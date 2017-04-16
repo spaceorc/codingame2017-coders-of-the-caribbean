@@ -32,6 +32,18 @@ internal class Player
 
 	private static void Main2(string[] args)
 	{
+		var ship = new Ship(1, new Coord(6, 15), owner: 1, rum: 100, orientation: 0, speed: 2);
+		enemyShips = new List<Ship>
+		{
+			new Ship(666, new Coord(6, 20), owner: 0, rum: 100, orientation: 0, speed: 2)
+		};
+		myShips = new List<Ship>{ship};
+		var fireTarget = SelectFireTarget(ship);
+		Console.Out.WriteLine(fireTarget);
+	}
+
+	private static void Main3(string[] args)
+	{
 		var ship = new Ship(1, new Coord(6, 19), owner: 1, rum: 100, orientation: 0, speed: 0);
 		shipsFired.Add(ship.id, true);
 		mines = new List<Mine>();
@@ -340,7 +352,7 @@ internal class Player
 			var fireTargets = GetFireTargets(ship, enemyShips[i]);
 			foreach (var fireTarget in fireTargets)
 			{
-				if (bestFireTarget == null || bestFireTarget.rum < fireTarget.rum || bestFireTarget.turns > fireTarget.turns)
+				if (bestFireTarget == null || fireTarget.priority < bestFireTarget.priority || fireTarget.turns < bestFireTarget.turns)
 					bestFireTarget = fireTarget;
 			}
 		}
@@ -349,31 +361,27 @@ internal class Player
 
 	private static IEnumerable<FireTarget> GetFireTargets(Ship ship, Ship enemyShip)
 	{
-		var targets = new List<Tuple<Coord, int>>
-		{
-			Tuple.Create(enemyShip.coord, 50),
-			Tuple.Create(enemyShip.bow, 25),
-			Tuple.Create(enemyShip.stern, 25)
-		};
 		var currentMyShips = myShips;
-		for (var turns = 0; turns < 4; turns++)
+		for (var turns = 0; turns < 5; turns++)
 		{
-			foreach (var target in targets)
+			enemyShip = enemyShip.Apply(ShipMoveCommand.Wait)[1];
+			var coords = new[] {enemyShip.coord, enemyShip.bow, enemyShip.stern};
+			for (var i = 0; i < coords.Length; i++)
 			{
-				if (!target.Item1.IsInsideMap() || currentMyShips.Any(m => m.DistanceTo(target.Item1) == 0))
-					continue;
-				var distanceTo = ship.bow.DistanceTo(target.Item1);
-				if (distanceTo <= 10)
+				var target = coords[i];
+				if (target.IsInsideMap())
 				{
-					var travelTime = (int)(1 + Math.Round(distanceTo / 3.0));
-					if (travelTime == turns)
-						yield return new FireTarget(target.Item1, turns, target.Item2);
+					if (currentMyShips.Any(m => m.DistanceTo(target) == 0))
+						continue;
+					var distanceTo = ship.bow.DistanceTo(target);
+					if (distanceTo <= 10)
+					{
+						var travelTime = (int) (1 + Math.Round(distanceTo / 3.0));
+						if (travelTime == turns)
+							yield return new FireTarget(target, turns, i == 0 ? HIGH_DAMAGE : LOW_DAMAGE, i);
+					}
 				}
 			}
-			if (enemyShip.speed != 0)
-				for (var i = 0; i < targets.Count; i++)
-				for (var j = 0; j < enemyShip.speed; j++)
-					targets[i] = Tuple.Create(targets[i].Item1.Neighbor(enemyShip.orientation), targets[i].Item2);
 			currentMyShips = currentMyShips.Select(c => c.Apply(ShipMoveCommand.Wait)[1]).ToList();
 		}
 	}
@@ -383,12 +391,19 @@ internal class Player
 		public readonly int rum;
 		public readonly Coord target;
 		public readonly int turns;
+		public readonly int priority;
 
-		public FireTarget(Coord target, int turns, int rum)
+		public FireTarget(Coord target, int turns, int rum, int priority)
 		{
 			this.target = target;
 			this.turns = turns;
 			this.rum = rum;
+			this.priority = priority;
+		}
+
+		public override string ToString()
+		{
+			return $"{nameof(target)}: {target}, {nameof(rum)}: {rum}, {nameof(turns)}: {turns}, {nameof(priority)}: {priority}";
 		}
 	}
 
