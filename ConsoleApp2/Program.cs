@@ -102,55 +102,71 @@ internal class Player
 		}
 	}
 
-	private static void ManualMove(Ship ship, Coord target)
+	private static ShipMoveCommand SelectMoveCommand(Ship ship, Coord target)
 	{
 		if (ship.DistanceTo(target) == 0)
-		{
-			ship.Wait();
-			return;
-		}
+			return ShipMoveCommand.Wait;
+
 		var queue = new Queue<ShipPathChainItem>();
-		queue.Enqueue(ShipPathChainItem.Start(ship));
+		var item = ShipPathChainItem.Start(ship);
+		queue.Enqueue(item);
 
-		var used = new HashSet<ShipMovementState>();
-		used.Add(new ShipMovementState(ship));
+		var used = new Dictionary<ShipMovementState, ShipPathChainItem>();
+		used.Add(new ShipMovementState(ship), item);
 
-		var bestDist = int.MaxValue;
-		var bestCommand = ShipMoveCommand.Wait;
-		var bestLength = int.MaxValue;
 		while (queue.Any())
 		{
 			var current = queue.Dequeue();
-			if (current.prev != null)
-			{
-				var dist = current.ship.DistanceTo(target);
-				if (dist < bestDist || dist == bestDist && (current.length < bestLength ||
-															current.length == bestLength &&
-															current.startCommand == ShipMoveCommand.Wait))
-				{
-					bestDist = dist;
-					bestCommand = current.startCommand;
-					bestLength = current.length;
-				}
-			}
-			if (current.length != MANUAL_MOVE_DEPTH)
+			if (current.depth != MANUAL_MOVE_DEPTH)
 				foreach (var moveCommand in Enum.GetValues(typeof(ShipMoveCommand)).Cast<ShipMoveCommand>())
 				{
 					var newShips = current.ship.Apply(moveCommand);
 					var newMovedShip = newShips[0];
 					var newShip = newShips[1];
-					if (used.Add(new ShipMovementState(newShip)))
+					var newMovementState = new ShipMovementState(newShip);
+					if (!used.ContainsKey(newMovementState))
 					{
 						var onMine = mines.Any(m => newShip.DistanceTo(m.coord) == 0 || newMovedShip.DistanceTo(m.coord) == 0);
-						var cannoned = cannonballs.Any(b => b.turns == current.length + 1 && newShip.DistanceTo(b.coord) == 0);
+						var cannoned = cannonballs.Any(b => b.turns == current.depth + 1 && newShip.DistanceTo(b.coord) == 0);
 						var nearMyShip = myShips.Where(m => m.id != newShip.id).Any(m => newShip.DistanceTo(m.coord) < SHIP_MIN_DIST);
 						var nearEnemyShip = enemyShips.Any(m => newShip.DistanceTo(m.coord) < SHIP_MIN_DIST);
 						if (!onMine && !nearMyShip && !nearEnemyShip && !cannoned)
-							queue.Enqueue(current.Next(newShip, moveCommand));
+						{
+							var next = current.Next(newShip, moveCommand);
+							queue.Enqueue(next);
+							used.Add(newMovementState, next);
+						}
+						else
+							used.Add(newMovementState, null);
 					}
 				}
 		}
-		if (bestCommand == ShipMoveCommand.Wait)
+
+		var bestDist = int.MaxValue;
+		var bestDepth = int.MaxValue;
+		var bestCommand = ShipMoveCommand.Wait;
+		foreach (var chainItem in used.Values.Where(v => v != null))
+		{
+			if (chainItem.hasContinuations && chainItem.prev != null)
+			{
+				var dist = chainItem.ship.DistanceTo(target);
+				if (dist < bestDist || dist == bestDist && (chainItem.depth < bestDepth ||
+				                                            chainItem.depth == bestDepth &&
+				                                            chainItem.startCommand == ShipMoveCommand.Wait))
+				{
+					bestDist = dist;
+					bestCommand = chainItem.startCommand;
+					bestDepth = chainItem.depth;
+				}
+			}
+		}
+		return bestCommand;
+	}
+
+	private static void ManualMove(Ship ship, Coord target)
+	{
+		var moveCommand = SelectMoveCommand(ship, target);
+		if (moveCommand == ShipMoveCommand.Wait)
 		{
 			bool fired;
 			shipsFired.TryGetValue(ship.id, out fired);
@@ -166,7 +182,7 @@ internal class Player
 			}
 		}
 		shipsFired[ship.id] = false;
-		ship.Move(bestCommand);
+		ship.Move(moveCommand);
 	}
 
 	private class ShipMovementState : IEquatable<ShipMovementState>
@@ -222,20 +238,29 @@ internal class Player
 	private class ShipPathChainItem
 	{
 		public readonly ShipMoveCommand command;
-		public readonly int length;
+		public readonly int depth;
 		public readonly ShipPathChainItem prev;
 		public readonly Ship ship;
 		public readonly ShipMoveCommand startCommand;
 		public bool hasContinuations;
 
-		private ShipPathChainItem(ShipPathChainItem prev, ShipMoveCommand command, Ship ship, int length,
+		private ShipPathChainItem(ShipPathChainItem prev, ShipMoveCommand command, Ship ship, int depth,
 			ShipMoveCommand startCommand)
 		{
 			this.prev = prev;
 			this.command = command;
 			this.ship = ship;
-			this.length = length;
+			this.depth = depth;
 			this.startCommand = startCommand;
+			if (depth == MANUAL_MOVE_DEPTH)
+			{
+				var t = this;
+				while (t != null && !t.hasContinuations)
+				{
+					t.hasContinuations = true;
+					t = t.prev;
+				}
+			}
 		}
 
 		public static ShipPathChainItem Start(Ship ship)
@@ -245,14 +270,13 @@ internal class Player
 
 		public ShipPathChainItem Next(Ship nextShip, ShipMoveCommand moveCommand)
 		{
-			hasContinuations = true;
-			return new ShipPathChainItem(this, moveCommand, nextShip, length + 1, prev == null ? moveCommand : startCommand);
+			return new ShipPathChainItem(this, moveCommand, nextShip, depth + 1, prev == null ? moveCommand : startCommand);
 		}
 
 		public override string ToString()
 		{
 			return
-				$"{(prev == null ? "ROOT: " : "")}{nameof(command)}: {command}, {nameof(length)}: {length}, {nameof(startCommand)}: {startCommand}, {nameof(ship)}: {ship}";
+				$"{(prev == null ? "ROOT: " : "")}{nameof(command)}: {command}, {nameof(depth)}: {depth}, {nameof(startCommand)}: {startCommand}, {nameof(ship)}: {ship}";
 		}
 	}
 
