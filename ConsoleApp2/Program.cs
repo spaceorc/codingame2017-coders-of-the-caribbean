@@ -352,7 +352,9 @@ internal class Player
 			var fireTargets = GetFireTargets(ship, enemyShips[i]);
 			foreach (var fireTarget in fireTargets)
 			{
-				if (bestFireTarget == null || fireTarget.priority < bestFireTarget.priority || fireTarget.turns < bestFireTarget.turns)
+				if (bestFireTarget == null || 
+					fireTarget.priority < bestFireTarget.priority || 
+					fireTarget.priority == bestFireTarget.priority && fireTarget.turns < bestFireTarget.turns)
 					bestFireTarget = fireTarget;
 			}
 		}
