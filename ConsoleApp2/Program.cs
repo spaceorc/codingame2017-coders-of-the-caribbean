@@ -63,7 +63,6 @@ internal class Player
 		// game loop
 		while (true)
 		{
-			var stopwatch = Stopwatch.StartNew();
 			barrels = new Dictionary<int, Barrel>();
 			usedBarrelCoords = new HashSet<Coord>();
 			myShips = new List<Ship>();
@@ -106,6 +105,7 @@ internal class Player
 						break;
 				}
 			}
+			var stopwatch = Stopwatch.StartNew();
 			Preprocess();
 			foreach (var ship in myShips)
 			{
