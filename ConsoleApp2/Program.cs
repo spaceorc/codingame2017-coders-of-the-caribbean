@@ -27,6 +27,7 @@ internal class Player
 	private static List<Cannonball> cannonballs;
 	private static readonly Dictionary<int, IStrategy> strategies = new Dictionary<int, IStrategy>();
 	private static readonly Dictionary<int, bool> shipsFired = new Dictionary<int, bool>();
+	private static readonly Dictionary<int, int> shipsMined = new Dictionary<int, int>();
 	private static List<Ship> enemyShips;
 	private static List<Ship> enemyShipsMoved;
 
@@ -220,11 +221,15 @@ internal class Player
 
 	private static void ManualMove(Ship ship, Coord target)
 	{
+		bool fired;
+		shipsFired.TryGetValue(ship.id, out fired);
+		shipsFired[ship.id] = false;
+		int mined;
+		shipsMined.TryGetValue(ship.id, out mined);
+		shipsMined[ship.id] = mined - 1;
 		var moveCommand = SelectMoveCommand(ship, target);
 		if (moveCommand == ShipMoveCommand.Wait)
 		{
-			bool fired;
-			shipsFired.TryGetValue(ship.id, out fired);
 			if (!fired)
 			{
 				var fireTarget = SelectFireTarget(ship);
@@ -236,7 +241,15 @@ internal class Player
 				}
 			}
 		}
-		shipsFired[ship.id] = false;
+		if (moveCommand == ShipMoveCommand.Wait)
+		{
+			if (mined <= 0)
+			{
+				shipsMined[ship.id] = 4;
+				ship.Mine();
+				return;
+			}
+		}
 		ship.Move(moveCommand);
 	}
 
