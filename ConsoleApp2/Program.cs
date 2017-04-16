@@ -27,13 +27,13 @@ internal class Player
 
 	private static void Main2(string[] args)
 	{
-		var ship = new Ship(1, new Coord(10, 9), owner: 1, rum: 100, orientation: 5, speed: 2);
+		var ship = new Ship(1, new Coord(18, 2), owner: 1, rum: 100, orientation: 1, speed: 2);
 		shipsFired.Add(ship.id, true);
-		mines = new List<Mine> { new Mine(111, 12, 12) };
+		mines = new List<Mine>();
 		cannonballs = new List<Cannonball>();
 		myShips = new List<Ship>{ship};
 		enemyShips = new List<Ship>();
-		ManualMove(ship, new Coord(14, 12));
+		ManualMove(ship, new Coord(20, 2));
 	}
 
 	private static void Main(string[] args)
@@ -108,7 +108,7 @@ internal class Player
 			return ShipMoveCommand.Wait;
 
 		var queue = new Queue<ShipPathChainItem>();
-		var item = ShipPathChainItem.Start(ship);
+		var item = ShipPathChainItem.Start(ship, target);
 		queue.Enqueue(item);
 
 		var used = new Dictionary<ShipMovementState, ShipPathChainItem>();
@@ -132,35 +132,33 @@ internal class Player
 						var nearEnemyShip = enemyShips.Any(m => newShip.DistanceTo(m.coord) < SHIP_MIN_DIST);
 						if (!onMine && !nearMyShip && !nearEnemyShip && !cannoned)
 						{
-							var next = current.Next(newShip, moveCommand);
+							var next = current.Next(newShip, moveCommand, target);
 							queue.Enqueue(next);
 							used.Add(newMovementState, next);
 						}
 						else
+						{
 							used.Add(newMovementState, null);
+						}
 					}
 				}
 		}
 
-		var bestDist = int.MaxValue;
-		var bestDepth = int.MaxValue;
-		var bestCommand = ShipMoveCommand.Wait;
+		ShipPathChainItem bestChainItem = null;
 		foreach (var chainItem in used.Values.Where(v => v != null))
 		{
-			if (chainItem.hasContinuations && chainItem.prev != null)
+			if (chainItem.prev != null)
 			{
-				var dist = chainItem.ship.DistanceTo(target);
-				if (dist < bestDist || dist == bestDist && (chainItem.depth < bestDepth ||
-				                                            chainItem.depth == bestDepth &&
-				                                            chainItem.startCommand == ShipMoveCommand.Wait))
+				if (bestChainItem == null || chainItem.damage < bestChainItem.damage || chainItem.damage == bestChainItem.damage 
+					&& (chainItem.dist < bestChainItem.dist || chainItem.dist == bestChainItem.dist 
+					&& (chainItem.depth < bestChainItem.depth || chainItem.depth == bestChainItem.depth 
+					&& chainItem.startCommand == ShipMoveCommand.Wait)))
 				{
-					bestDist = dist;
-					bestCommand = chainItem.startCommand;
-					bestDepth = chainItem.depth;
+					bestChainItem = chainItem;
 				}
 			}
 		}
-		return bestCommand;
+		return bestChainItem?.startCommand ?? ShipMoveCommand.Wait;
 	}
 
 	private static void ManualMove(Ship ship, Coord target)
@@ -239,38 +237,43 @@ internal class Player
 	{
 		public readonly ShipMoveCommand command;
 		public readonly int depth;
+		public readonly int dist;
 		public readonly ShipPathChainItem prev;
 		public readonly Ship ship;
 		public readonly ShipMoveCommand startCommand;
-		public bool hasContinuations;
+		public int damage = int.MaxValue;
 
 		private ShipPathChainItem(ShipPathChainItem prev, ShipMoveCommand command, Ship ship, int depth,
-			ShipMoveCommand startCommand)
+			ShipMoveCommand startCommand, Coord target)
 		{
 			this.prev = prev;
 			this.command = command;
 			this.ship = ship;
 			this.depth = depth;
 			this.startCommand = startCommand;
+			dist = ship.DistanceTo(target);
 			if (depth == MANUAL_MOVE_DEPTH)
+				SetDamage(0);
+		}
+
+		public void SetDamage(int newDamage)
+		{
+			var t = this;
+			while (t != null && t.damage > newDamage)
 			{
-				var t = this;
-				while (t != null && !t.hasContinuations)
-				{
-					t.hasContinuations = true;
-					t = t.prev;
-				}
+				t.damage = newDamage;
+				t = t.prev;
 			}
 		}
 
-		public static ShipPathChainItem Start(Ship ship)
+		public static ShipPathChainItem Start(Ship ship, Coord target)
 		{
-			return new ShipPathChainItem(null, ShipMoveCommand.Wait, ship, 0, ShipMoveCommand.Wait);
+			return new ShipPathChainItem(null, ShipMoveCommand.Wait, ship, 0, ShipMoveCommand.Wait, target);
 		}
 
-		public ShipPathChainItem Next(Ship nextShip, ShipMoveCommand moveCommand)
+		public ShipPathChainItem Next(Ship nextShip, ShipMoveCommand moveCommand, Coord target)
 		{
-			return new ShipPathChainItem(this, moveCommand, nextShip, depth + 1, prev == null ? moveCommand : startCommand);
+			return new ShipPathChainItem(this, moveCommand, nextShip, depth + 1, prev == null ? moveCommand : startCommand, target);
 		}
 
 		public override string ToString()
@@ -595,10 +598,10 @@ internal class Player
 			switch (moveCommand)
 			{
 				case ShipMoveCommand.Port:
-					movedShip = new Ship(movedShip.id, movedShip.coord, (orientation + 1) % 6, 0, rum - 1, owner);
+					movedShip = new Ship(movedShip.id, movedShip.coord, (orientation + 1) % 6, movedShip.speed, rum - 1, owner);
 					break;
 				case ShipMoveCommand.Starboard:
-					movedShip = new Ship(movedShip.id, movedShip.coord, (orientation + 5) % 6, 0, rum - 1, owner);
+					movedShip = new Ship(movedShip.id, movedShip.coord, (orientation + 5) % 6, movedShip.speed, rum - 1, owner);
 					break;
 			}
 			result.Add(movedShip);
