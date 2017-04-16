@@ -12,6 +12,10 @@ internal class Player
 	private static readonly int MAP_WIDTH = 23;
 	private static readonly int MAP_HEIGHT = 21;
 	private static readonly int MAX_SHIP_SPEED = 2;
+	private static readonly int LOW_DAMAGE = 25;
+	private static readonly int HIGH_DAMAGE = 50;
+	private static readonly int MINE_DAMAGE = 25;
+	private static readonly int NEAR_MINE_DAMAGE = 10;
 	private static readonly int MANUAL_MOVE_DEPTH = 6;
 	private static readonly int FREE_REACH_DIST = 5;
 	private static readonly int SHIP_MIN_DIST = 3;
@@ -24,16 +28,22 @@ internal class Player
 	private static readonly Dictionary<int, IStrategy> strategies = new Dictionary<int, IStrategy>();
 	private static readonly Dictionary<int, bool> shipsFired = new Dictionary<int, bool>();
 	private static List<Ship> enemyShips;
+	private static List<Ship> enemyShipsMoved;
 
 	private static void Main2(string[] args)
 	{
-		var ship = new Ship(1, new Coord(18, 2), owner: 1, rum: 100, orientation: 1, speed: 2);
+		var ship = new Ship(1, new Coord(6, 19), owner: 1, rum: 100, orientation: 0, speed: 0);
 		shipsFired.Add(ship.id, true);
 		mines = new List<Mine>();
 		cannonballs = new List<Cannonball>();
-		myShips = new List<Ship>{ship};
+		myShips = new List<Ship>
+		{
+			ship,
+			new Ship(2, new Coord(8, 19), owner: 1, rum: 100, orientation: 4, speed: 0)
+		};
 		enemyShips = new List<Ship>();
-		ManualMove(ship, new Coord(20, 2));
+		Preprocess();
+		ManualMove(ship, new Coord(2, 2));
 	}
 
 	private static void Main(string[] args)
@@ -84,6 +94,7 @@ internal class Player
 						break;
 				}
 			}
+			Preprocess();
 			foreach (var ship in myShips)
 			{
 				var action = Decide(ship);
@@ -100,6 +111,13 @@ internal class Player
 			stopwatch.Stop();
 			Console.Error.WriteLine($"Decision made in {stopwatch.ElapsedMilliseconds} ms");
 		}
+	}
+
+	private static void Preprocess()
+	{
+		enemyShipsMoved = new List<Ship>();
+		foreach (var enemyShip in enemyShips)
+			enemyShipsMoved.Add(enemyShip.Apply(ShipMoveCommand.Wait)[1]);
 	}
 
 	private static ShipMoveCommand SelectMoveCommand(Ship ship, Coord target)
@@ -120,25 +138,52 @@ internal class Player
 			if (current.depth != MANUAL_MOVE_DEPTH)
 				foreach (var moveCommand in Enum.GetValues(typeof(ShipMoveCommand)).Cast<ShipMoveCommand>())
 				{
+					bool that = false;
+					//if (current.ship.id == 1 && current.ship.coord.Equals(new Coord(6, 19)))
+					//{
+					//	that = true;
+					//}
+
+					if (that) Console.Error.WriteLine(moveCommand);
+					if (that) Console.Error.WriteLine(current.ship);
+
 					var newShips = current.ship.Apply(moveCommand);
 					var newMovedShip = newShips[0];
 					var newShip = newShips[1];
 					var newMovementState = new ShipMovementState(newShip);
 					if (!used.ContainsKey(newMovementState))
 					{
+						var damage = 0;
 						var onMine = mines.Any(m => newShip.DistanceTo(m.coord) == 0 || newMovedShip.DistanceTo(m.coord) == 0);
-						var cannoned = cannonballs.Any(b => b.turns == current.depth + 1 && newShip.DistanceTo(b.coord) == 0);
+						if (onMine)
+							damage = MINE_DAMAGE;
+						var cannonedBowOrStern = cannonballs.Any(b => b.turns == current.depth + 1 && (newShip.bow.DistanceTo(b.coord) == 0 || newShip.stern.DistanceTo(b.coord) == 0));
+						if (cannonedBowOrStern)
+							damage = LOW_DAMAGE;
+						var cannonedCenter = cannonballs.Any(b => b.turns == current.depth + 1 && newShip.coord.DistanceTo(b.coord) == 0);
+						if (cannonedCenter)
+							damage = HIGH_DAMAGE;
 						var nearMyShip = myShips.Where(m => m.id != newShip.id).Any(m => newShip.DistanceTo(m.coord) < SHIP_MIN_DIST);
 						var nearEnemyShip = enemyShips.Any(m => newShip.DistanceTo(m.coord) < SHIP_MIN_DIST);
-						if (!onMine && !nearMyShip && !nearEnemyShip && !cannoned)
+						if (nearMyShip || nearEnemyShip)
+							damage = HIGH_DAMAGE * 2; // virtual
+
+						if (that) Console.Error.WriteLine(damage);
+
+						var onMyShip = myShips.Where(m => m.id != newShip.id).Any(m => newShip.DistanceTo(m.coord) == 0 || newShip.DistanceTo(m.bow) == 0 || newShip.DistanceTo(m.stern) == 0);
+						var onEnemyShip = enemyShips.Any(m => newShip.DistanceTo(m.coord) == 0 || newShip.DistanceTo(m.bow) == 0 || newShip.DistanceTo(m.stern) == 0);
+						var onEnemyShipMoved = enemyShipsMoved.Any(m => newShip.DistanceTo(m.coord) == 0 || newShip.DistanceTo(m.bow) == 0 || newShip.DistanceTo(m.stern) == 0);
+						if (!onMyShip && !onEnemyShip && !onEnemyShipMoved)
 						{
-							var next = current.Next(newShip, moveCommand, target);
+							var next = current.Next(newShip, moveCommand, target, damage);
 							queue.Enqueue(next);
 							used.Add(newMovementState, next);
+							if (that) Console.Error.WriteLine(next);
 						}
 						else
 						{
 							used.Add(newMovementState, null);
+							if (that) Console.Error.WriteLine("NO");
 						}
 					}
 				}
@@ -149,10 +194,10 @@ internal class Player
 		{
 			if (chainItem.prev != null)
 			{
-				if (bestChainItem == null || chainItem.damage < bestChainItem.damage || chainItem.damage == bestChainItem.damage 
-					&& (chainItem.dist < bestChainItem.dist || chainItem.dist == bestChainItem.dist 
-					&& (chainItem.depth < bestChainItem.depth || chainItem.depth == bestChainItem.depth 
-					&& chainItem.startCommand == ShipMoveCommand.Wait)))
+				if (bestChainItem == null || chainItem.damage < bestChainItem.damage || chainItem.damage == bestChainItem.damage
+				    && (chainItem.dist < bestChainItem.dist || chainItem.dist == bestChainItem.dist
+				        && (chainItem.depth < bestChainItem.depth || chainItem.depth == bestChainItem.depth
+				            && chainItem.startCommand == ShipMoveCommand.Wait)))
 				{
 					bestChainItem = chainItem;
 				}
@@ -238,13 +283,14 @@ internal class Player
 		public readonly ShipMoveCommand command;
 		public readonly int depth;
 		public readonly int dist;
+		public readonly int pathDamage;
 		public readonly ShipPathChainItem prev;
 		public readonly Ship ship;
 		public readonly ShipMoveCommand startCommand;
 		public int damage = int.MaxValue;
 
 		private ShipPathChainItem(ShipPathChainItem prev, ShipMoveCommand command, Ship ship, int depth,
-			ShipMoveCommand startCommand, Coord target)
+			ShipMoveCommand startCommand, Coord target, int pathDamage)
 		{
 			this.prev = prev;
 			this.command = command;
@@ -252,11 +298,12 @@ internal class Player
 			this.depth = depth;
 			this.startCommand = startCommand;
 			dist = ship.DistanceTo(target);
+			this.pathDamage = pathDamage;
 			if (depth == MANUAL_MOVE_DEPTH)
-				SetDamage(0);
+				SetDamage(pathDamage);
 		}
 
-		public void SetDamage(int newDamage)
+		private void SetDamage(int newDamage)
 		{
 			var t = this;
 			while (t != null && t.damage > newDamage)
@@ -268,12 +315,12 @@ internal class Player
 
 		public static ShipPathChainItem Start(Ship ship, Coord target)
 		{
-			return new ShipPathChainItem(null, ShipMoveCommand.Wait, ship, 0, ShipMoveCommand.Wait, target);
+			return new ShipPathChainItem(null, ShipMoveCommand.Wait, ship, 0, ShipMoveCommand.Wait, target, 0);
 		}
 
-		public ShipPathChainItem Next(Ship nextShip, ShipMoveCommand moveCommand, Coord target)
+		public ShipPathChainItem Next(Ship nextShip, ShipMoveCommand moveCommand, Coord target, int nextDamage)
 		{
-			return new ShipPathChainItem(this, moveCommand, nextShip, depth + 1, prev == null ? moveCommand : startCommand, target);
+			return new ShipPathChainItem(this, moveCommand, nextShip, depth + 1, prev == null ? moveCommand : startCommand, target, pathDamage + nextDamage);
 		}
 
 		public override string ToString()
@@ -325,8 +372,8 @@ internal class Player
 			}
 			if (enemyShip.speed != 0)
 				for (var i = 0; i < targets.Count; i++)
-					for (var j = 0; j < enemyShip.speed; j++)
-						targets[i] = Tuple.Create(targets[i].Item1.Neighbor(enemyShip.orientation), targets[i].Item2);
+				for (var j = 0; j < enemyShip.speed; j++)
+					targets[i] = Tuple.Create(targets[i].Item1.Neighbor(enemyShip.orientation), targets[i].Item2);
 			currentMyShips = currentMyShips.Select(c => c.Apply(ShipMoveCommand.Wait)[1]).ToList();
 		}
 	}
