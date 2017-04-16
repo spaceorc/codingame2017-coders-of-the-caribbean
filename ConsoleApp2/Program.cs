@@ -16,7 +16,7 @@ internal class Player
 	private static readonly int HIGH_DAMAGE = 50;
 	private static readonly int MINE_DAMAGE = 25;
 	private static readonly int NEAR_MINE_DAMAGE = 10;
-	private static readonly int MANUAL_MOVE_DEPTH = 6;
+	private static readonly int MANUAL_MOVE_DEPTH = 5;
 	private static readonly int FREE_REACH_DIST = 5;
 	private static readonly int SHIP_MIN_DIST = 3;
 
