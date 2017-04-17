@@ -16,10 +16,11 @@ internal class Player
 	private static readonly int HIGH_DAMAGE = 50;
 	private static readonly int MINE_DAMAGE = 25;
 	private static readonly int NEAR_MINE_DAMAGE = 10;
+	private static readonly int NEAR_SHIP_DAMAGE = 5;
 	private static readonly int MANUAL_MOVE_DEPTH = 5;
 	private static readonly int FREE_REACH_DIST = 5;
-	private static readonly int SHIP_MIN_DIST = 3;
-	private static readonly bool USE_MINING = true;
+	private static readonly int SHIP_MIN_DIST = 4;
+	private static readonly bool USE_MINING = false;
 
 	private static Dictionary<int, Barrel> barrels;
 	private static HashSet<Coord> usedBarrelCoords;
@@ -188,23 +189,25 @@ internal class Player
 						var damage = 0;
 						var onMine = mines.Any(m => newShip.Collides(m) || newMovedShip.Collides(m));
 						if (onMine)
-							damage = MINE_DAMAGE;
+							damage = Math.Max(damage, MINE_DAMAGE);
 						var cannonedBowOrStern = cannonballs.Any(b => b.turns == current.depth + 1 && (newShip.bow.Equals(b.coord) || newShip.stern.Equals(b.coord)));
 						if (cannonedBowOrStern)
-							damage = LOW_DAMAGE;
+							damage = Math.Max(damage, LOW_DAMAGE);
 						var cannonedCenter = cannonballs.Any(b => b.turns == current.depth + 1 && newShip.coord.Equals(b.coord));
 						if (cannonedCenter)
-							damage = HIGH_DAMAGE;
+							damage = Math.Max(damage, HIGH_DAMAGE);
 						//var nearMyShip = myShips.Where(m => m.id != newShip.id).Any(m => newShip.DistanceTo(m.coord) < SHIP_MIN_DIST);
 						var nearEnemyShip = enemyShips.Any(m => newShip.DistanceTo(m.coord) < SHIP_MIN_DIST);
 						if (/*nearMyShip || */nearEnemyShip)
-							damage = HIGH_DAMAGE * 2; // virtual
+							damage = Math.Max(damage, NEAR_SHIP_DAMAGE); // virtual
 
 						if (that) Console.Error.WriteLine(damage);
 
-						var onMyShip = myShipsMoved[current.depth].Where(m => m.id != newShip.id).Any(m => newShip.Collides(m));
+						var onMyShip = myShips.Where(m => m.id != newShip.id).Any(m => newShip.Collides(m))
+							|| myShipsMoved[current.depth].Where(m => m.id != newShip.id).Any(m => newShip.Collides(m));
 						//var onEnemyShip = enemyShips.Any(m => newShip.DistanceTo(m.coord) == 0 || newShip.DistanceTo(m.bow) == 0 || newShip.DistanceTo(m.stern) == 0);
-						var onEnemyShipMoved = enemyShipsMoved[current.depth].Any(m => newShip.Collides(m));
+						var onEnemyShipMoved = enemyShips.Any(m => newShip.Collides(m))
+							|| enemyShipsMoved[current.depth].Any(m => newShip.Collides(m));
 						if (!onMyShip /*&& !onEnemyShip */&& !onEnemyShipMoved)
 						{
 							var next = current.Next(newShip, moveCommand, target, damage);
