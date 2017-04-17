@@ -289,17 +289,15 @@ internal class Player
 						var cannonedCenter = cannonballs.Any(b => b.turns == current.depth + 1 && newShip.coord.Equals(b.coord));
 						if (cannonedCenter)
 							damage = Math.Max(damage, HIGH_DAMAGE);
-						//var nearMyShip = myShips.Where(m => m.id != newShip.id).Any(m => newShip.DistanceTo(m.coord) < SHIP_MIN_DIST);
 						var nearEnemyShip = enemyShips.Any(m => newShip.DistanceTo(m.coord) < SHIP_MIN_DIST);
-						if (/*nearMyShip || */nearEnemyShip)
+						if (nearEnemyShip)
 							damage = Math.Max(damage, NEAR_SHIP_DAMAGE); // virtual
 
 						var onMyShip = current.depth == 0 && myShips.Where(m => m.id != newShip.id).Any(m => newShip.Collides(m) || newMovedShip.Collides(m))
 							|| myShipsMoved[current.depth].Where(m => m.id != newShip.id).Any(m => newShip.Collides(m) || newMovedShip.Collides(m));
-						//var onEnemyShip = enemyShips.Any(m => newShip.DistanceTo(m.coord) == 0 || newShip.DistanceTo(m.bow) == 0 || newShip.DistanceTo(m.stern) == 0);
 						var onEnemyShipMoved = current.depth == 0 && enemyShips.Any(m => newShip.Collides(m) || newMovedShip.Collides(m))
 							|| enemyShipsMoved[current.depth].Any(m => newShip.Collides(m) || newMovedShip.Collides(m));
-						if (!onMyShip /*&& !onEnemyShip */&& !onEnemyShipMoved)
+						if (!onMyShip && !onEnemyShipMoved)
 						{
 							var next = current.Next(newShip, moveCommand, target, damage);
 							queue.Enqueue(next);
@@ -489,7 +487,7 @@ internal class Player
 		public override string ToString()
 		{
 			return
-				$"{(prev == null ? "ROOT: " : "")}{nameof(command)}: {command}, {nameof(depth)}: {depth}, {nameof(startCommand)}: {startCommand}, {nameof(ship)}: {ship}";
+				$"{(prev == null ? "ROOT: " : "")}{nameof(command)}: {command}, {nameof(depth)}: {depth}, {nameof(startCommand)}: {startCommand}, {nameof(ship)}: {ship}, {nameof(damage)}: {damage}, {nameof(pathDamage)}: {pathDamage}";
 		}
 	}
 
