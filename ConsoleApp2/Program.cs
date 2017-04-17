@@ -19,17 +19,19 @@ internal class Player
 	private static readonly int MANUAL_MOVE_DEPTH = 5;
 	private static readonly int FREE_REACH_DIST = 5;
 	private static readonly int SHIP_MIN_DIST = 3;
+	private static readonly bool USE_MINING = true;
 
 	private static Dictionary<int, Barrel> barrels;
 	private static HashSet<Coord> usedBarrelCoords;
 	private static List<Ship> myShips;
+	private static List<Ship> enemyShips;
 	private static List<Mine> mines;
 	private static List<Cannonball> cannonballs;
 	private static readonly Dictionary<int, IStrategy> strategies = new Dictionary<int, IStrategy>();
 	private static readonly Dictionary<int, bool> shipsFired = new Dictionary<int, bool>();
 	private static readonly Dictionary<int, int> shipsMined = new Dictionary<int, int>();
-	private static List<Ship> enemyShips;
-	private static List<Ship> enemyShipsMoved;
+	private static List<List<Ship>> enemyShipsMoved;
+	private static List<List<Ship>> myShipsMoved;
 
 	private static void Main2(string[] args)
 	{
@@ -128,14 +130,31 @@ internal class Player
 
 	private static void Preprocess()
 	{
-		enemyShipsMoved = new List<Ship>();
-		foreach (var enemyShip in enemyShips)
-			enemyShipsMoved.Add(enemyShip.Apply(ShipMoveCommand.Wait)[1]);
+		enemyShipsMoved = new List<List<Ship>>();
+		var prevShips = enemyShips;
+		for (int i = 0; i < MANUAL_MOVE_DEPTH; i++)
+		{
+			var ships = new List<Ship>();
+			enemyShipsMoved.Add(ships);
+			foreach (var ship in prevShips)
+				ships.Add(ship.Apply(ShipMoveCommand.Wait)[1]);
+			prevShips = ships;
+		}
+		myShipsMoved = new List<List<Ship>>();
+		prevShips = myShips;
+		for (int i = 0; i < MANUAL_MOVE_DEPTH; i++)
+		{
+			var ships = new List<Ship>();
+			myShipsMoved.Add(ships);
+			foreach (var ship in prevShips)
+				ships.Add(ship.Apply(ShipMoveCommand.Wait)[1]);
+			prevShips = ships;
+		}
 	}
 
 	private static ShipMoveCommand SelectMoveCommand(Ship ship, Coord target)
 	{
-		if (ship.DistanceTo(target) == 0)
+		if (ship.Collides(target))
 			return ShipMoveCommand.Wait;
 
 		var queue = new Queue<ShipPathChainItem>();
@@ -167,26 +186,26 @@ internal class Player
 					if (!used.ContainsKey(newMovementState))
 					{
 						var damage = 0;
-						var onMine = mines.Any(m => newShip.DistanceTo(m.coord) == 0 || newMovedShip.DistanceTo(m.coord) == 0);
+						var onMine = mines.Any(m => newShip.Collides(m) || newMovedShip.Collides(m));
 						if (onMine)
 							damage = MINE_DAMAGE;
-						var cannonedBowOrStern = cannonballs.Any(b => b.turns == current.depth + 1 && (newShip.bow.DistanceTo(b.coord) == 0 || newShip.stern.DistanceTo(b.coord) == 0));
+						var cannonedBowOrStern = cannonballs.Any(b => b.turns == current.depth + 1 && (newShip.bow.Equals(b.coord) || newShip.stern.Equals(b.coord)));
 						if (cannonedBowOrStern)
 							damage = LOW_DAMAGE;
-						var cannonedCenter = cannonballs.Any(b => b.turns == current.depth + 1 && newShip.coord.DistanceTo(b.coord) == 0);
+						var cannonedCenter = cannonballs.Any(b => b.turns == current.depth + 1 && newShip.coord.Equals(b.coord));
 						if (cannonedCenter)
 							damage = HIGH_DAMAGE;
-						var nearMyShip = myShips.Where(m => m.id != newShip.id).Any(m => newShip.DistanceTo(m.coord) < SHIP_MIN_DIST);
+						//var nearMyShip = myShips.Where(m => m.id != newShip.id).Any(m => newShip.DistanceTo(m.coord) < SHIP_MIN_DIST);
 						var nearEnemyShip = enemyShips.Any(m => newShip.DistanceTo(m.coord) < SHIP_MIN_DIST);
-						if (nearMyShip || nearEnemyShip)
+						if (/*nearMyShip || */nearEnemyShip)
 							damage = HIGH_DAMAGE * 2; // virtual
 
 						if (that) Console.Error.WriteLine(damage);
 
-						var onMyShip = myShips.Where(m => m.id != newShip.id).Any(m => newShip.DistanceTo(m.coord) == 0 || newShip.DistanceTo(m.bow) == 0 || newShip.DistanceTo(m.stern) == 0);
-						var onEnemyShip = enemyShips.Any(m => newShip.DistanceTo(m.coord) == 0 || newShip.DistanceTo(m.bow) == 0 || newShip.DistanceTo(m.stern) == 0);
-						var onEnemyShipMoved = enemyShipsMoved.Any(m => newShip.DistanceTo(m.coord) == 0 || newShip.DistanceTo(m.bow) == 0 || newShip.DistanceTo(m.stern) == 0);
-						if (!onMyShip && !onEnemyShip && !onEnemyShipMoved)
+						var onMyShip = myShipsMoved[current.depth].Where(m => m.id != newShip.id).Any(m => newShip.Collides(m));
+						//var onEnemyShip = enemyShips.Any(m => newShip.DistanceTo(m.coord) == 0 || newShip.DistanceTo(m.bow) == 0 || newShip.DistanceTo(m.stern) == 0);
+						var onEnemyShipMoved = enemyShipsMoved[current.depth].Any(m => newShip.Collides(m));
+						if (!onMyShip /*&& !onEnemyShip */&& !onEnemyShipMoved)
 						{
 							var next = current.Next(newShip, moveCommand, target, damage);
 							queue.Enqueue(next);
@@ -216,6 +235,28 @@ internal class Player
 				}
 			}
 		}
+
+		if (bestChainItem != null)
+		{
+			var chain = new List<ShipMoveCommand>();
+			var chainItem = bestChainItem;
+			while (chainItem.prev != null)
+			{
+				chain.Add(chainItem.command);
+				chainItem = chainItem.prev;
+			}
+			chain.Reverse();
+
+			var index = myShipsMoved[0].FindIndex(s => s.id == ship.id);
+			var movedShip = ship;
+			for (var i = 0; i < chain.Count; i++)
+			{
+				var moveCommand = chain[i];
+				movedShip = movedShip.Apply(moveCommand)[0];
+				myShipsMoved[i][index] = movedShip;
+			}
+		}
+
 		return bestChainItem?.startCommand ?? ShipMoveCommand.Wait;
 	}
 
@@ -241,13 +282,16 @@ internal class Player
 				}
 			}
 		}
-		if (moveCommand == ShipMoveCommand.Wait)
+		if (USE_MINING)
 		{
-			if (mined <= 0)
+			if (moveCommand == ShipMoveCommand.Wait)
 			{
-				shipsMined[ship.id] = 4;
-				ship.Mine();
-				return;
+				if (mined <= 0)
+				{
+					shipsMined[ship.id] = 4;
+					ship.Mine();
+					return;
+				}
 			}
 		}
 		ship.Move(moveCommand);
@@ -431,6 +475,16 @@ internal class Player
 		IStrategy strategy;
 		if (!strategies.TryGetValue(ship.id, out strategy))
 			strategies[ship.id] = strategy = new CollectBarrelsStrategy();
+		if (strategy is WalkAroundStrategy)
+		{
+			var switchStrategy = new CollectBarrelsStrategy();
+			var switchAction = switchStrategy.Decide(ship);
+			if (switchAction.type == DecisionType.Goto)
+			{
+				strategies[ship.id] = switchStrategy;
+				return switchAction;
+			}
+		}
 		var action = strategy.Decide(ship);
 		if (action.type == DecisionType.Unknown)
 		{
@@ -704,6 +758,21 @@ internal class Player
 			if (sternDist == 0)
 				return 0;
 			return dist;
+		}
+
+		public bool Collides(Coord target)
+		{
+			return coord.Equals(target) || bow.Equals(target) || stern.Equals(target);
+		}
+
+		public bool Collides(Entity target)
+		{
+			return Collides(target.coord);
+		}
+
+		public bool Collides(Ship target)
+		{
+			return Collides(target.coord) || Collides(target.bow) || Collides(target.stern);
 		}
 
 		public override string ToString()
