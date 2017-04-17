@@ -25,6 +25,7 @@ internal class Player
 	private static readonly bool USE_DOUBLE_PATHFINDING = true;
 
 	private static readonly int DUMP_TURN = -1;
+	private static readonly int DUMP_STAT_TURN = -1;
 
 	private static Dictionary<int, Barrel> barrels;
 	private static HashSet<Coord> usedBarrelCoords;
@@ -37,6 +38,7 @@ internal class Player
 	private static readonly Dictionary<int, int> shipsMined = new Dictionary<int, int>();
 	private static List<List<Ship>> enemyShipsMoved;
 	private static List<List<Ship>> myShipsMoved;
+	private static List<TurnStat> stats = new List<TurnStat>();
 
 	private static void Main(string[] args)
 	{
@@ -195,7 +197,8 @@ internal class Player
 					break;
 			}
 		}
-		if (USE_DOUBLE_PATHFINDING && stopwatch.ElapsedMilliseconds < 20)
+		bool isDouble = USE_DOUBLE_PATHFINDING && stopwatch.ElapsedMilliseconds < 20;
+		if (isDouble)
 		{
 			moves = new List<ShipMoveCommand>();
 			foreach (var ship in myShips)
@@ -218,7 +221,21 @@ internal class Player
 			ManualMove(ship, moves[i]);
 		}
 		stopwatch.Stop();
+		stats.Add(new TurnStat{isDouble = isDouble, time = stopwatch.ElapsedMilliseconds });
 		Console.Error.WriteLine($"Decision made in {stopwatch.ElapsedMilliseconds} ms");
+		if (currentTurn == DUMP_STAT_TURN)
+		{
+			Console.Error.WriteLine("--- STATISTICS ---");
+			Console.Error.WriteLine($"TotalCount: {stats.Count}");
+			Console.Error.WriteLine($"DoublePathCount: {stats.Count(t => t.isDouble)}");
+			Console.Error.WriteLine($"Time_Avg: {stats.Average(t => t.time)}");
+			Console.Error.WriteLine($"Time_95: {stats.Percentile(t => t.time, 95)}");
+			Console.Error.WriteLine($"Time_50: {stats.Percentile(t => t.time, 50)}");
+			Console.Error.WriteLine($"TimeCorrected_Avg: {stats.Average(t => t.CorrectedTime())}");
+			Console.Error.WriteLine($"TimeCorrected_95: {stats.Percentile(t => t.CorrectedTime(), 95)}");
+			Console.Error.WriteLine($"TimeCorrected_50: {stats.Percentile(t => t.CorrectedTime(), 50)}");
+			Console.Error.WriteLine("---");
+		}
 	}
 
 	private static void Preprocess()
@@ -1077,4 +1094,36 @@ internal class Player
 	}
 
 	#endregion
+
 }
+
+#region stat
+
+internal class TurnStat
+{
+	public long time;
+	public bool isDouble;
+
+	public long CorrectedTime()
+	{
+		return isDouble ? time / 2 : time;
+	}
+}
+
+internal static class StatExtensions
+{
+	public static long Percentile<T>(this IEnumerable<T> enumerable, Func<T, long> selector, int percentile)
+	{
+		var items = enumerable.Select(selector).ToList();
+		items.Sort();
+		if (items.Count == 0)
+			return -1;
+		var index = percentile * items.Count / 100 - 1;
+		if (index < 0)
+			index = 0;
+		if (index >= items.Count)
+			index = items.Count - 1;
+		return items[index];
+	}
+}
+#endregion
