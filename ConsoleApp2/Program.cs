@@ -21,6 +21,7 @@ internal class Player
 	private static readonly int FREE_REACH_DIST = 5;
 	private static readonly int SHIP_MIN_DIST = 4;
 	private static readonly bool USE_MINING = false;
+	private static readonly bool USE_DOUBLE_PATHFINDING = true;
 
 	private static Dictionary<int, Barrel> barrels;
 	private static HashSet<Coord> usedBarrelCoords;
@@ -111,6 +112,19 @@ internal class Player
 			}
 			var stopwatch = Stopwatch.StartNew();
 			Preprocess();
+			if (USE_DOUBLE_PATHFINDING)
+			{
+				foreach (var ship in myShips)
+				{
+					var action = Decide(ship);
+					switch (action.type)
+					{
+						case DecisionType.Goto:
+							SelectMoveCommand(ship, action.coord);
+							break;
+					}
+				}
+			}
 			foreach (var ship in myShips)
 			{
 				var action = Decide(ship);
