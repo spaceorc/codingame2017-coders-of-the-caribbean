@@ -280,15 +280,6 @@ internal class Player
 			if (current.depth != MANUAL_MOVE_DEPTH)
 				foreach (var moveCommand in Enum.GetValues(typeof(ShipMoveCommand)).Cast<ShipMoveCommand>())
 				{
-					bool that = false;
-					//if (current.ship.id == 1 && current.ship.coord.Equals(new Coord(6, 19)))
-					//{
-					//	that = true;
-					//}
-
-					if (that) Console.Error.WriteLine(moveCommand);
-					if (that) Console.Error.WriteLine(current.ship);
-
 					var newShips = current.ship.Apply(moveCommand);
 					var newMovedShip = newShips[0];
 					var newShip = newShips[1];
@@ -310,7 +301,6 @@ internal class Player
 						if (/*nearMyShip || */nearEnemyShip)
 							damage = Math.Max(damage, NEAR_SHIP_DAMAGE); // virtual
 
-						if (that) Console.Error.WriteLine(damage);
 
 						var onMyShip = myShips.Where(m => m.id != newShip.id).Any(m => newShip.Collides(m))
 							|| myShipsMoved[current.depth].Where(m => m.id != newShip.id).Any(m => newShip.Collides(m));
@@ -322,12 +312,10 @@ internal class Player
 							var next = current.Next(newShip, moveCommand, target, damage);
 							queue.Enqueue(next);
 							used.Add(newMovementState, next);
-							if (that) Console.Error.WriteLine(next);
 						}
 						else
 						{
 							used.Add(newMovementState, null);
-							if (that) Console.Error.WriteLine("NO");
 						}
 					}
 				}
