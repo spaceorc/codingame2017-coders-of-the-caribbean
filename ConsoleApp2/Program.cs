@@ -54,32 +54,19 @@ internal class Player
 	private static void Main22(string[] args)
 	{
 		var state = @"
-3
-17
-0 SHIP 16 18 5 2 91 1
-2 SHIP 6 2 4 2 91 1
-4 SHIP 2 8 4 2 89 1
-1 SHIP 8 20 0 2 91 0
-3 SHIP 20 17 5 0 88 0
-5 SHIP 6 14 3 2 90 0
-8 MINE 11 19 0 0 0 0
-9 MINE 4 1 0 0 0 0
-11 MINE 2 10 0 0 0 0
-13 MINE 15 15 0 0 0 0
-15 MINE 18 13 0 0 0 0
-32 CANNONBALL 21 17 0 2 0 0
-33 CANNONBALL 5 8 2 2 0 0
-34 CANNONBALL 7 12 4 0 0 0
-35 CANNONBALL 20 17 0 3 0 0
-36 CANNONBALL 17 20 3 3 0 0
-21 BARREL 21 19 20 0 0 0
+2
+6
+1 SHIP 4 14 5 0 57 1
+3 SHIP 5 14 5 2 28 1
+0 SHIP 12 10 5 2 36 0
+2 SHIP 19 9 2 2 45 0
+5 MINE 5 16 0 0 0 0
+7 MINE 1 16 0 0 0 0
 ".Trim();
-		
+
 		//===
-		strategies[0] = new CollectBarrelsStrategy(new Barrel(21, 21, 19, 20));
-		strategies[2] = new WalkAroundStrategy(1, true);
-		strategies[4] = new WalkAroundStrategy(1, true);
-		shipsFired[0] = true;
+		strategies[1] = new WalkAroundStrategy(2, true);
+		strategies[3] = new WalkAroundStrategy(2, true);
 		//===
 
 
@@ -225,17 +212,23 @@ internal class Player
 		Console.Error.WriteLine($"Decision made in {stopwatch.ElapsedMilliseconds} ms");
 		if (currentTurn == DUMP_STAT_TURN)
 		{
-			Console.Error.WriteLine("--- STATISTICS ---");
-			Console.Error.WriteLine($"TotalCount: {stats.Count}");
-			Console.Error.WriteLine($"DoublePathCount: {stats.Count(t => t.isDouble)}");
-			Console.Error.WriteLine($"Time_Avg: {stats.Average(t => t.time)}");
-			Console.Error.WriteLine($"Time_95: {stats.Percentile(t => t.time, 95)}");
-			Console.Error.WriteLine($"Time_50: {stats.Percentile(t => t.time, 50)}");
-			Console.Error.WriteLine($"TimeCorrected_Avg: {stats.Average(t => t.CorrectedTime())}");
-			Console.Error.WriteLine($"TimeCorrected_95: {stats.Percentile(t => t.CorrectedTime(), 95)}");
-			Console.Error.WriteLine($"TimeCorrected_50: {stats.Percentile(t => t.CorrectedTime(), 50)}");
-			Console.Error.WriteLine("---");
+			DumpStats();
 		}
+	}
+
+	private static void DumpStats()
+	{
+		Console.Error.WriteLine("--- STATISTICS ---");
+		Console.Error.WriteLine($"TotalCount: {stats.Count}");
+		Console.Error.WriteLine($"DoublePathCount: {stats.Count(t => t.isDouble)}");
+		Console.Error.WriteLine($"Time_Max: {stats.Max(t => t.time)}");
+		Console.Error.WriteLine($"Time_Avg: {stats.Average(t => t.time)}");
+		Console.Error.WriteLine($"Time_95: {stats.Percentile(t => t.time, 95)}");
+		Console.Error.WriteLine($"Time_50: {stats.Percentile(t => t.time, 50)}");
+		Console.Error.WriteLine($"TimeCorrected_Avg: {stats.Average(t => t.CorrectedTime())}");
+		Console.Error.WriteLine($"TimeCorrected_95: {stats.Percentile(t => t.CorrectedTime(), 95)}");
+		Console.Error.WriteLine($"TimeCorrected_50: {stats.Percentile(t => t.CorrectedTime(), 50)}");
+		Console.Error.WriteLine("---");
 	}
 
 	private static void Preprocess()
