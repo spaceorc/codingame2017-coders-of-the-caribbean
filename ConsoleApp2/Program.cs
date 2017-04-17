@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 
 /**
@@ -23,6 +24,8 @@ internal class Player
 	private static readonly bool USE_MINING = false;
 	private static readonly bool USE_DOUBLE_PATHFINDING = true;
 
+	private static readonly int DUMP_TURN = -1;
+
 	private static Dictionary<int, Barrel> barrels;
 	private static HashSet<Coord> usedBarrelCoords;
 	private static List<Ship> myShips;
@@ -34,6 +37,52 @@ internal class Player
 	private static readonly Dictionary<int, int> shipsMined = new Dictionary<int, int>();
 	private static List<List<Ship>> enemyShipsMoved;
 	private static List<List<Ship>> myShipsMoved;
+
+	private static void Main(string[] args)
+	{
+		// game loop
+		int currentTurn = 0;
+		while (true)
+		{
+			currentTurn += 2;
+			Iteration(currentTurn, Console.In);
+		}
+	}
+
+	private static void Main22(string[] args)
+	{
+		var state = @"
+3
+17
+0 SHIP 16 18 5 2 91 1
+2 SHIP 6 2 4 2 91 1
+4 SHIP 2 8 4 2 89 1
+1 SHIP 8 20 0 2 91 0
+3 SHIP 20 17 5 0 88 0
+5 SHIP 6 14 3 2 90 0
+8 MINE 11 19 0 0 0 0
+9 MINE 4 1 0 0 0 0
+11 MINE 2 10 0 0 0 0
+13 MINE 15 15 0 0 0 0
+15 MINE 18 13 0 0 0 0
+32 CANNONBALL 21 17 0 2 0 0
+33 CANNONBALL 5 8 2 2 0 0
+34 CANNONBALL 7 12 4 0 0 0
+35 CANNONBALL 20 17 0 3 0 0
+36 CANNONBALL 17 20 3 3 0 0
+21 BARREL 21 19 20 0 0 0
+".Trim();
+		
+		//===
+		strategies[0] = new CollectBarrelsStrategy(new Barrel(21, 21, 19, 20));
+		strategies[2] = new WalkAroundStrategy(1, true);
+		strategies[4] = new WalkAroundStrategy(1, true);
+		shipsFired[0] = true;
+		//===
+
+
+		Iteration(int.MaxValue, new StringReader(state));
+	}
 
 	private static void Main2(string[] args)
 	{
@@ -60,87 +109,116 @@ internal class Player
 		};
 		enemyShips = new List<Ship>();
 		Preprocess();
-		ManualMove(ship, new Coord(2, 2));
+		//ManualMove(ship, new Coord(2, 2));
 	}
 
-	private static void Main(string[] args)
+	
+	private static void Iteration(int currentTurn, TextReader input)
 	{
-		// game loop
-		while (true)
+		barrels = new Dictionary<int, Barrel>();
+		usedBarrelCoords = new HashSet<Coord>();
+		myShips = new List<Ship>();
+		enemyShips = new List<Ship>();
+		mines = new List<Mine>();
+		cannonballs = new List<Cannonball>();
+		var myShipCount = int.Parse(input.ReadLine()); // the number of remaining ships
+		var entityCount = int.Parse(input.ReadLine()); // the number of entities (e.g. ships, mines or cannonballs)
+		Console.Error.WriteLine("Current turn: " + currentTurn);
+		if (currentTurn == DUMP_TURN)
 		{
-			barrels = new Dictionary<int, Barrel>();
-			usedBarrelCoords = new HashSet<Coord>();
-			myShips = new List<Ship>();
-			enemyShips = new List<Ship>();
-			mines = new List<Mine>();
-			cannonballs = new List<Cannonball>();
-			var myShipCount = int.Parse(Console.ReadLine()); // the number of remaining ships
-			var entityCount = int.Parse(Console.ReadLine()); // the number of entities (e.g. ships, mines or cannonballs)
-			for (var i = 0; i < entityCount; i++)
+			Console.Error.WriteLine("---");
+			Console.Error.WriteLine(myShipCount);
+			Console.Error.WriteLine(entityCount);
+		}
+		for (var i = 0; i < entityCount; i++)
+		{
+			var line = input.ReadLine();
+			if (currentTurn == DUMP_TURN)
 			{
-				var inputs = Console.ReadLine().Split(' ');
-				var entityId = int.Parse(inputs[0]);
-				var entityType = (EntityType)Enum.Parse(typeof(EntityType), inputs[1], true);
-				var x = int.Parse(inputs[2]);
-				var y = int.Parse(inputs[3]);
-				var arg1 = int.Parse(inputs[4]);
-				var arg2 = int.Parse(inputs[5]);
-				var arg3 = int.Parse(inputs[6]);
-				var arg4 = int.Parse(inputs[7]);
-				switch (entityType)
-				{
-					case EntityType.Barrel:
-						var barrel = new Barrel(entityId, x, y, arg1);
-						if (usedBarrelCoords.Add(barrel.coord))
-							barrels.Add(entityId, barrel);
-						//Console.Error.WriteLine($"Barrel found: {barrel}");
-						break;
-					case EntityType.Ship:
-						var ship = new Ship(entityId, x, y, arg1, arg2, arg3, arg4);
-						if (ship.owner == 1)
-							myShips.Add(ship);
-						else
-							enemyShips.Add(ship);
-						break;
-					case EntityType.Mine:
-						mines.Add(new Mine(entityId, x, y));
-						break;
-					case EntityType.Cannonball:
-						cannonballs.Add(new Cannonball(entityId, x, y, arg1, arg2));
-						break;
-				}
+				Console.Error.WriteLine(line);
 			}
-			var stopwatch = Stopwatch.StartNew();
-			Preprocess();
-			if (USE_DOUBLE_PATHFINDING)
+			var inputs = line.Split(' ');
+			var entityId = int.Parse(inputs[0]);
+			var entityType = (EntityType) Enum.Parse(typeof(EntityType), inputs[1], true);
+			var x = int.Parse(inputs[2]);
+			var y = int.Parse(inputs[3]);
+			var arg1 = int.Parse(inputs[4]);
+			var arg2 = int.Parse(inputs[5]);
+			var arg3 = int.Parse(inputs[6]);
+			var arg4 = int.Parse(inputs[7]);
+			switch (entityType)
 			{
-				foreach (var ship in myShips)
-				{
-					var action = Decide(ship);
-					switch (action.type)
-					{
-						case DecisionType.Goto:
-							SelectMoveCommand(ship, action.coord);
-							break;
-					}
-				}
+				case EntityType.Barrel:
+					var barrel = new Barrel(entityId, x, y, arg1);
+					if (usedBarrelCoords.Add(barrel.coord))
+						barrels.Add(entityId, barrel);
+					//Console.Error.WriteLine($"Barrel found: {barrel}");
+					break;
+				case EntityType.Ship:
+					var ship = new Ship(entityId, x, y, arg1, arg2, arg3, arg4);
+					if (ship.owner == 1)
+						myShips.Add(ship);
+					else
+						enemyShips.Add(ship);
+					break;
+				case EntityType.Mine:
+					mines.Add(new Mine(entityId, x, y));
+					break;
+				case EntityType.Cannonball:
+					cannonballs.Add(new Cannonball(entityId, x, y, arg1, arg2));
+					break;
 			}
+		}
+		if (currentTurn == DUMP_TURN)
+		{
+			Console.Error.WriteLine("===");
+			foreach (var kvp in strategies)
+				Console.Error.WriteLine($"strategies[{kvp.Key}] = {kvp.Value.Dump()};");
+			foreach (var kvp in shipsFired)
+				Console.Error.WriteLine($"shipsFired[{kvp.Key}] = {kvp.Value.ToString().ToLower()};");
+			foreach (var kvp in shipsMined)
+				Console.Error.WriteLine($"shipsMined[{kvp.Key}] = {kvp.Value};");
+		}
+		var stopwatch = Stopwatch.StartNew();
+		Preprocess();
+		var moves = new List<ShipMoveCommand>();
+		foreach (var ship in myShips)
+		{
+			var action = Decide(ship);
+			switch (action.type)
+			{
+				case DecisionType.Goto:
+					moves.Add(SelectMoveCommand(ship, action.coord));
+					break;
+				default:
+					moves.Add(ShipMoveCommand.Wait);
+					break;
+			}
+		}
+		if (USE_DOUBLE_PATHFINDING && stopwatch.ElapsedMilliseconds < 20)
+		{
+			moves = new List<ShipMoveCommand>();
 			foreach (var ship in myShips)
 			{
 				var action = Decide(ship);
 				switch (action.type)
 				{
 					case DecisionType.Goto:
-						ManualMove(ship, action.coord);
+						moves.Add(SelectMoveCommand(ship, action.coord));
 						break;
 					default:
-						ship.Wait();
+						moves.Add(ShipMoveCommand.Wait);
 						break;
 				}
 			}
-			stopwatch.Stop();
-			Console.Error.WriteLine($"Decision made in {stopwatch.ElapsedMilliseconds} ms");
 		}
+		for (var i = 0; i < myShips.Count; i++)
+		{
+			var ship = myShips[i];
+			ManualMove(ship, moves[i]);
+		}
+		stopwatch.Stop();
+		Console.Error.WriteLine($"Decision made in {stopwatch.ElapsedMilliseconds} ms");
 	}
 
 	private static void Preprocess()
@@ -277,15 +355,17 @@ internal class Player
 		return bestChainItem?.startCommand ?? ShipMoveCommand.Wait;
 	}
 
-	private static void ManualMove(Ship ship, Coord target)
+	private static void ManualMove(Ship ship, ShipMoveCommand moveCommand)
 	{
 		bool fired;
 		shipsFired.TryGetValue(ship.id, out fired);
-		shipsFired[ship.id] = false;
+		shipsFired.Remove(ship.id);
 		int mined;
 		shipsMined.TryGetValue(ship.id, out mined);
-		shipsMined[ship.id] = mined - 1;
-		var moveCommand = SelectMoveCommand(ship, target);
+		if (mined - 1 <= 0)
+			shipsMined.Remove(ship.id);
+		else
+			shipsMined[ship.id] = mined - 1;
 		if (moveCommand == ShipMoveCommand.Wait)
 		{
 			if (!fired)
@@ -542,11 +622,21 @@ internal class Player
 	private interface IStrategy
 	{
 		Decision Decide(Ship ship);
+		string Dump();
 	}
 
 	private class CollectBarrelsStrategy : IStrategy
 	{
 		public Barrel currentTarget;
+
+		public CollectBarrelsStrategy()
+		{
+		}
+
+		public CollectBarrelsStrategy(Barrel currentTarget)
+		{
+			this.currentTarget = currentTarget;
+		}
 
 		public Decision Decide(Ship ship)
 		{
@@ -585,6 +675,11 @@ internal class Player
 
 			return currentTarget == null ? Decision.Unknown() : Decision.Goto(currentTarget.coord);
 		}
+
+		public string Dump()
+		{
+			return $"new CollectBarrelsStrategy({currentTarget.Dump()})";
+		}
 	}
 
 	private class WalkAroundStrategy : IStrategy
@@ -600,6 +695,16 @@ internal class Player
 		private int currentTarget;
 		private bool started;
 
+		public WalkAroundStrategy()
+		{
+		}
+
+		public WalkAroundStrategy(int currentTarget, bool started)
+		{
+			this.currentTarget = currentTarget;
+			this.started = started;
+		}
+
 		public Decision Decide(Ship ship)
 		{
 			if (ship.DistanceTo(targets[currentTarget]) < FREE_REACH_DIST)
@@ -613,6 +718,11 @@ internal class Player
 				Console.Error.WriteLine($"New target for {ship.id}: {targets[currentTarget]}");
 			}
 			return Decision.Goto(targets[currentTarget]);
+		}
+
+		public string Dump()
+		{
+			return $"new WalkAroundStrategy({currentTarget}, {started.ToString().ToLower()})";
 		}
 	}
 
@@ -805,6 +915,11 @@ internal class Player
 		public Barrel(int id, int x, int y, int rum) : base(id, EntityType.Barrel, x, y)
 		{
 			this.rum = rum;
+		}
+
+		public string Dump()
+		{
+			return $"new Barrel({id}, {coord.x}, {coord.y}, {rum})";
 		}
 	}
 
