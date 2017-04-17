@@ -184,7 +184,7 @@ internal class Player
 					break;
 			}
 		}
-		bool isDouble = USE_DOUBLE_PATHFINDING && stopwatch.ElapsedMilliseconds < 20;
+		bool isDouble = USE_DOUBLE_PATHFINDING && stopwatch.ElapsedMilliseconds < 15;
 		if (isDouble)
 		{
 			moves = new List<ShipMoveCommand>();
@@ -261,12 +261,10 @@ internal class Player
 			return ShipMoveCommand.Wait;
 
 		var queue = new Queue<ShipPathChainItem>();
-		var item = ShipPathChainItem.Start(ship, target);
-		queue.Enqueue(item);
+		queue.Enqueue(ShipPathChainItem.Start(ship, target));
 
 		var used = new Dictionary<ShipMovementState, ShipPathChainItem>();
-		used.Add(new ShipMovementState(ship), item);
-
+		
 		while (queue.Any())
 		{
 			var current = queue.Dequeue();
@@ -276,7 +274,7 @@ internal class Player
 					var newShips = current.ship.Apply(moveCommand);
 					var newMovedShip = newShips[0];
 					var newShip = newShips[1];
-					var newMovementState = new ShipMovementState(newShip);
+					var newMovementState = new ShipMovementState(newShip, current.depth + 1);
 					if (!used.ContainsKey(newMovementState))
 					{
 						var damage = 0;
@@ -394,9 +392,11 @@ internal class Player
 		public readonly Coord coord;
 		public readonly int orientation;
 		public readonly int speed;
+		public readonly int depth;
 
-		public ShipMovementState(Ship ship)
+		public ShipMovementState(Ship ship, int depth)
 		{
+			this.depth = depth;
 			coord = ship.coord;
 			orientation = ship.orientation;
 			speed = ship.speed;
@@ -406,7 +406,7 @@ internal class Player
 		{
 			if (ReferenceEquals(null, other)) return false;
 			if (ReferenceEquals(this, other)) return true;
-			return coord.Equals(other.coord) && orientation == other.orientation && speed == other.speed;
+			return coord.Equals(other.coord) && orientation == other.orientation && speed == other.speed && depth == other.depth;
 		}
 
 		public override bool Equals(object obj)
@@ -424,6 +424,7 @@ internal class Player
 				var hashCode = coord.GetHashCode();
 				hashCode = (hashCode * 397) ^ orientation;
 				hashCode = (hashCode * 397) ^ speed;
+				hashCode = (hashCode * 397) ^ depth;
 				return hashCode;
 			}
 		}
