@@ -52,7 +52,7 @@
     <Compile Include="Cannons\FireTarget.cs" />
     <Compile Include="Cannons\FireTargetType.cs" />
     <Compile Include="Navigation\Navigator.cs" />
-    <Compile Include="Prediction\Forecast.cs" />
+    <Compile Include="Prediction\Forecaster.cs" />
     <Compile Include="State\GameState.cs" />
     <Compile Include="State\TurnState.cs" />
     <Compile Include="Geometry\Coord.cs" />
