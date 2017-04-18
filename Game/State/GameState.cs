@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Game.Cannons;
 using Game.Entities;
+using Game.Mining;
 using Game.Statistics;
 
 namespace Game.State
@@ -10,6 +11,7 @@ namespace Game.State
 	public class GameState
 	{
 		public readonly Dictionary<int, CannonMaster> cannonMasters = new Dictionary<int, CannonMaster>();
+		public readonly Dictionary<int, Miner> miners = new Dictionary<int, Miner>();
 		public readonly List<TurnStat> stats = new List<TurnStat>();
 
 		public CannonMaster GetCannonMaster(Ship ship)
@@ -19,14 +21,24 @@ namespace Game.State
 				cannonMasters.Add(ship.id, cannonMaster = new CannonMaster(ship.id, this));
 			return cannonMaster;
 		}
-		
+
+		public Miner GetMiner(Ship ship)
+		{
+			Miner miner;
+			if (!miners.TryGetValue(ship.id, out miner))
+				miners.Add(ship.id, miner = new Miner(ship.id, this));
+			return miner;
+		}
+
 		public void Dump()
 		{
 			Console.Error.WriteLine("var gameState = new GameState();");
 			foreach (var cannonMaster in cannonMasters)
 				Console.Error.WriteLine($"gameState.cannonMasters[{cannonMaster.Key}] = {cannonMaster.Value.Dump("gameState")}");
+			foreach (var miner in miners)
+				Console.Error.WriteLine($"gameState.miners[{miner.Key}] = {miner.Value.Dump("gameState")}");
+
 			// todo strategies
-			// todo miners
 		}
 
 		public void DumpStats()

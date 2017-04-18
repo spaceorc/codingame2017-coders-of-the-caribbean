@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Game.Entities;
@@ -13,7 +12,6 @@ namespace Game
 	public class Player
 	{
 		private static readonly Dictionary<int, IStrategy> strategies = new Dictionary<int, IStrategy>();
-		private static readonly Dictionary<int, int> shipsMined = new Dictionary<int, int>();
 		private static List<List<Ship>> enemyShipsMoved;
 		private static List<List<Ship>> myShipsMoved;
 		private static TurnState turnState;
@@ -210,30 +208,16 @@ namespace Game
 
 		private static void ManualMove(Ship ship, ShipMoveCommand moveCommand)
 		{
-
-			int mined;
-			shipsMined.TryGetValue(ship.id, out mined);
-			if (mined - 1 <= 0)
-				shipsMined.Remove(ship.id);
-			else
-				shipsMined[ship.id] = mined - 1;
+			var cannonMaster = gameState.GetCannonMaster(ship);
+			cannonMaster.PrepareToFire(turnState);
+			var miner = gameState.GetMiner(ship);
+			miner.PrepareToMine(turnState);
 			if (moveCommand == ShipMoveCommand.Wait)
 			{
-				if (gameState.GetCannonMaster(ship).Fire(turnState))
+				if (cannonMaster.Fire(turnState))
 					return;
-			}
-			gameState.GetCannonMaster(ship).DontFire(turnState);
-			if (Settings.USE_MINING)
-			{
-				if (moveCommand == ShipMoveCommand.Wait)
-				{
-					if (mined <= 0)
-					{
-						shipsMined[ship.id] = 4;
-						ship.Mine();
-						return;
-					}
-				}
+				if (miner.Mine(turnState))
+					return;
 			}
 			ship.Move(moveCommand);
 		}

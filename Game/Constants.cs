@@ -10,5 +10,6 @@ namespace Game
 		public const int HIGH_DAMAGE = 50;
 		public const int MINE_DAMAGE = 25;
 		public const int NEAR_MINE_DAMAGE = 10;
+		public const int MINING_COOLDOWN = 4;
 	}
 }

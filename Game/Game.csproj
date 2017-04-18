@@ -43,6 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Cannons\CannonMaster.cs" />
+    <Compile Include="Mining\Miner.cs" />
     <Compile Include="Entities\Barrel.cs" />
     <Compile Include="Entities\Cannonball.cs" />
     <Compile Include="Constants.cs" />
