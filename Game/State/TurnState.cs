@@ -23,10 +23,6 @@ namespace Game.State
 		public readonly Dictionary<int, Cannonball> cannonballsById = new Dictionary<int, Cannonball>();
 
 		public readonly Stopwatch stopwatch = Stopwatch.StartNew();
-		
-		public TurnState()
-		{
-		}
 
 		public readonly List<string> lines = new List<string>();
 

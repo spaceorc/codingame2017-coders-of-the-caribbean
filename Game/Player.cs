@@ -12,8 +12,6 @@ namespace Game
 	public class Player
 	{
 		private static readonly Dictionary<int, IStrategy> strategies = new Dictionary<int, IStrategy>();
-		public static List<List<Ship>> enemyShipsMoved;
-		public static List<List<Ship>> myShipsMoved;
 		private static TurnState turnState;
 		private static GameState gameState = new GameState();
 
@@ -39,7 +37,7 @@ namespace Game
 				gameState.Dump();
 			}
 			turnState.stopwatch.Restart();
-			Preprocess();
+			gameState.forecaster.BuildForecast(turnState);
 			var moves = new List<List<ShipMoveCommand>>();
 			foreach (var ship in turnState.myShips)
 			{
@@ -85,35 +83,10 @@ namespace Game
 			}
 			turnState.stopwatch.Stop();
 			gameState.stats.Add(new TurnStat {isDouble = isDouble, time = turnState.stopwatch.ElapsedMilliseconds});
-			Console.Error.WriteLine($"Decision made in {turnState.stopwatch.ElapsedMilliseconds} ms");
+			Console.Error.WriteLine($"Decision made in {turnState.stopwatch.ElapsedMilliseconds} ms (isDouble = {isDouble})");
 			if (currentTurn == Settings.DUMP_STAT_TURN)
 				gameState.DumpStats();
 		}
-
-		private static void Preprocess()
-		{
-			enemyShipsMoved = new List<List<Ship>>();
-			var prevShips = turnState.enemyShips;
-			for (int i = 0; i < Settings.NAVIGATION_PATH_DEPTH; i++)
-			{
-				var ships = new List<Ship>();
-				enemyShipsMoved.Add(ships);
-				foreach (var ship in prevShips)
-					ships.Add(ship.Apply(ShipMoveCommand.Wait)[1]);
-				prevShips = ships;
-			}
-			myShipsMoved = new List<List<Ship>>();
-			prevShips = turnState.myShips;
-			for (int i = 0; i < Settings.NAVIGATION_PATH_DEPTH; i++)
-			{
-				var ships = new List<Ship>();
-				myShipsMoved.Add(ships);
-				foreach (var ship in prevShips)
-					ships.Add(ship.Apply(ShipMoveCommand.Wait)[1]);
-				prevShips = ships;
-			}
-		}
-
 
 		private static void ManualMove(Ship ship, ShipMoveCommand moveCommand)
 		{

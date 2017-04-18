@@ -5,6 +5,7 @@ using Game.Cannons;
 using Game.Entities;
 using Game.Mining;
 using Game.Navigation;
+using Game.Prediction;
 using Game.Statistics;
 
 namespace Game.State
@@ -15,6 +16,12 @@ namespace Game.State
 		public readonly Dictionary<int, Miner> miners = new Dictionary<int, Miner>();
 		public readonly Dictionary<int, Navigator> navigators = new Dictionary<int, Navigator>();
 		public readonly List<TurnStat> stats = new List<TurnStat>();
+		public readonly Forecaster forecaster;
+
+		public GameState()
+		{
+			forecaster = new Forecaster(this);
+		}
 
 		public Cannoneer GetCannoneer(Ship ship)
 		{

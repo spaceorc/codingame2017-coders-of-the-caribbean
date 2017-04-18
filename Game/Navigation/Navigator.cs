@@ -23,18 +23,18 @@ namespace Game.Navigation
 		{
 			var ship = turnState.myShipsById[shipId];
 
-			var index = Player.myShipsMoved[0].FindIndex(s => s.id == shipId);
+			var index = gameState.forecaster.myShipsMoved[0].FindIndex(s => s.id == shipId);
 			var movedShip = ship;
 			for (var i = 0; i < path.Count; i++)
 			{
 				var moveCommand = path[i];
 				movedShip = movedShip.Apply(moveCommand)[0];
-				Player.myShipsMoved[i][index] = movedShip;
+				gameState.forecaster.myShipsMoved[i][index] = movedShip;
 			}
 			for (var i = path.Count; i < Settings.NAVIGATION_PATH_DEPTH; i++)
 			{
 				movedShip = movedShip.Apply(ShipMoveCommand.Wait)[0];
-				Player.myShipsMoved[i][index] = movedShip;
+				gameState.forecaster.myShipsMoved[i][index] = movedShip;
 			}
 		}
 
@@ -80,11 +80,11 @@ namespace Game.Navigation
 
 							var onMyShip = current.depth == 0 && turnState.myShips.Where(m => m.id != newShip.id)
 								               .Any(m => newShip.Collides(m) || newMovedShip.Collides(m))
-							               || Player.myShipsMoved[current.depth]
+							               || gameState.forecaster.myShipsMoved[current.depth]
 								               .Where(m => m.id != newShip.id)
 								               .Any(m => newShip.Collides(m) || newMovedShip.Collides(m));
 							var onEnemyShipMoved = current.depth == 0 && turnState.enemyShips.Any(m => newShip.Collides(m) || newMovedShip.Collides(m))
-							                       || Player.enemyShipsMoved[current.depth]
+							                       || gameState.forecaster.enemyShipsMoved[current.depth]
 								                       .Any(m => newShip.Collides(m) || newMovedShip.Collides(m));
 							if (!onMyShip && !onEnemyShipMoved)
 							{
