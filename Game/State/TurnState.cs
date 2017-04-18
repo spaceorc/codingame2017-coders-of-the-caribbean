@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Game.Entities;
@@ -20,6 +21,8 @@ namespace Game.State
 		public readonly Dictionary<int, Ship> enemyShipsById = new Dictionary<int, Ship>();
 		public readonly Dictionary<int, Mine> minesById = new Dictionary<int, Mine>();
 		public readonly Dictionary<int, Cannonball> cannonballsById = new Dictionary<int, Cannonball>();
+
+		public readonly Stopwatch stopwatch = Stopwatch.StartNew();
 		
 		public TurnState()
 		{
@@ -86,7 +89,7 @@ namespace Game.State
 				}
 			}
 		}
-
+		
 		public static TurnState ReadFrom(TextReader input)
 		{
 			return new TurnState(input);

@@ -16,7 +16,6 @@ namespace Game
 		private static readonly Dictionary<int, int> shipsMined = new Dictionary<int, int>();
 		private static List<List<Ship>> enemyShipsMoved;
 		private static List<List<Ship>> myShipsMoved;
-		private static List<TurnStat> stats = new List<TurnStat>();
 		private static TurnState turnState;
 		private static GameState gameState = new GameState();
 
@@ -41,7 +40,7 @@ namespace Game
 				Console.Error.WriteLine("===");
 				gameState.Dump();
 			}
-			var stopwatch = Stopwatch.StartNew();
+			turnState.stopwatch.Restart();
 			Preprocess();
 			var moves = new List<ShipMoveCommand>();
 			foreach (var ship in turnState.myShips)
@@ -57,7 +56,7 @@ namespace Game
 						break;
 				}
 			}
-			bool isDouble = Settings.USE_DOUBLE_PATHFINDING && stopwatch.ElapsedMilliseconds < Settings.DOUBLE_PATHFINDING_TIMELIMIT;
+			bool isDouble = Settings.USE_DOUBLE_PATHFINDING && turnState.stopwatch.ElapsedMilliseconds < Settings.DOUBLE_PATHFINDING_TIMELIMIT;
 			if (isDouble)
 			{
 				moves = new List<ShipMoveCommand>();
@@ -80,28 +79,11 @@ namespace Game
 				var ship = turnState.myShips[i];
 				ManualMove(ship, moves[i]);
 			}
-			stopwatch.Stop();
-			stats.Add(new TurnStat {isDouble = isDouble, time = stopwatch.ElapsedMilliseconds});
-			Console.Error.WriteLine($"Decision made in {stopwatch.ElapsedMilliseconds} ms");
+			turnState.stopwatch.Stop();
+			gameState.stats.Add(new TurnStat {isDouble = isDouble, time = turnState.stopwatch.ElapsedMilliseconds});
+			Console.Error.WriteLine($"Decision made in {turnState.stopwatch.ElapsedMilliseconds} ms");
 			if (currentTurn == Settings.DUMP_STAT_TURN)
-			{
-				DumpStats();
-			}
-		}
-
-		private static void DumpStats()
-		{
-			Console.Error.WriteLine("--- STATISTICS ---");
-			Console.Error.WriteLine($"TotalCount: {stats.Count}");
-			Console.Error.WriteLine($"DoublePathCount: {stats.Count(t => t.isDouble)}");
-			Console.Error.WriteLine($"Time_Max: {stats.Max(t => t.time)}");
-			Console.Error.WriteLine($"Time_Avg: {stats.Average(t => t.time)}");
-			Console.Error.WriteLine($"Time_95: {stats.Percentile(t => t.time, 95)}");
-			Console.Error.WriteLine($"Time_50: {stats.Percentile(t => t.time, 50)}");
-			Console.Error.WriteLine($"TimeCorrected_Avg: {stats.Average(t => t.CorrectedTime())}");
-			Console.Error.WriteLine($"TimeCorrected_95: {stats.Percentile(t => t.CorrectedTime(), 95)}");
-			Console.Error.WriteLine($"TimeCorrected_50: {stats.Percentile(t => t.CorrectedTime(), 50)}");
-			Console.Error.WriteLine("---");
+				gameState.DumpStats();
 		}
 
 		private static void Preprocess()
