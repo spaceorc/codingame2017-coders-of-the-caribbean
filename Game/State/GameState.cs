@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Game.Cannons;
 using Game.Entities;
@@ -12,14 +13,16 @@ namespace Game.State
 		{
 			CannonMaster cannonMaster;
 			if (!cannonMasters.TryGetValue(ship.id, out cannonMaster))
-				cannonMasters.Add(ship.id, cannonMaster = new CannonMaster(ship, this));
+				cannonMasters.Add(ship.id, cannonMaster = new CannonMaster(ship.id, this));
 			return cannonMaster;
 		}
 
 		public void Dump()
 		{
+			Console.Error.WriteLine("var gameState = new GameState();");
+			foreach (var cannonMaster in cannonMasters)
+				Console.Error.WriteLine($"gameState.cannonMasters[{cannonMaster.Key}] = {cannonMaster.Value.Dump("gameState")}");
 			// todo strategies
-			// todo cannons
 			// todo miners
 		}
 	}

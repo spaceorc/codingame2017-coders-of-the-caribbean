@@ -12,10 +12,10 @@ namespace Game.Cannons
 		public readonly int shipId;
 		public bool fired;
 
-		public CannonMaster(Ship ship, GameState gameState)
+		public CannonMaster(int shipId, GameState gameState)
 		{
 			this.gameState = gameState;
-			shipId = ship.id;
+			this.shipId = shipId;
 		}
 
 		public bool Fire(TurnState turnState)
@@ -37,6 +37,11 @@ namespace Game.Cannons
 		public void DontFire(TurnState turnState)
 		{
 			fired = false;
+		}
+
+		public string Dump(string gameStateRef)
+		{
+			return $"new CannonMaster({shipId}, gameStateRef) {{ fired = {fired.ToString().ToLower()} }}";
 		}
 
 		private static FireTarget SelectFireTarget(TurnState turnState, Ship ship)
