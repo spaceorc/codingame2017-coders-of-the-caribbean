@@ -6,13 +6,13 @@ using Game.State;
 
 namespace Game.Cannons
 {
-	public class CannonMaster
+	public class Cannoneer
 	{
-		private readonly GameState gameState;
+		public readonly GameState gameState;
 		public readonly int shipId;
 		public bool fire;
 
-		public CannonMaster(int shipId, GameState gameState)
+		public Cannoneer(int shipId, GameState gameState)
 		{
 			this.gameState = gameState;
 			this.shipId = shipId;
@@ -38,7 +38,7 @@ namespace Game.Cannons
 
 		public string Dump(string gameStateRef)
 		{
-			return $"new CannonMaster({shipId}, gameStateRef) {{ fire = {fire.ToString().ToLower()} }}";
+			return $"new {nameof(Cannoneer)}({shipId}, {gameStateRef}) {{ {nameof(fire)} = {fire.ToString().ToLower()} }}";
 		}
 
 		private static FireTarget SelectFireTarget(TurnState turnState, Ship ship)

@@ -4,7 +4,7 @@ namespace Game.Mining
 {
 	public class Miner
 	{
-		private readonly GameState gameState;
+		public readonly GameState gameState;
 		public readonly int shipId;
 		public int cooldown;
 
@@ -35,7 +35,7 @@ namespace Game.Mining
 		
 		public string Dump(string gameStateRef)
 		{
-			return $"new {nameof(Miner)}({shipId}, gameStateRef) {{ {nameof(cooldown)} = {cooldown} }}";
+			return $"new {nameof(Miner)}({shipId}, {gameStateRef}) {{ {nameof(cooldown)} = {cooldown} }}";
 		}
 	}
 }

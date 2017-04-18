@@ -42,7 +42,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Cannons\CannonMaster.cs" />
+    <Compile Include="Cannons\Cannoneer.cs" />
     <Compile Include="Mining\Miner.cs" />
     <Compile Include="Entities\Barrel.cs" />
     <Compile Include="Entities\Cannonball.cs" />

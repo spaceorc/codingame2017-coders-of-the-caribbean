@@ -208,13 +208,13 @@ namespace Game
 
 		private static void ManualMove(Ship ship, ShipMoveCommand moveCommand)
 		{
-			var cannonMaster = gameState.GetCannonMaster(ship);
-			cannonMaster.PrepareToFire(turnState);
+			var cannoneer = gameState.GetCannoneer(ship);
+			cannoneer.PrepareToFire(turnState);
 			var miner = gameState.GetMiner(ship);
 			miner.PrepareToMine(turnState);
 			if (moveCommand == ShipMoveCommand.Wait)
 			{
-				if (cannonMaster.Fire(turnState))
+				if (cannoneer.Fire(turnState))
 					return;
 				if (miner.Mine(turnState))
 					return;

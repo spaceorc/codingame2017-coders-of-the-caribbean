@@ -10,16 +10,16 @@ namespace Game.State
 {
 	public class GameState
 	{
-		public readonly Dictionary<int, CannonMaster> cannonMasters = new Dictionary<int, CannonMaster>();
+		public readonly Dictionary<int, Cannoneer> cannoneers = new Dictionary<int, Cannoneer>();
 		public readonly Dictionary<int, Miner> miners = new Dictionary<int, Miner>();
 		public readonly List<TurnStat> stats = new List<TurnStat>();
 
-		public CannonMaster GetCannonMaster(Ship ship)
+		public Cannoneer GetCannoneer(Ship ship)
 		{
-			CannonMaster cannonMaster;
-			if (!cannonMasters.TryGetValue(ship.id, out cannonMaster))
-				cannonMasters.Add(ship.id, cannonMaster = new CannonMaster(ship.id, this));
-			return cannonMaster;
+			Cannoneer cannoneer;
+			if (!cannoneers.TryGetValue(ship.id, out cannoneer))
+				cannoneers.Add(ship.id, cannoneer = new Cannoneer(ship.id, this));
+			return cannoneer;
 		}
 
 		public Miner GetMiner(Ship ship)
@@ -33,10 +33,10 @@ namespace Game.State
 		public void Dump()
 		{
 			Console.Error.WriteLine("var gameState = new GameState();");
-			foreach (var cannonMaster in cannonMasters)
-				Console.Error.WriteLine($"gameState.cannonMasters[{cannonMaster.Key}] = {cannonMaster.Value.Dump("gameState")}");
+			foreach (var cannoneer in cannoneers)
+				Console.Error.WriteLine($"gameState.{nameof(cannoneers)}[{cannoneer.Key}] = {cannoneer.Value.Dump("gameState")}");
 			foreach (var miner in miners)
-				Console.Error.WriteLine($"gameState.miners[{miner.Key}] = {miner.Value.Dump("gameState")}");
+				Console.Error.WriteLine($"gameState.{nameof(miners)}[{miner.Key}] = {miner.Value.Dump("gameState")}");
 
 			// todo strategies
 		}
