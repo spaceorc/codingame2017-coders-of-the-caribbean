@@ -18,26 +18,6 @@ namespace Game.Navigation
 			this.gameState = gameState;
 		}
 
-		// todo move it to precalc logic
-		public void ApplyPath(TurnState turnState, List<ShipMoveCommand> path)
-		{
-			var ship = turnState.myShipsById[shipId];
-
-			var index = gameState.forecaster.myShipsMoved[0].FindIndex(s => s.id == shipId);
-			var movedShip = ship;
-			for (var i = 0; i < path.Count; i++)
-			{
-				var moveCommand = path[i];
-				movedShip = movedShip.Apply(moveCommand)[0];
-				gameState.forecaster.myShipsMoved[i][index] = movedShip;
-			}
-			for (var i = path.Count; i < Settings.NAVIGATION_PATH_DEPTH; i++)
-			{
-				movedShip = movedShip.Apply(ShipMoveCommand.Wait)[0];
-				gameState.forecaster.myShipsMoved[i][index] = movedShip;
-			}
-		}
-
 		public List<ShipMoveCommand> FindPath(TurnState turnState, Coord target)
 		{
 			var ship = turnState.myShipsById[shipId];

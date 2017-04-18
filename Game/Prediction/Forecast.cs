@@ -38,5 +38,23 @@ namespace Game.Prediction
 				prevShips = ships;
 			}
 		}
+
+		public void ApplyPath(Ship ship, List<ShipMoveCommand> path)
+		{
+			var index = gameState.forecaster.myShipsMoved[0].FindIndex(s => s.id == ship.id);
+			var movedShip = ship;
+			for (var i = 0; i < path.Count; i++)
+			{
+				var moveCommand = path[i];
+				movedShip = movedShip.Apply(moveCommand)[0];
+				gameState.forecaster.myShipsMoved[i][index] = movedShip;
+			}
+			for (var i = path.Count; i < Settings.NAVIGATION_PATH_DEPTH; i++)
+			{
+				movedShip = movedShip.Apply(ShipMoveCommand.Wait)[0];
+				gameState.forecaster.myShipsMoved[i][index] = movedShip;
+			}
+		}
+
 	}
 }

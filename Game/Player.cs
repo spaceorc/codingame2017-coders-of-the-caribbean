@@ -48,7 +48,7 @@ namespace Game
 					case DecisionType.Goto:
 						var path = navigator.FindPath(turnState, action.coord);
 						moves.Add(path);
-						navigator.ApplyPath(turnState, path);
+						gameState.forecaster.ApplyPath(ship, path);
 						break;
 					default:
 						moves.Add(null);
@@ -69,6 +69,7 @@ namespace Game
 						case DecisionType.Goto:
 							var path = navigator.FindPath(turnState, action.coord);
 							moves.Add(path);
+							gameState.forecaster.ApplyPath(ship, path);
 							break;
 						default:
 							moves.Add(null);
