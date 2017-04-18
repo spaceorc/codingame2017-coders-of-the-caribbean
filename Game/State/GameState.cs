@@ -51,13 +51,15 @@ namespace Game.State
 		{
 			Console.Error.WriteLine("var gameState = new GameState();");
 			foreach (var cannoneer in cannoneers)
-				Console.Error.WriteLine($"gameState.{nameof(cannoneers)}[{cannoneer.Key}] = {cannoneer.Value.Dump("gameState")}");
+				Console.Error.WriteLine($"gameState.{nameof(cannoneers)}[{cannoneer.Key}] = {cannoneer.Value.Dump("gameState")};");
 			foreach (var miner in miners)
-				Console.Error.WriteLine($"gameState.{nameof(miners)}[{miner.Key}] = {miner.Value.Dump("gameState")}");
+				Console.Error.WriteLine($"gameState.{nameof(miners)}[{miner.Key}] = {miner.Value.Dump("gameState")};");
 			foreach (var navigator in navigators)
-				Console.Error.WriteLine($"gameState.{nameof(navigators)}[{navigator.Key}] = {navigator.Value.Dump("gameState")}");
+				Console.Error.WriteLine($"gameState.{nameof(navigators)}[{navigator.Key}] = {navigator.Value.Dump("gameState")};");
 
 			// todo strategies
+			foreach (var strategy in Player.strategies)
+				Console.Error.WriteLine($"Player.strategies[{strategy.Key}] = {strategy.Value.Dump()};");
 		}
 
 		public void DumpStats()

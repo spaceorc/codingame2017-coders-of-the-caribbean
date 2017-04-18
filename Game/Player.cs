@@ -11,7 +11,7 @@ namespace Game
 {
 	public class Player
 	{
-		private static readonly Dictionary<int, IStrategy> strategies = new Dictionary<int, IStrategy>();
+		public static readonly Dictionary<int, IStrategy> strategies = new Dictionary<int, IStrategy>();
 		private static TurnState turnState;
 		private static GameState gameState = new GameState();
 
@@ -26,7 +26,7 @@ namespace Game
 			}
 		}
 
-		private static void Iteration(int currentTurn, TextReader input)
+		public static void Iteration(int currentTurn, TextReader input)
 		{
 			turnState = TurnState.ReadFrom(input);
 			Console.Error.WriteLine("Current turn: " + currentTurn);
@@ -132,13 +132,13 @@ namespace Game
 			return action;
 		}
 
-		private enum DecisionType
+		public enum DecisionType
 		{
 			Unknown,
 			Goto
 		}
 
-		private class Decision
+		public class Decision
 		{
 			public readonly Coord coord;
 			public readonly DecisionType type;
@@ -160,13 +160,13 @@ namespace Game
 			}
 		}
 
-		private interface IStrategy
+		public interface IStrategy
 		{
 			Decision Decide(Ship ship);
 			string Dump();
 		}
 
-		private class CollectBarrelsStrategy : IStrategy
+		public class CollectBarrelsStrategy : IStrategy
 		{
 			public Barrel currentTarget;
 
@@ -223,7 +223,7 @@ namespace Game
 			}
 		}
 
-		private class WalkAroundStrategy : IStrategy
+		public class WalkAroundStrategy : IStrategy
 		{
 			private static readonly Coord[] targets =
 			{

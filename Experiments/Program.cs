@@ -4,8 +4,13 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Game;
+using Game.Cannons;
 using Game.Entities;
 using Game.Geometry;
+using Game.Mining;
+using Game.Navigation;
+using Game.State;
 
 namespace Experiments
 {
@@ -15,22 +20,27 @@ namespace Experiments
 		{
 			var state = @"
 2
-6
-1 SHIP 4 14 5 0 57 1
-3 SHIP 5 14 5 2 28 1
-0 SHIP 12 10 5 2 36 0
-2 SHIP 19 9 2 2 45 0
-5 MINE 5 16 0 0 0 0
-7 MINE 1 16 0 0 0 0
+5
+1 SHIP 17 16 1 2 42 1
+3 SHIP 18 6 3 2 64 1
+0 SHIP 15 12 0 2 72 0
+2 SHIP 7 14 1 2 66 0
+50 CANNONBALL 16 15 1 2 0 0
 ".Trim();
-			/*
+
 			//===
-			strategies[1] = new WalkAroundStrategy(2, true);
-			strategies[3] = new WalkAroundStrategy(2, true);
+			var gameState = new GameState();
+			gameState.cannoneers[1] = new Cannoneer(1, gameState) { fire = true };
+			gameState.cannoneers[3] = new Cannoneer(3, gameState) { fire = true };
+			gameState.miners[1] = new Miner(1, gameState) { cooldown = 0 };
+			gameState.miners[3] = new Miner(3, gameState) { cooldown = 0 };
+			gameState.navigators[1] = new Navigator(1, gameState);
+			gameState.navigators[3] = new Navigator(3, gameState);
+			Player.strategies[1] = new Player.WalkAroundStrategy(3, true);
+			Player.strategies[3] = new Player.WalkAroundStrategy(0, true);
 			//===
 
-
-			Iteration(int.MaxValue, new StringReader(state));*/
+			Player.Iteration(int.MaxValue, new StringReader(state));
 		}
 		/*
 		private static void Main2(string[] args)
