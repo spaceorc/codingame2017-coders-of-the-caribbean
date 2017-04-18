@@ -11,18 +11,13 @@ namespace Game
 {
 	public class Player
 	{
-		private static Dictionary<int, Barrel> barrels;
-		private static HashSet<Coord> usedBarrelCoords;
-		private static List<Ship> myShips;
-		private static List<Ship> enemyShips;
-		private static List<Mine> mines;
-		private static List<Cannonball> cannonballs;
 		private static readonly Dictionary<int, IStrategy> strategies = new Dictionary<int, IStrategy>();
 		private static readonly Dictionary<int, bool> shipsFired = new Dictionary<int, bool>();
 		private static readonly Dictionary<int, int> shipsMined = new Dictionary<int, int>();
 		private static List<List<Ship>> enemyShipsMoved;
 		private static List<List<Ship>> myShipsMoved;
 		private static List<TurnStat> stats = new List<TurnStat>();
+		private static GameState gameState;
 
 		private static void Main(string[] args)
 		{
@@ -35,115 +30,13 @@ namespace Game
 			}
 		}
 
-		private static void Main22(string[] args)
-		{
-			var state = @"
-2
-6
-1 SHIP 4 14 5 0 57 1
-3 SHIP 5 14 5 2 28 1
-0 SHIP 12 10 5 2 36 0
-2 SHIP 19 9 2 2 45 0
-5 MINE 5 16 0 0 0 0
-7 MINE 1 16 0 0 0 0
-".Trim();
-
-			//===
-			strategies[1] = new WalkAroundStrategy(2, true);
-			strategies[3] = new WalkAroundStrategy(2, true);
-			//===
-
-
-			Iteration(int.MaxValue, new StringReader(state));
-		}
-
-		private static void Main2(string[] args)
-		{
-			var ship = new Ship(1, new Coord(6, 15), owner: 1, rum: 100, orientation: 0, speed: 2);
-			enemyShips = new List<Ship>
-			{
-				new Ship(666, new Coord(6, 20), owner: 0, rum: 100, orientation: 0, speed: 2)
-			};
-			myShips = new List<Ship> {ship};
-			var fireTarget = SelectFireTarget(ship);
-			Console.Out.WriteLine(fireTarget);
-		}
-
-		private static void Main3(string[] args)
-		{
-			var ship = new Ship(1, new Coord(6, 19), owner: 1, rum: 100, orientation: 0, speed: 0);
-			shipsFired.Add(ship.id, true);
-			mines = new List<Mine>();
-			cannonballs = new List<Cannonball>();
-			myShips = new List<Ship>
-			{
-				ship,
-				new Ship(2, new Coord(8, 19), owner: 1, rum: 100, orientation: 4, speed: 0)
-			};
-			enemyShips = new List<Ship>();
-			Preprocess();
-			//ManualMove(ship, new Coord(2, 2));
-		}
-
-
 		private static void Iteration(int currentTurn, TextReader input)
 		{
-			barrels = new Dictionary<int, Barrel>();
-			usedBarrelCoords = new HashSet<Coord>();
-			myShips = new List<Ship>();
-			enemyShips = new List<Ship>();
-			mines = new List<Mine>();
-			cannonballs = new List<Cannonball>();
-			var myShipCount = int.Parse(input.ReadLine()); // the number of remaining ships
-			var entityCount = int.Parse(input.ReadLine()); // the number of entities (e.g. ships, mines or cannonballs)
+			gameState = GameState.ReadFrom(input);
 			Console.Error.WriteLine("Current turn: " + currentTurn);
 			if (currentTurn == Settings.DUMP_TURN)
 			{
-				Console.Error.WriteLine("---");
-				Console.Error.WriteLine(myShipCount);
-				Console.Error.WriteLine(entityCount);
-			}
-			for (var i = 0; i < entityCount; i++)
-			{
-				var line = input.ReadLine();
-				if (currentTurn == Settings.DUMP_TURN)
-				{
-					Console.Error.WriteLine(line);
-				}
-				var inputs = line.Split(' ');
-				var entityId = int.Parse(inputs[0]);
-				var entityType = (EntityType) Enum.Parse(typeof(EntityType), inputs[1], true);
-				var x = int.Parse(inputs[2]);
-				var y = int.Parse(inputs[3]);
-				var arg1 = int.Parse(inputs[4]);
-				var arg2 = int.Parse(inputs[5]);
-				var arg3 = int.Parse(inputs[6]);
-				var arg4 = int.Parse(inputs[7]);
-				switch (entityType)
-				{
-					case EntityType.Barrel:
-						var barrel = new Barrel(entityId, x, y, arg1);
-						if (usedBarrelCoords.Add(barrel.coord))
-							barrels.Add(entityId, barrel);
-						//Console.Error.WriteLine($"Barrel found: {barrel}");
-						break;
-					case EntityType.Ship:
-						var ship = new Ship(entityId, x, y, arg1, arg2, arg3, arg4);
-						if (ship.owner == 1)
-							myShips.Add(ship);
-						else
-							enemyShips.Add(ship);
-						break;
-					case EntityType.Mine:
-						mines.Add(new Mine(entityId, x, y));
-						break;
-					case EntityType.Cannonball:
-						cannonballs.Add(new Cannonball(entityId, x, y, arg1, arg2));
-						break;
-				}
-			}
-			if (currentTurn == Settings.DUMP_TURN)
-			{
+				gameState.WriteTo(Console.Error);
 				Console.Error.WriteLine("===");
 				foreach (var kvp in strategies)
 					Console.Error.WriteLine($"strategies[{kvp.Key}] = {kvp.Value.Dump()};");
@@ -155,7 +48,7 @@ namespace Game
 			var stopwatch = Stopwatch.StartNew();
 			Preprocess();
 			var moves = new List<ShipMoveCommand>();
-			foreach (var ship in myShips)
+			foreach (var ship in gameState.myShips)
 			{
 				var action = Decide(ship);
 				switch (action.type)
@@ -168,11 +61,11 @@ namespace Game
 						break;
 				}
 			}
-			bool isDouble = Settings.USE_DOUBLE_PATHFINDING && stopwatch.ElapsedMilliseconds < 15;
+			bool isDouble = Settings.USE_DOUBLE_PATHFINDING && stopwatch.ElapsedMilliseconds < Settings.DOUBLE_PATHFINDING_TIMELIMIT;
 			if (isDouble)
 			{
 				moves = new List<ShipMoveCommand>();
-				foreach (var ship in myShips)
+				foreach (var ship in gameState.myShips)
 				{
 					var action = Decide(ship);
 					switch (action.type)
@@ -186,9 +79,9 @@ namespace Game
 					}
 				}
 			}
-			for (var i = 0; i < myShips.Count; i++)
+			for (var i = 0; i < gameState.myShips.Count; i++)
 			{
-				var ship = myShips[i];
+				var ship = gameState.myShips[i];
 				ManualMove(ship, moves[i]);
 			}
 			stopwatch.Stop();
@@ -218,7 +111,7 @@ namespace Game
 		private static void Preprocess()
 		{
 			enemyShipsMoved = new List<List<Ship>>();
-			var prevShips = enemyShips;
+			var prevShips = gameState.enemyShips;
 			for (int i = 0; i < Settings.MANUAL_MOVE_DEPTH; i++)
 			{
 				var ships = new List<Ship>();
@@ -228,7 +121,7 @@ namespace Game
 				prevShips = ships;
 			}
 			myShipsMoved = new List<List<Ship>>();
-			prevShips = myShips;
+			prevShips = gameState.myShips;
 			for (int i = 0; i < Settings.MANUAL_MOVE_DEPTH; i++)
 			{
 				var ships = new List<Ship>();
@@ -262,26 +155,26 @@ namespace Game
 						if (!used.ContainsKey(newMovementState))
 						{
 							var damage = 0;
-							var onMine = mines.Any(m => newShip.Collides(m) || newMovedShip.Collides(m));
+							var onMine = gameState.mines.Any(m => newShip.Collides(m) || newMovedShip.Collides(m));
 							if (onMine)
 								damage = Math.Max(damage, Constants.MINE_DAMAGE);
-							var cannonedBowOrStern = cannonballs.Any(b => b.turns == current.depth + 1 &&
+							var cannonedBowOrStern = gameState.cannonballs.Any(b => b.turns == current.depth + 1 &&
 							                                              (newShip.bow.Equals(b.coord) || newShip.stern.Equals(b.coord)));
 							if (cannonedBowOrStern)
 								damage = Math.Max(damage, Constants.LOW_DAMAGE);
-							var cannonedCenter = cannonballs.Any(b => b.turns == current.depth + 1 && newShip.coord.Equals(b.coord));
+							var cannonedCenter = gameState.cannonballs.Any(b => b.turns == current.depth + 1 && newShip.coord.Equals(b.coord));
 							if (cannonedCenter)
 								damage = Math.Max(damage, Constants.HIGH_DAMAGE);
-							var nearEnemyShip = enemyShips.Any(m => newShip.DistanceTo(m.coord) < Settings.SHIP_MIN_DIST);
+							var nearEnemyShip = gameState.enemyShips.Any(m => newShip.DistanceTo(m.coord) < Settings.SHIP_MIN_DIST);
 							if (nearEnemyShip)
 								damage = Math.Max(damage, Settings.NEAR_SHIP_DAMAGE); // virtual
 
-							var onMyShip = current.depth == 0 && myShips.Where(m => m.id != newShip.id)
+							var onMyShip = current.depth == 0 && gameState.myShips.Where(m => m.id != newShip.id)
 								               .Any(m => newShip.Collides(m) || newMovedShip.Collides(m))
 							               || myShipsMoved[current.depth]
 								               .Where(m => m.id != newShip.id)
 								               .Any(m => newShip.Collides(m) || newMovedShip.Collides(m));
-							var onEnemyShipMoved = current.depth == 0 && enemyShips.Any(m => newShip.Collides(m) || newMovedShip.Collides(m))
+							var onEnemyShipMoved = current.depth == 0 && gameState.enemyShips.Any(m => newShip.Collides(m) || newMovedShip.Collides(m))
 							                       || enemyShipsMoved[current.depth]
 								                       .Any(m => newShip.Collides(m) || newMovedShip.Collides(m));
 							if (!onMyShip && !onEnemyShipMoved)
@@ -488,9 +381,9 @@ namespace Game
 		private static FireTarget SelectFireTarget(Ship ship)
 		{
 			FireTarget bestFireTarget = null;
-			for (var i = 0; i < enemyShips.Count; i++)
+			for (var i = 0; i < gameState.enemyShips.Count; i++)
 			{
-				var fireTargets = GetFireTargets(ship, enemyShips[i]);
+				var fireTargets = GetFireTargets(ship, gameState.enemyShips[i]);
 				foreach (var fireTarget in fireTargets)
 				{
 					if (bestFireTarget == null ||
@@ -504,7 +397,7 @@ namespace Game
 
 		private static IEnumerable<FireTarget> GetFireTargets(Ship ship, Ship enemyShip)
 		{
-			var currentMyShips = myShips;
+			var currentMyShips = gameState.myShips;
 			for (var turns = 0; turns < 5; turns++)
 			{
 				enemyShip = enemyShip.Apply(ShipMoveCommand.Wait)[1];
@@ -628,11 +521,11 @@ namespace Game
 
 			public Decision Decide(Ship ship)
 			{
-				if (!barrels.Any())
+				if (!gameState.barrels.Any())
 					return Decision.Unknown();
 
 				var used = new HashSet<int>();
-				foreach (var myShip in myShips)
+				foreach (var myShip in gameState.myShips)
 				{
 					IStrategy otherStrategy;
 					if (myShip.id != ship.id && strategies.TryGetValue(myShip.id, out otherStrategy))
@@ -643,11 +536,11 @@ namespace Game
 					}
 				}
 
-				if (currentTarget == null || !barrels.ContainsKey(currentTarget.id))
+				if (currentTarget == null || !gameState.barrelsById.ContainsKey(currentTarget.id))
 				{
 					var bestDist = int.MaxValue;
 					Barrel bestBarrel = null;
-					foreach (var barrel in barrels.Values)
+					foreach (var barrel in gameState.barrels)
 						if (!used.Contains(barrel.id))
 						{
 							var dist = ship.DistanceTo(barrel.coord);

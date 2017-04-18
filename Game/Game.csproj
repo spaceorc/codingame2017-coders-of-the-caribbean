@@ -47,6 +47,7 @@
     <Compile Include="Constants.cs" />
     <Compile Include="Entities\Entity.cs" />
     <Compile Include="Entities\EntityType.cs" />
+    <Compile Include="GameState.cs" />
     <Compile Include="Geometry\Coord.cs" />
     <Compile Include="Geometry\CubeCoord.cs" />
     <Compile Include="Entities\Mine.cs" />
