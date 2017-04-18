@@ -4,6 +4,7 @@ using System.Linq;
 using Game.Cannons;
 using Game.Entities;
 using Game.Mining;
+using Game.Navigation;
 using Game.Statistics;
 
 namespace Game.State
@@ -12,6 +13,7 @@ namespace Game.State
 	{
 		public readonly Dictionary<int, Cannoneer> cannoneers = new Dictionary<int, Cannoneer>();
 		public readonly Dictionary<int, Miner> miners = new Dictionary<int, Miner>();
+		public readonly Dictionary<int, Navigator> navigators = new Dictionary<int, Navigator>();
 		public readonly List<TurnStat> stats = new List<TurnStat>();
 
 		public Cannoneer GetCannoneer(Ship ship)
@@ -30,6 +32,14 @@ namespace Game.State
 			return miner;
 		}
 
+		public Navigator GetNavigator(Ship ship)
+		{
+			Navigator navigator;
+			if (!navigators.TryGetValue(ship.id, out navigator))
+				navigators.Add(ship.id, navigator = new Navigator(ship.id, this));
+			return navigator;
+		}
+
 		public void Dump()
 		{
 			Console.Error.WriteLine("var gameState = new GameState();");
@@ -37,6 +47,8 @@ namespace Game.State
 				Console.Error.WriteLine($"gameState.{nameof(cannoneers)}[{cannoneer.Key}] = {cannoneer.Value.Dump("gameState")}");
 			foreach (var miner in miners)
 				Console.Error.WriteLine($"gameState.{nameof(miners)}[{miner.Key}] = {miner.Value.Dump("gameState")}");
+			foreach (var navigator in navigators)
+				Console.Error.WriteLine($"gameState.{nameof(navigators)}[{navigator.Key}] = {navigator.Value.Dump("gameState")}");
 
 			// todo strategies
 		}

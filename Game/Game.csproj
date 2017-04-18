@@ -51,6 +51,7 @@
     <Compile Include="Entities\EntityType.cs" />
     <Compile Include="Cannons\FireTarget.cs" />
     <Compile Include="Cannons\FireTargetType.cs" />
+    <Compile Include="Navigation\Navigator.cs" />
     <Compile Include="State\GameState.cs" />
     <Compile Include="State\TurnState.cs" />
     <Compile Include="Geometry\Coord.cs" />
