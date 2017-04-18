@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using Game.Entities;
 using Game.Geometry;
+using Game.State;
 using Game.Statistics;
 
 namespace Game
@@ -12,12 +13,12 @@ namespace Game
 	public class Player
 	{
 		private static readonly Dictionary<int, IStrategy> strategies = new Dictionary<int, IStrategy>();
-		private static readonly Dictionary<int, bool> shipsFired = new Dictionary<int, bool>();
 		private static readonly Dictionary<int, int> shipsMined = new Dictionary<int, int>();
 		private static List<List<Ship>> enemyShipsMoved;
 		private static List<List<Ship>> myShipsMoved;
 		private static List<TurnStat> stats = new List<TurnStat>();
-		private static GameState gameState;
+		private static TurnState turnState;
+		private static GameState gameState = new GameState();
 
 		private static void Main(string[] args)
 		{
@@ -32,23 +33,18 @@ namespace Game
 
 		private static void Iteration(int currentTurn, TextReader input)
 		{
-			gameState = GameState.ReadFrom(input);
+			turnState = TurnState.ReadFrom(input);
 			Console.Error.WriteLine("Current turn: " + currentTurn);
 			if (currentTurn == Settings.DUMP_TURN)
 			{
-				gameState.WriteTo(Console.Error);
+				turnState.WriteTo(Console.Error);
 				Console.Error.WriteLine("===");
-				foreach (var kvp in strategies)
-					Console.Error.WriteLine($"strategies[{kvp.Key}] = {kvp.Value.Dump()};");
-				foreach (var kvp in shipsFired)
-					Console.Error.WriteLine($"shipsFired[{kvp.Key}] = {kvp.Value.ToString().ToLower()};");
-				foreach (var kvp in shipsMined)
-					Console.Error.WriteLine($"shipsMined[{kvp.Key}] = {kvp.Value};");
+				gameState.Dump();
 			}
 			var stopwatch = Stopwatch.StartNew();
 			Preprocess();
 			var moves = new List<ShipMoveCommand>();
-			foreach (var ship in gameState.myShips)
+			foreach (var ship in turnState.myShips)
 			{
 				var action = Decide(ship);
 				switch (action.type)
@@ -65,7 +61,7 @@ namespace Game
 			if (isDouble)
 			{
 				moves = new List<ShipMoveCommand>();
-				foreach (var ship in gameState.myShips)
+				foreach (var ship in turnState.myShips)
 				{
 					var action = Decide(ship);
 					switch (action.type)
@@ -79,9 +75,9 @@ namespace Game
 					}
 				}
 			}
-			for (var i = 0; i < gameState.myShips.Count; i++)
+			for (var i = 0; i < turnState.myShips.Count; i++)
 			{
-				var ship = gameState.myShips[i];
+				var ship = turnState.myShips[i];
 				ManualMove(ship, moves[i]);
 			}
 			stopwatch.Stop();
@@ -111,7 +107,7 @@ namespace Game
 		private static void Preprocess()
 		{
 			enemyShipsMoved = new List<List<Ship>>();
-			var prevShips = gameState.enemyShips;
+			var prevShips = turnState.enemyShips;
 			for (int i = 0; i < Settings.MANUAL_MOVE_DEPTH; i++)
 			{
 				var ships = new List<Ship>();
@@ -121,7 +117,7 @@ namespace Game
 				prevShips = ships;
 			}
 			myShipsMoved = new List<List<Ship>>();
-			prevShips = gameState.myShips;
+			prevShips = turnState.myShips;
 			for (int i = 0; i < Settings.MANUAL_MOVE_DEPTH; i++)
 			{
 				var ships = new List<Ship>();
@@ -155,26 +151,26 @@ namespace Game
 						if (!used.ContainsKey(newMovementState))
 						{
 							var damage = 0;
-							var onMine = gameState.mines.Any(m => newShip.Collides(m) || newMovedShip.Collides(m));
+							var onMine = turnState.mines.Any(m => newShip.Collides(m) || newMovedShip.Collides(m));
 							if (onMine)
 								damage = Math.Max(damage, Constants.MINE_DAMAGE);
-							var cannonedBowOrStern = gameState.cannonballs.Any(b => b.turns == current.depth + 1 &&
+							var cannonedBowOrStern = turnState.cannonballs.Any(b => b.turns == current.depth + 1 &&
 							                                              (newShip.bow.Equals(b.coord) || newShip.stern.Equals(b.coord)));
 							if (cannonedBowOrStern)
 								damage = Math.Max(damage, Constants.LOW_DAMAGE);
-							var cannonedCenter = gameState.cannonballs.Any(b => b.turns == current.depth + 1 && newShip.coord.Equals(b.coord));
+							var cannonedCenter = turnState.cannonballs.Any(b => b.turns == current.depth + 1 && newShip.coord.Equals(b.coord));
 							if (cannonedCenter)
 								damage = Math.Max(damage, Constants.HIGH_DAMAGE);
-							var nearEnemyShip = gameState.enemyShips.Any(m => newShip.DistanceTo(m.coord) < Settings.SHIP_MIN_DIST);
+							var nearEnemyShip = turnState.enemyShips.Any(m => newShip.DistanceTo(m.coord) < Settings.SHIP_MIN_DIST);
 							if (nearEnemyShip)
 								damage = Math.Max(damage, Settings.NEAR_SHIP_DAMAGE); // virtual
 
-							var onMyShip = current.depth == 0 && gameState.myShips.Where(m => m.id != newShip.id)
+							var onMyShip = current.depth == 0 && turnState.myShips.Where(m => m.id != newShip.id)
 								               .Any(m => newShip.Collides(m) || newMovedShip.Collides(m))
 							               || myShipsMoved[current.depth]
 								               .Where(m => m.id != newShip.id)
 								               .Any(m => newShip.Collides(m) || newMovedShip.Collides(m));
-							var onEnemyShipMoved = current.depth == 0 && gameState.enemyShips.Any(m => newShip.Collides(m) || newMovedShip.Collides(m))
+							var onEnemyShipMoved = current.depth == 0 && turnState.enemyShips.Any(m => newShip.Collides(m) || newMovedShip.Collides(m))
 							                       || enemyShipsMoved[current.depth]
 								                       .Any(m => newShip.Collides(m) || newMovedShip.Collides(m));
 							if (!onMyShip && !onEnemyShipMoved)
@@ -232,9 +228,7 @@ namespace Game
 
 		private static void ManualMove(Ship ship, ShipMoveCommand moveCommand)
 		{
-			bool fired;
-			shipsFired.TryGetValue(ship.id, out fired);
-			shipsFired.Remove(ship.id);
+
 			int mined;
 			shipsMined.TryGetValue(ship.id, out mined);
 			if (mined - 1 <= 0)
@@ -243,17 +237,10 @@ namespace Game
 				shipsMined[ship.id] = mined - 1;
 			if (moveCommand == ShipMoveCommand.Wait)
 			{
-				if (!fired)
-				{
-					var fireTarget = SelectFireTarget(ship);
-					if (fireTarget != null)
-					{
-						shipsFired[ship.id] = true;
-						ship.Fire(fireTarget.target);
-						return;
-					}
-				}
+				if (gameState.GetCannonMaster(ship).Fire(turnState))
+					return;
 			}
+			gameState.GetCannonMaster(ship).DontFire(turnState);
 			if (Settings.USE_MINING)
 			{
 				if (moveCommand == ShipMoveCommand.Wait)
@@ -376,76 +363,6 @@ namespace Game
 			}
 		}
 
-		#region FireTarget
-
-		private static FireTarget SelectFireTarget(Ship ship)
-		{
-			FireTarget bestFireTarget = null;
-			for (var i = 0; i < gameState.enemyShips.Count; i++)
-			{
-				var fireTargets = GetFireTargets(ship, gameState.enemyShips[i]);
-				foreach (var fireTarget in fireTargets)
-				{
-					if (bestFireTarget == null ||
-					    fireTarget.priority < bestFireTarget.priority ||
-					    fireTarget.priority == bestFireTarget.priority && fireTarget.turns < bestFireTarget.turns)
-						bestFireTarget = fireTarget;
-				}
-			}
-			return bestFireTarget;
-		}
-
-		private static IEnumerable<FireTarget> GetFireTargets(Ship ship, Ship enemyShip)
-		{
-			var currentMyShips = gameState.myShips;
-			for (var turns = 0; turns < 5; turns++)
-			{
-				enemyShip = enemyShip.Apply(ShipMoveCommand.Wait)[1];
-				var coords = new[] {enemyShip.coord, enemyShip.bow, enemyShip.stern};
-				for (var i = 0; i < coords.Length; i++)
-				{
-					var target = coords[i];
-					if (target.IsInsideMap())
-					{
-						if (currentMyShips.Any(m => m.DistanceTo(target) == 0))
-							continue;
-						var distanceTo = ship.bow.DistanceTo(target);
-						if (distanceTo <= 10)
-						{
-							var travelTime = (int) (1 + Math.Round(distanceTo / 3.0));
-							if (travelTime == turns)
-								yield return new FireTarget(target, turns, i == 0 ? Constants.HIGH_DAMAGE : Constants.LOW_DAMAGE, i);
-						}
-					}
-				}
-				currentMyShips = currentMyShips.Select(c => c.Apply(ShipMoveCommand.Wait)[1]).ToList();
-			}
-		}
-
-		private class FireTarget
-		{
-			public readonly int rum;
-			public readonly Coord target;
-			public readonly int turns;
-			public readonly int priority;
-
-			public FireTarget(Coord target, int turns, int rum, int priority)
-			{
-				this.target = target;
-				this.turns = turns;
-				this.rum = rum;
-				this.priority = priority;
-			}
-
-			public override string ToString()
-			{
-				return
-					$"{nameof(target)}: {target}, {nameof(rum)}: {rum}, {nameof(turns)}: {turns}, {nameof(priority)}: {priority}";
-			}
-		}
-
-		#endregion
-
 		#region Strategies
 
 		private static Decision Decide(Ship ship)
@@ -521,11 +438,11 @@ namespace Game
 
 			public Decision Decide(Ship ship)
 			{
-				if (!gameState.barrels.Any())
+				if (!turnState.barrels.Any())
 					return Decision.Unknown();
 
 				var used = new HashSet<int>();
-				foreach (var myShip in gameState.myShips)
+				foreach (var myShip in turnState.myShips)
 				{
 					IStrategy otherStrategy;
 					if (myShip.id != ship.id && strategies.TryGetValue(myShip.id, out otherStrategy))
@@ -536,11 +453,11 @@ namespace Game
 					}
 				}
 
-				if (currentTarget == null || !gameState.barrelsById.ContainsKey(currentTarget.id))
+				if (currentTarget == null || !turnState.barrelsById.ContainsKey(currentTarget.id))
 				{
 					var bestDist = int.MaxValue;
 					Barrel bestBarrel = null;
-					foreach (var barrel in gameState.barrels)
+					foreach (var barrel in turnState.barrels)
 						if (!used.Contains(barrel.id))
 						{
 							var dist = ship.DistanceTo(barrel.coord);

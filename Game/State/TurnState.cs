@@ -5,9 +5,9 @@ using System.Linq;
 using Game.Entities;
 using Game.Geometry;
 
-namespace Game
+namespace Game.State
 {
-	public class GameState
+	public class TurnState
 	{
 		public readonly List<Barrel> barrels = new List<Barrel>();
 		public readonly List<Ship> myShips = new List<Ship>();
@@ -21,13 +21,13 @@ namespace Game
 		public readonly Dictionary<int, Mine> minesById = new Dictionary<int, Mine>();
 		public readonly Dictionary<int, Cannonball> cannonballsById = new Dictionary<int, Cannonball>();
 		
-		public GameState()
+		public TurnState()
 		{
 		}
 
 		public readonly List<string> lines = new List<string>();
 
-		private GameState(TextReader input)
+		private TurnState(TextReader input)
 		{
 			Dictionary<Coord, Barrel> usedBarrelCoords = new Dictionary<Coord, Barrel>();
 			string line;
@@ -87,9 +87,9 @@ namespace Game
 			}
 		}
 
-		public static GameState ReadFrom(TextReader input)
+		public static TurnState ReadFrom(TextReader input)
 		{
-			return new GameState(input);
+			return new TurnState(input);
 		}
 
 		public void WriteTo(TextWriter output)

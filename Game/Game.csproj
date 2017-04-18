@@ -42,12 +42,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Cannons\CannonMaster.cs" />
     <Compile Include="Entities\Barrel.cs" />
     <Compile Include="Entities\Cannonball.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Entities\Entity.cs" />
     <Compile Include="Entities\EntityType.cs" />
-    <Compile Include="GameState.cs" />
+    <Compile Include="Cannons\FireTarget.cs" />
+    <Compile Include="Cannons\FireTargetType.cs" />
+    <Compile Include="State\GameState.cs" />
+    <Compile Include="State\TurnState.cs" />
     <Compile Include="Geometry\Coord.cs" />
     <Compile Include="Geometry\CubeCoord.cs" />
     <Compile Include="Entities\Mine.cs" />
