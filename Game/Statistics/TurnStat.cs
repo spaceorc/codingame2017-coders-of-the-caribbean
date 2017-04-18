@@ -1,6 +1,6 @@
-namespace Game
+namespace Game.Statistics
 {
-	internal class TurnStat
+	public class TurnStat
 	{
 		public long time;
 		public bool isDouble;

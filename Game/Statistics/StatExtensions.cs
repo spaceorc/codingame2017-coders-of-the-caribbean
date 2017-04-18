@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Game
+namespace Game.Statistics
 {
-	internal static class StatExtensions
+	public static class StatExtensions
 	{
 		public static long Percentile<T>(this IEnumerable<T> enumerable, Func<T, long> selector, int percentile)
 		{

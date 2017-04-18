@@ -42,13 +42,25 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Entities\Barrel.cs" />
+    <Compile Include="Entities\Cannonball.cs" />
+    <Compile Include="Constants.cs" />
+    <Compile Include="Entities\Entity.cs" />
+    <Compile Include="Entities\EntityType.cs" />
+    <Compile Include="Geometry\Coord.cs" />
+    <Compile Include="Geometry\CubeCoord.cs" />
+    <Compile Include="Entities\Mine.cs" />
     <Compile Include="Player.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="StatExtensions.cs" />
-    <Compile Include="TurnStat.cs" />
+    <Compile Include="Settings.cs" />
+    <Compile Include="Entities\Ship.cs" />
+    <Compile Include="Entities\ShipMoveCommand.cs" />
+    <Compile Include="Statistics\StatExtensions.cs" />
+    <Compile Include="Statistics\TurnStat.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -22,7 +23,8 @@ namespace Pack
 				result.AppendLine("//* author: spaceorc");
 				result.AppendLine("//* source code: https://github.com/spaceorc/codingame2017-coders-of-the-caribbean");
 				result.AppendLine("//**********************************************");
-			
+
+				var contents = new List<Tuple<FileInfo, string, int>>();
 				foreach (var fileInfo in fileInfos)
 				{
 					Console.Out.WriteLine($"Preprocessing {fileInfo.Name}");
@@ -30,12 +32,22 @@ namespace Pack
 					using (var fileReader = new StreamReader(fileStream))
 					{
 						var fileContent = fileReader.ReadToEnd();
-						result.AppendLine();
-						result.AppendLine($"// *** {fileInfo.Name} ***");
-						result.AppendLine();
-						result.AppendLine(Preprocess(fileInfo.Name, fileContent));
+						var preprocessed = Preprocess(fileInfo.Name, fileContent);
+						contents.Add(Tuple.Create(fileInfo, preprocessed.Item1, preprocessed.Item2));
 					}
 				}
+
+				foreach (var tuple in contents.OrderBy(t => t.Item3).ThenBy(t => t.Item1.DirectoryName.ToLowerInvariant()))
+				{
+					Console.Out.WriteLine($"Writing {tuple.Item1.Name}");
+					result.AppendLine();
+					result.AppendLine($"#region {tuple.Item1.Name}");
+					result.AppendLine();
+					result.AppendLine(tuple.Item2);
+					result.AppendLine();
+					result.AppendLine($"#endregion");
+				}
+
 				Clipboard.SetText(result.ToString());
 				Console.Out.WriteLine("Result was copied to clipboard");
 
@@ -48,14 +60,21 @@ namespace Pack
 			}
 		}
 
-		private static string Preprocess(string fileName, string fileContent)
+		private static Tuple<string, int> Preprocess(string fileName, string fileContent)
 		{
+			var orderRegex = new Regex(@"//\s*pack\s*:\s*(?<order>\d+)", RegexOptions.Singleline | RegexOptions.Compiled);
+			var orderMatch = orderRegex.Match(fileContent);
+			int order = int.MaxValue;
+			if (orderMatch.Success)
+				order = int.Parse(orderMatch.Groups["order"].Value);
 			var regex = new Regex(@"^(?<using>.*?)(?<header>namespace.*?\n{)", RegexOptions.Singleline | RegexOptions.Compiled);
 			var match = regex.Match(fileContent);
 			if (!match.Success)
 				throw new InvalidOperationException($"Couldn't preprocess file {fileName}");
-			return match.Groups["header"].Value + "\r\n\t" + match.Groups["using"].Value.Replace("\n", "\n\t") +
-			       fileContent.Substring(match.Groups["header"].Index + match.Groups["header"].Length);
+			var usings = match.Groups["using"].Value.Replace("\n", "\n\t").Trim();
+			var preprocessed = (match.Groups["header"].Value + "\r\n\t" + usings).TrimEnd()
+			                 + (string.IsNullOrEmpty(usings) ? "" : "\r\n") + fileContent.Substring(match.Groups["header"].Index + match.Groups["header"].Length);
+			return Tuple.Create(preprocessed, order);
 		}
 
 		private static bool IsExcluded(FileInfo fileInfo)

@@ -3,28 +3,14 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using Game.Entities;
+using Game.Geometry;
+using Game.Statistics;
 
 namespace Game
 {
 	public class Player
 	{
-		private static readonly int MAP_WIDTH = 23;
-		private static readonly int MAP_HEIGHT = 21;
-		private static readonly int MAX_SHIP_SPEED = 2;
-		private static readonly int LOW_DAMAGE = 25;
-		private static readonly int HIGH_DAMAGE = 50;
-		private static readonly int MINE_DAMAGE = 25;
-		private static readonly int NEAR_MINE_DAMAGE = 10;
-		private static readonly int NEAR_SHIP_DAMAGE = 5;
-		private static readonly int MANUAL_MOVE_DEPTH = 5;
-		private static readonly int FREE_REACH_DIST = 5;
-		private static readonly int SHIP_MIN_DIST = 4;
-		private static readonly bool USE_MINING = false;
-		private static readonly bool USE_DOUBLE_PATHFINDING = true;
-
-		private static readonly int DUMP_TURN = -1;
-		private static readonly int DUMP_STAT_TURN = -1;
-
 		private static Dictionary<int, Barrel> barrels;
 		private static HashSet<Coord> usedBarrelCoords;
 		private static List<Ship> myShips;
@@ -111,7 +97,7 @@ namespace Game
 			var myShipCount = int.Parse(input.ReadLine()); // the number of remaining ships
 			var entityCount = int.Parse(input.ReadLine()); // the number of entities (e.g. ships, mines or cannonballs)
 			Console.Error.WriteLine("Current turn: " + currentTurn);
-			if (currentTurn == DUMP_TURN)
+			if (currentTurn == Settings.DUMP_TURN)
 			{
 				Console.Error.WriteLine("---");
 				Console.Error.WriteLine(myShipCount);
@@ -120,7 +106,7 @@ namespace Game
 			for (var i = 0; i < entityCount; i++)
 			{
 				var line = input.ReadLine();
-				if (currentTurn == DUMP_TURN)
+				if (currentTurn == Settings.DUMP_TURN)
 				{
 					Console.Error.WriteLine(line);
 				}
@@ -156,7 +142,7 @@ namespace Game
 						break;
 				}
 			}
-			if (currentTurn == DUMP_TURN)
+			if (currentTurn == Settings.DUMP_TURN)
 			{
 				Console.Error.WriteLine("===");
 				foreach (var kvp in strategies)
@@ -182,7 +168,7 @@ namespace Game
 						break;
 				}
 			}
-			bool isDouble = USE_DOUBLE_PATHFINDING && stopwatch.ElapsedMilliseconds < 15;
+			bool isDouble = Settings.USE_DOUBLE_PATHFINDING && stopwatch.ElapsedMilliseconds < 15;
 			if (isDouble)
 			{
 				moves = new List<ShipMoveCommand>();
@@ -208,7 +194,7 @@ namespace Game
 			stopwatch.Stop();
 			stats.Add(new TurnStat {isDouble = isDouble, time = stopwatch.ElapsedMilliseconds});
 			Console.Error.WriteLine($"Decision made in {stopwatch.ElapsedMilliseconds} ms");
-			if (currentTurn == DUMP_STAT_TURN)
+			if (currentTurn == Settings.DUMP_STAT_TURN)
 			{
 				DumpStats();
 			}
@@ -233,7 +219,7 @@ namespace Game
 		{
 			enemyShipsMoved = new List<List<Ship>>();
 			var prevShips = enemyShips;
-			for (int i = 0; i < MANUAL_MOVE_DEPTH; i++)
+			for (int i = 0; i < Settings.MANUAL_MOVE_DEPTH; i++)
 			{
 				var ships = new List<Ship>();
 				enemyShipsMoved.Add(ships);
@@ -243,7 +229,7 @@ namespace Game
 			}
 			myShipsMoved = new List<List<Ship>>();
 			prevShips = myShips;
-			for (int i = 0; i < MANUAL_MOVE_DEPTH; i++)
+			for (int i = 0; i < Settings.MANUAL_MOVE_DEPTH; i++)
 			{
 				var ships = new List<Ship>();
 				myShipsMoved.Add(ships);
@@ -266,7 +252,7 @@ namespace Game
 			while (queue.Any())
 			{
 				var current = queue.Dequeue();
-				if (current.depth != MANUAL_MOVE_DEPTH)
+				if (current.depth != Settings.MANUAL_MOVE_DEPTH)
 					foreach (var moveCommand in Enum.GetValues(typeof(ShipMoveCommand)).Cast<ShipMoveCommand>())
 					{
 						var newShips = current.ship.Apply(moveCommand);
@@ -278,17 +264,17 @@ namespace Game
 							var damage = 0;
 							var onMine = mines.Any(m => newShip.Collides(m) || newMovedShip.Collides(m));
 							if (onMine)
-								damage = Math.Max(damage, MINE_DAMAGE);
+								damage = Math.Max(damage, Constants.MINE_DAMAGE);
 							var cannonedBowOrStern = cannonballs.Any(b => b.turns == current.depth + 1 &&
 							                                              (newShip.bow.Equals(b.coord) || newShip.stern.Equals(b.coord)));
 							if (cannonedBowOrStern)
-								damage = Math.Max(damage, LOW_DAMAGE);
+								damage = Math.Max(damage, Constants.LOW_DAMAGE);
 							var cannonedCenter = cannonballs.Any(b => b.turns == current.depth + 1 && newShip.coord.Equals(b.coord));
 							if (cannonedCenter)
-								damage = Math.Max(damage, HIGH_DAMAGE);
-							var nearEnemyShip = enemyShips.Any(m => newShip.DistanceTo(m.coord) < SHIP_MIN_DIST);
+								damage = Math.Max(damage, Constants.HIGH_DAMAGE);
+							var nearEnemyShip = enemyShips.Any(m => newShip.DistanceTo(m.coord) < Settings.SHIP_MIN_DIST);
 							if (nearEnemyShip)
-								damage = Math.Max(damage, NEAR_SHIP_DAMAGE); // virtual
+								damage = Math.Max(damage, Settings.NEAR_SHIP_DAMAGE); // virtual
 
 							var onMyShip = current.depth == 0 && myShips.Where(m => m.id != newShip.id)
 								               .Any(m => newShip.Collides(m) || newMovedShip.Collides(m))
@@ -375,7 +361,7 @@ namespace Game
 					}
 				}
 			}
-			if (USE_MINING)
+			if (Settings.USE_MINING)
 			{
 				if (moveCommand == ShipMoveCommand.Wait)
 				{
@@ -465,7 +451,7 @@ namespace Game
 				this.startCommand = startCommand;
 				dist = ship.DistanceTo(target);
 				this.pathDamage = pathDamage;
-				if (depth == MANUAL_MOVE_DEPTH)
+				if (depth == Settings.MANUAL_MOVE_DEPTH)
 					SetDamage(pathDamage);
 			}
 
@@ -535,7 +521,7 @@ namespace Game
 						{
 							var travelTime = (int) (1 + Math.Round(distanceTo / 3.0));
 							if (travelTime == turns)
-								yield return new FireTarget(target, turns, i == 0 ? HIGH_DAMAGE : LOW_DAMAGE, i);
+								yield return new FireTarget(target, turns, i == 0 ? Constants.HIGH_DAMAGE : Constants.LOW_DAMAGE, i);
 						}
 					}
 				}
@@ -689,9 +675,9 @@ namespace Game
 			private static readonly Coord[] targets =
 			{
 				new Coord(5, 5),
-				new Coord(5, MAP_HEIGHT - 5),
-				new Coord(MAP_WIDTH - 5, MAP_HEIGHT - 5),
-				new Coord(MAP_WIDTH - 5, 5)
+				new Coord(5, Constants.MAP_HEIGHT - 5),
+				new Coord(Constants.MAP_WIDTH - 5, Constants.MAP_HEIGHT - 5),
+				new Coord(Constants.MAP_WIDTH - 5, 5)
 			};
 
 			private int currentTarget;
@@ -709,7 +695,7 @@ namespace Game
 
 			public Decision Decide(Ship ship)
 			{
-				if (ship.DistanceTo(targets[currentTarget]) < FREE_REACH_DIST)
+				if (ship.DistanceTo(targets[currentTarget]) < Settings.FREE_REACH_DIST)
 				{
 					currentTarget = (currentTarget + 1) % targets.Length;
 					Console.Error.WriteLine($"New target for {ship.id}: {targets[currentTarget]}");
@@ -730,360 +716,6 @@ namespace Game
 
 		#endregion
 
-		#region Entities
-
-		private enum ShipMoveCommand
-		{
-			Wait,
-			Slower,
-			Faster,
-			Port, // to the left
-			Starboard // to the right
-		}
-
-		private class Ship : Entity
-		{
-			public readonly Coord bow;
-			public readonly int orientation;
-			public readonly int owner;
-			public readonly int rum;
-			public readonly int speed;
-			public readonly Coord stern;
-
-			public Ship(int id, Coord coord, int orientation, int speed, int rum, int owner) : this(id, coord.x, coord.y,
-				orientation, speed, rum, owner)
-			{
-			}
-
-			public Ship(int id, int x, int y, int orientation, int speed, int rum, int owner) : base(id, EntityType.Ship, x, y)
-			{
-				this.orientation = orientation;
-				this.speed = speed;
-				this.rum = rum;
-				this.owner = owner;
-				bow = coord.Neighbor(orientation);
-				stern = coord.Neighbor((orientation + 3) % 6);
-			}
-
-			public void Wait()
-			{
-				Console.WriteLine("WAIT");
-			}
-
-			public void Move(Coord coord)
-			{
-				Console.WriteLine($"MOVE {coord.x} {coord.y}");
-			}
-
-			public void Fire(Coord coord)
-			{
-				Console.WriteLine($"FIRE {coord.x} {coord.y}");
-			}
-
-			public void Mine()
-			{
-				Console.WriteLine("MINE");
-			}
-
-			public void Faster()
-			{
-				Console.WriteLine("FASTER");
-			}
-
-			public void Slower()
-			{
-				Console.WriteLine("SLOWER");
-			}
-
-			public void Port()
-			{
-				Console.WriteLine("PORT");
-			}
-
-			public void Starboard()
-			{
-				Console.WriteLine("STARBOARD");
-			}
-
-			public void Move(ShipMoveCommand command)
-			{
-				switch (command)
-				{
-					case ShipMoveCommand.Faster:
-						Faster();
-						break;
-					case ShipMoveCommand.Slower:
-						Slower();
-						break;
-					case ShipMoveCommand.Port:
-						Port();
-						break;
-					case ShipMoveCommand.Starboard:
-						Starboard();
-						break;
-					default:
-						Wait();
-						break;
-				}
-			}
-
-			public List<Ship> Apply(ShipMoveCommand moveCommand)
-			{
-				var result = new List<Ship>();
-				var newSpeed = speed;
-				switch (moveCommand)
-				{
-					case ShipMoveCommand.Faster:
-						newSpeed++;
-						break;
-					case ShipMoveCommand.Slower:
-						newSpeed--;
-						break;
-				}
-				if (newSpeed > MAX_SHIP_SPEED)
-					newSpeed = MAX_SHIP_SPEED;
-				if (newSpeed < 0)
-					newSpeed = 0;
-				var movedShip = this;
-				for (var sp = 1; sp <= newSpeed; sp++)
-				{
-					var newShip = new Ship(movedShip.id, movedShip.coord.Neighbor(orientation), orientation, sp, rum - 1, owner);
-					if (!newShip.IsInsideMap())
-						break;
-					movedShip = newShip;
-				}
-				if (movedShip.speed != newSpeed)
-					movedShip = new Ship(movedShip.id, movedShip.coord, orientation, 0, rum - 1, owner);
-				result.Add(movedShip);
-				switch (moveCommand)
-				{
-					case ShipMoveCommand.Port:
-						movedShip = new Ship(movedShip.id, movedShip.coord, (orientation + 1) % 6, movedShip.speed, rum - 1, owner);
-						break;
-					case ShipMoveCommand.Starboard:
-						movedShip = new Ship(movedShip.id, movedShip.coord, (orientation + 5) % 6, movedShip.speed, rum - 1, owner);
-						break;
-				}
-				result.Add(movedShip);
-				return result;
-			}
-
-			public bool IsInsideMap()
-			{
-				return coord.IsInsideMap();
-			}
-
-			public int DistanceTo(Coord target)
-			{
-				var dist = coord.DistanceTo(target);
-				if (dist == 0)
-					return 0;
-				var bowDist = bow.DistanceTo(target);
-				if (bowDist == 0)
-					return 0;
-				if (bowDist < dist)
-					return bowDist;
-				var sternDist = stern.DistanceTo(target);
-				if (sternDist == 0)
-					return 0;
-				return dist;
-			}
-
-			public bool Collides(Coord target)
-			{
-				return coord.Equals(target) || bow.Equals(target) || stern.Equals(target);
-			}
-
-			public bool Collides(Entity target)
-			{
-				return Collides(target.coord);
-			}
-
-			public bool Collides(Ship target)
-			{
-				return Collides(target.coord) || Collides(target.bow) || Collides(target.stern);
-			}
-
-			public override string ToString()
-			{
-				return $"{base.ToString()}, {nameof(orientation)}: {orientation}, {nameof(speed)}: {speed}";
-			}
-		}
-
-		private class Barrel : Entity
-		{
-			public readonly int rum;
-
-			public Barrel(int id, int x, int y, int rum) : base(id, EntityType.Barrel, x, y)
-			{
-				this.rum = rum;
-			}
-
-			public string Dump()
-			{
-				return $"new Barrel({id}, {coord.x}, {coord.y}, {rum})";
-			}
-		}
-
-		private class Mine : Entity
-		{
-			public Mine(int id, int x, int y) : base(id, EntityType.Mine, x, y)
-			{
-			}
-		}
-
-		private class Cannonball : Entity
-		{
-			public readonly int firedBy;
-			public readonly int turns;
-
-			public Cannonball(int id, int x, int y, int firedBy, int turns) : base(id, EntityType.Cannonball, x, y)
-			{
-				this.firedBy = firedBy;
-				this.turns = turns;
-			}
-		}
-
-		private enum EntityType
-		{
-			Ship,
-			Barrel,
-			Mine,
-			Cannonball
-		}
-
-		private abstract class Entity
-		{
-			public readonly Coord coord;
-			public readonly int id;
-			public readonly EntityType type;
-
-			protected Entity(int id, EntityType type, int x, int y)
-			{
-				this.id = id;
-				this.type = type;
-				coord = new Coord(x, y);
-			}
-
-			public override string ToString()
-			{
-				return $"{type}[{id}] at ({coord})";
-			}
-		}
-
-		#endregion
-
-		#region Coords
-
-		private struct Coord
-		{
-			private static readonly int[][] DIRECTIONS_EVEN =
-				{new[] {1, 0}, new[] {0, -1}, new[] {-1, -1}, new[] {-1, 0}, new[] {-1, 1}, new[] {0, 1}};
-
-			private static readonly int[][] DIRECTIONS_ODD =
-				{new[] {1, 0}, new[] {1, -1}, new[] {0, -1}, new[] {-1, 0}, new[] {0, 1}, new[] {1, 1}};
-
-			public Coord(int x, int y)
-			{
-				this.x = x;
-				this.y = y;
-			}
-
-			public readonly int x;
-			public readonly int y;
-
-			public int DistanceTo(Coord dst)
-			{
-				return ToCubeCoord().DistanceTo(dst.ToCubeCoord());
-			}
-
-			public Coord Neighbor(int orientation)
-			{
-				int newY, newX;
-				if (y % 2 == 1)
-				{
-					newY = y + DIRECTIONS_ODD[orientation][1];
-					newX = x + DIRECTIONS_ODD[orientation][0];
-				}
-				else
-				{
-					newY = y + DIRECTIONS_EVEN[orientation][1];
-					newX = x + DIRECTIONS_EVEN[orientation][0];
-				}
-
-				return new Coord(newX, newY);
-			}
-
-			public override string ToString()
-			{
-				return $"{x}, {y}";
-			}
-
-			public CubeCoord ToCubeCoord()
-			{
-				var xp = x - (y - (y & 1)) / 2;
-				var zp = y;
-				var yp = -(xp + zp);
-				return new CubeCoord(xp, yp, zp);
-			}
-
-			public bool IsInsideMap()
-			{
-				return x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT;
-			}
-		}
-
-		private struct CubeCoord
-		{
-			private static readonly int[][] directions =
-			{
-				new[] {1, -1, 0},
-				new[] {+1, 0, -1},
-				new[] {0, +1, -1},
-				new[] {-1, +1, 0},
-				new[] {-1, 0, +1},
-				new[] {0, -1, +1}
-			};
-
-			public CubeCoord(int x, int y, int z)
-			{
-				this.x = x;
-				this.y = y;
-				this.z = z;
-			}
-
-			public readonly int x;
-			public readonly int y;
-			public readonly int z;
-
-			public int DistanceTo(CubeCoord dst)
-			{
-				return (Math.Abs(x - dst.x) + Math.Abs(y - dst.y) + Math.Abs(z - dst.z)) / 2;
-			}
-
-			public CubeCoord Neighbor(int orientation)
-			{
-				var nx = x + directions[orientation][0];
-				var ny = y + directions[orientation][1];
-				var nz = z + directions[orientation][2];
-
-				return new CubeCoord(nx, ny, nz);
-			}
-
-			public Coord ToCoord()
-			{
-				var newX = x + (z - (z & 1)) / 2;
-				var newY = z;
-				return new Coord(newX, newY);
-			}
-		}
-
-		#endregion
-
+		
 	}
-
-	#region stat
-
-	#endregion
-
 }
