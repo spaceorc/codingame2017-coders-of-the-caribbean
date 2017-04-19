@@ -11,6 +11,7 @@ using Game.Geometry;
 using Game.Mining;
 using Game.Navigation;
 using Game.State;
+using Game.Strategy;
 
 namespace Experiments
 {
@@ -29,15 +30,8 @@ namespace Experiments
 ".Trim();
 
 			//===
-			var gameState = new GameState();
-			gameState.cannoneers[1] = new Cannoneer(1, gameState) { fire = true };
-			gameState.cannoneers[3] = new Cannoneer(3, gameState) { fire = true };
-			gameState.miners[1] = new Miner(1, gameState) { cooldown = 0 };
-			gameState.miners[3] = new Miner(3, gameState) { cooldown = 0 };
-			gameState.navigators[1] = new Navigator(1, gameState);
-			gameState.navigators[3] = new Navigator(3, gameState);
-			Player.strategies[1] = new Player.WalkAroundStrategy(3, true);
-			Player.strategies[3] = new Player.WalkAroundStrategy(0, true);
+			
+
 			//===
 
 			Player.Iteration(int.MaxValue, new StringReader(state));

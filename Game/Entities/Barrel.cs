@@ -8,10 +8,5 @@ namespace Game.Entities
 		{
 			this.rum = rum;
 		}
-
-		public string Dump()
-		{
-			return $"new Barrel({id}, {coord.x}, {coord.y}, {rum})";
-		}
 	}
 }

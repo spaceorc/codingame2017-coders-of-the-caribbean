@@ -7,6 +7,7 @@ using Game.Mining;
 using Game.Navigation;
 using Game.Prediction;
 using Game.Statistics;
+using Game.Strategy;
 
 namespace Game.State
 {
@@ -17,10 +18,12 @@ namespace Game.State
 		public readonly Dictionary<int, Navigator> navigators = new Dictionary<int, Navigator>();
 		public readonly List<TurnStat> stats = new List<TurnStat>();
 		public readonly Forecaster forecaster;
+		public readonly Admiral admiral;
 
 		public GameState()
 		{
 			forecaster = new Forecaster(this);
+			admiral = new Admiral(this);
 		}
 
 		public Cannoneer GetCannoneer(Ship ship)
@@ -56,10 +59,7 @@ namespace Game.State
 				Console.Error.WriteLine($"gameState.{nameof(miners)}[{miner.Key}] = {miner.Value.Dump("gameState")};");
 			foreach (var navigator in navigators)
 				Console.Error.WriteLine($"gameState.{nameof(navigators)}[{navigator.Key}] = {navigator.Value.Dump("gameState")};");
-
-			// todo strategies
-			foreach (var strategy in Player.strategies)
-				Console.Error.WriteLine($"Player.strategies[{strategy.Key}] = {strategy.Value.Dump()};");
+			admiral.Dump("gameState.admiral");
 		}
 
 		public void DumpStats()

@@ -43,6 +43,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Cannons\Cannoneer.cs" />
+    <Compile Include="Strategy\Admiral.cs" />
+    <Compile Include="Strategy\Decision.cs" />
+    <Compile Include="Strategy\DecisionType.cs" />
+    <Compile Include="Strategy\CollectBarrelsStrategy.cs" />
+    <Compile Include="Strategy\IStrategy.cs" />
     <Compile Include="Mining\Miner.cs" />
     <Compile Include="Entities\Barrel.cs" />
     <Compile Include="Entities\Cannonball.cs" />
@@ -65,6 +70,7 @@
     <Compile Include="Entities\ShipMoveCommand.cs" />
     <Compile Include="Statistics\StatExtensions.cs" />
     <Compile Include="Statistics\TurnStat.cs" />
+    <Compile Include="Strategy\WalkAroundStrategy.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
