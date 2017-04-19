@@ -98,6 +98,8 @@ namespace Game.Geometry
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static int Distance(int fastCoord1, int fastCoord2)
 		{
+			if (fastCoord1 < 0 || fastCoord2 < 0)
+				return 1000;
 			return fastCoord1 == fastCoord2 ? 0 : distances[fastCoord1 << bits | fastCoord2];
 		}
 	}

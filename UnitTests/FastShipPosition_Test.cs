@@ -163,6 +163,17 @@ namespace UnitTests
 		}
 
 		[Test]
+		public void DistanceTo_StrangeCase_ReturnsValidValue()
+		{
+			//coord: 23, 5, orientation: 0, speed: 0 23, 5
+			var shipPosition = new ShipPosition(new Coord(23, 5), 0, 0);
+			var target = new Coord(20, 5);
+			var fastShipPosition = FastShipPosition.Create(shipPosition);
+			var fastTarget = FastCoord.Create(target);
+			FastShipPosition.DistanceTo(fastShipPosition, fastTarget).Should().Be(3);
+		}
+
+		[Test]
 		public void IsInsideMap_ReturnsValidValue()
 		{
 			for (int x = -2; x < Constants.MAP_WIDTH + 2; x++)

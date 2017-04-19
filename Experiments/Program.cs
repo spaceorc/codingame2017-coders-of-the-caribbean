@@ -31,7 +31,9 @@ namespace Experiments
 			}
 
 			var indexes = Enumerable.Range(0, coordsX.Count).ToArray();
-			var random = new Random();
+			var seed = new Random().Next();
+			Console.Out.WriteLine($"Seed: {seed}");
+			var random = new Random(seed);
 			for (int i = 0; i < indexes.Length; i++)
 			{
 				var r = random.Next(i, indexes.Length);
@@ -133,8 +135,8 @@ namespace Experiments
 			ind = 0;
 			for (int i = 0; i < 10000000; i++)
 			{
-				shipPosition.DistanceTo(coords[ind++]);
-				if (ind >= indexes.Length)
+				shipPosition.DistanceTo(coords[ind]);
+				if (++ind >= indexes.Length)
 					ind = 0;
 			}
 			stopwatch.Stop();
