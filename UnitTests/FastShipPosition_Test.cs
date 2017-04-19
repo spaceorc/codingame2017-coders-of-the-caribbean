@@ -54,7 +54,7 @@ namespace UnitTests
 					{
 						if ((i++)%99 == 0)
 							Console.Out.WriteLine($"shipPosition: {shipPosition}; moveCommand: {moveCommand}; phase: {phase}; nextPosition: {nextPositions[phase]}");
-						var actual = FastShipPosition.ToShipPosition(FastShipPosition.Move(fastShipPosition, moveCommand, phase));
+						var actual = FastShipPosition.ToShipPosition(FastShipPosition.GetPositionAtPhase(FastShipPosition.Move(fastShipPosition, moveCommand), phase));
 						actual.Should().Be(nextPositions[phase], $"shipPosition: {shipPosition}; moveCommand: {moveCommand}; phase: {phase}; nextPosition: {nextPositions[phase]}");
 					}
 				}

@@ -17,11 +17,10 @@ namespace Game.Geometry
 		private const int count = (orientationMask | coordMask | speedMask) + 1;
 
 		private const int positionBits = orientationShift + orientationBits;
-		private const int movePhaseBits = 1;
 		private const int moveCommandBits = 3;
-		private const int movesCount = 1 << (positionBits + movePhaseBits + moveCommandBits);
+		private const int movesCount = 1 << (positionBits + moveCommandBits);
 		private static bool initialized;
-		private static readonly int[] moves = new int[movesCount];
+		private static readonly uint[] moves = new uint[movesCount];
 
 		public static void Init()
 		{
@@ -39,9 +38,13 @@ namespace Game.Geometry
 				{
 					var shipPosition = new ShipPosition(new Coord(x, y), orientation, speed);
 					var nextPositions = shipPosition.Apply(moveCommand);
+					if (nextPositions.Count != 2)
+						throw new InvalidOperationException("nextPositions.Count != 2");
 					var fastShipPosition = Create(shipPosition);
+					var moved = 0u;
 					for (int phase = 0; phase < nextPositions.Count; phase++)
-						moves[(fastShipPosition << movePhaseBits) | phase | ((int)moveCommand << (positionBits + movePhaseBits))] = Create(nextPositions[phase]);
+						moved = unchecked((moved << 16) | (uint)Create(nextPositions[phase]));
+					moves[fastShipPosition | ((int)moveCommand << positionBits)] = moved;
 				}
 			}
 		}
@@ -134,9 +137,27 @@ namespace Game.Geometry
 		}
 		
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static int Move(int fastShipPosition, ShipMoveCommand moveCommand, int phase)
+		public static uint Move(int fastShipPosition, ShipMoveCommand moveCommand)
 		{
-			return moves[(fastShipPosition << movePhaseBits) | phase | ((int)moveCommand << (positionBits + movePhaseBits))];
+			return moves[fastShipPosition | ((int)moveCommand << positionBits)];
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static int GetMovedPosition(uint moved)
+		{
+			return unchecked((int)(moved >> 16));
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static int GetFinalPosition(uint moved)
+		{
+			return unchecked((int)(moved & ((1 << 16) - 1)));
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static int GetPositionAtPhase(uint moved, int phase)
+		{
+			return phase == 0 ? GetMovedPosition(moved) : GetFinalPosition(moved);
 		}
 	}
 }

@@ -219,8 +219,9 @@ namespace Experiments
 			{
 				foreach (var moveCommand in Enum.GetValues(typeof(ShipMoveCommand)).Cast<ShipMoveCommand>())
 				{
-					FastShipPosition.Move(fastShips[ind], moveCommand, 0);
-					FastShipPosition.Move(fastShips[ind], moveCommand, 1);
+					var moved = FastShipPosition.Move(fastShips[ind], moveCommand);
+					FastShipPosition.GetMovedPosition(moved);
+					FastShipPosition.GetFinalPosition(moved);
 				}
 				if (++ind >= indexes.Length)
 					ind = 0;
