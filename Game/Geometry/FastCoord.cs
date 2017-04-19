@@ -4,18 +4,22 @@ namespace Game.Geometry
 {
 	public static class FastCoord
 	{
-		public const int bits = 10;
-		public const int count = 1 << bits;
-		public const int shiftY = bits/2;
-		public const int maskX = (1 << shiftY) - 1;
-		public const int orientationBits = 3;
-		public const int neighborsCount = 1 << (bits + orientationBits);
-		public const int distancesCount = (1 << bits) * (1 << bits);
-		public static readonly int[] distances = new int[distancesCount];
-		public static readonly int[] neighbors = new int[neighborsCount];
+		private static bool initialized;
+		private const int bits = 10;
+		private const int count = 1 << bits;
+		private const int shiftY = bits/2;
+		private const int maskX = (1 << shiftY) - 1;
+		private const int orientationBits = 3;
+		private const int neighborsCount = 1 << (bits + orientationBits);
+		private const int distancesCount = (1 << bits) * (1 << bits);
+		private static readonly int[] distances = new int[distancesCount];
+		private static readonly int[] neighbors = new int[neighborsCount];
 
 		public static void Init()
 		{
+			if (initialized)
+				return;
+			initialized = true;
 			var coords = new Coord[count];
 			for (int x = -1; x < Constants.MAP_WIDTH + 1; x++)
 				for (int y = -1; y < Constants.MAP_HEIGHT + 1; y++)
@@ -62,9 +66,15 @@ namespace Game.Geometry
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static bool IsInsideMap(int fastCoord)
 		{
-			var x = GetX(fastCoord);
-			var y = GetY(fastCoord);
-			return x >= 0 && x < Constants.MAP_WIDTH && y >= 0 && y < Constants.MAP_HEIGHT;
+			if (fastCoord < 0)
+				return false;
+			var rawX = fastCoord & maskX;
+			if (rawX <= 0 || rawX >= Constants.MAP_WIDTH + 1)
+				return false;
+			var rawY = fastCoord >> shiftY;
+			if (rawY <= 0 || rawY >= Constants.MAP_HEIGHT + 1)
+				return false;
+			return true;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

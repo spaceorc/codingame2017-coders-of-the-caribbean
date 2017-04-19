@@ -43,6 +43,9 @@ namespace Experiments
 			var coords = indexes.Select(i => coordsX[i]).ToArray();
 			var fastCoords = indexes.Select(i => FastCoord.Create(coords[i])).ToArray();
 
+			var ships = coords.Select(c => new ShipPosition(c, random.Next(6), random.Next(3))).ToArray();
+			var fastShips = ships.Select(FastShipPosition.Create).ToArray();
+
 			var stopwatch = Stopwatch.StartNew();
 
 			Console.Out.WriteLine("IsInsideMap");
@@ -123,8 +126,105 @@ namespace Experiments
 			}
 			stopwatch.Stop();
 			Console.Out.WriteLine(stopwatch.ElapsedMilliseconds);
+			
+			Console.Out.WriteLine("ShipDistanceTo");
+			var shipPosition = new ShipPosition(coords[0], 0, 0);
+			stopwatch.Restart();
+			ind = 0;
+			for (int i = 0; i < 10000000; i++)
+			{
+				shipPosition.DistanceTo(coords[ind++]);
+				if (ind >= indexes.Length)
+					ind = 0;
+			}
+			stopwatch.Stop();
+			Console.Out.WriteLine(stopwatch.ElapsedMilliseconds);
 
+			var fastShipPosition = FastShipPosition.Create(shipPosition);
+			stopwatch.Restart();
+			ind = 0;
+			for (int i = 0; i < 10000000; i++)
+			{
+				FastShipPosition.DistanceTo(fastShipPosition, fastCoords[ind++]);
+				if (ind >= indexes.Length)
+					ind = 0;
+			}
+			stopwatch.Stop();
+			Console.Out.WriteLine(stopwatch.ElapsedMilliseconds);
 
+			Console.Out.WriteLine("Collides");
+			stopwatch.Restart();
+			ind = 0;
+			for (int i = 0; i < 10000000; i++)
+			{
+				shipPosition.Collides(coords[ind++]);
+				if (ind >= indexes.Length)
+					ind = 0;
+			}
+			stopwatch.Stop();
+			Console.Out.WriteLine(stopwatch.ElapsedMilliseconds);
+
+			stopwatch.Restart();
+			ind = 0;
+			for (int i = 0; i < 10000000; i++)
+			{
+				FastShipPosition.Collides(fastShipPosition, fastCoords[ind++]);
+				if (ind >= indexes.Length)
+					ind = 0;
+			}
+			stopwatch.Stop();
+			Console.Out.WriteLine(stopwatch.ElapsedMilliseconds);
+
+			Console.Out.WriteLine("CollidesShip");
+			stopwatch.Restart();
+			ind = 0;
+			for (int i = 0; i < 10000000; i++)
+			{
+				shipPosition.CollidesShip(ships[ind++]);
+				if (ind >= indexes.Length)
+					ind = 0;
+			}
+			stopwatch.Stop();
+			Console.Out.WriteLine(stopwatch.ElapsedMilliseconds);
+
+			stopwatch.Restart();
+			ind = 0;
+			for (int i = 0; i < 10000000; i++)
+			{
+				FastShipPosition.CollidesShip(fastShipPosition, fastShips[ind++]);
+				if (ind >= indexes.Length)
+					ind = 0;
+			}
+			stopwatch.Stop();
+			Console.Out.WriteLine(stopwatch.ElapsedMilliseconds);
+
+			Console.Out.WriteLine("Move");
+			stopwatch.Restart();
+			ind = 0;
+			for (int i = 0; i < 1_000_000; i++)
+			{
+				foreach (var moveCommand in Enum.GetValues(typeof(ShipMoveCommand)).Cast<ShipMoveCommand>())
+					ships[ind].Apply(moveCommand);
+				if (++ind >= indexes.Length)
+					ind = 0;
+			}
+			stopwatch.Stop();
+			Console.Out.WriteLine(stopwatch.ElapsedMilliseconds);
+
+			stopwatch.Restart();
+			ind = 0;
+			for (int i = 0; i < 1_000_000; i++)
+			{
+				foreach (var moveCommand in Enum.GetValues(typeof(ShipMoveCommand)).Cast<ShipMoveCommand>())
+				{
+					FastShipPosition.Move(fastShips[ind], moveCommand, 0);
+					FastShipPosition.Move(fastShips[ind], moveCommand, 1);
+				}
+				if (++ind >= indexes.Length)
+					ind = 0;
+			}
+			stopwatch.Stop();
+			Console.Out.WriteLine(stopwatch.ElapsedMilliseconds);
 		}
 
 		private static void Main2(string[] args)

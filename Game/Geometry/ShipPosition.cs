@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Game.Geometry
 {
@@ -29,6 +30,11 @@ namespace Game.Geometry
 			return Collides(other.coord) || Collides(other.bow) || Collides(other.stern);
 		}
 
+		public bool IsInsideMap()
+		{
+			return coord.IsInsideMap();
+		}
+
 		public int DistanceTo(Coord target)
 		{
 			var dist = coord.DistanceTo(target);
@@ -43,6 +49,47 @@ namespace Game.Geometry
 			if (sternDist == 0)
 				return 0;
 			return dist;
+		}
+
+		public List<ShipPosition> Apply(ShipMoveCommand moveCommand)
+		{
+			var result = new List<ShipPosition>();
+			var newSpeed = speed;
+			switch (moveCommand)
+			{
+				case ShipMoveCommand.Faster:
+					newSpeed++;
+					break;
+				case ShipMoveCommand.Slower:
+					newSpeed--;
+					break;
+			}
+			if (newSpeed > Constants.MAX_SHIP_SPEED)
+				newSpeed = Constants.MAX_SHIP_SPEED;
+			if (newSpeed < 0)
+				newSpeed = 0;
+			var movedShip = this;
+			for (var sp = 1; sp <= newSpeed; sp++)
+			{
+				var newShip = new ShipPosition(movedShip.coord.Neighbor(orientation), orientation, sp);
+				if (!newShip.IsInsideMap())
+					break;
+				movedShip = newShip;
+			}
+			if (movedShip.speed != newSpeed)
+				movedShip = new ShipPosition(movedShip.coord, orientation, 0);
+			result.Add(movedShip);
+			switch (moveCommand)
+			{
+				case ShipMoveCommand.Port:
+					movedShip = new ShipPosition(movedShip.coord, (orientation + 1) % 6, movedShip.speed);
+					break;
+				case ShipMoveCommand.Starboard:
+					movedShip = new ShipPosition(movedShip.coord, (orientation + 5) % 6, movedShip.speed);
+					break;
+			}
+			result.Add(movedShip);
+			return result;
 		}
 
 		public bool Equals(ShipPosition other)
@@ -79,6 +126,11 @@ namespace Game.Geometry
 		public static bool operator !=(ShipPosition left, ShipPosition right)
 		{
 			return !Equals(left, right);
+		}
+
+		public override string ToString()
+		{
+			return $"{nameof(coord)}: {coord}, {nameof(orientation)}: {orientation}, {nameof(speed)}: {speed}";
 		}
 	}
 }
