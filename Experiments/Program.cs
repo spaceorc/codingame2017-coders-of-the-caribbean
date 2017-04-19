@@ -34,7 +34,7 @@ namespace Experiments
 
 			//===
 
-			Player.Iteration(int.MaxValue, new StringReader(state));
+			Player.Iteration(new StringReader(state));
 		}
 		/*
 		private static void Main2(string[] args)

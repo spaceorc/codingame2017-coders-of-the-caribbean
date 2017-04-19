@@ -19,6 +19,7 @@ namespace Game.State
 		public readonly List<TurnStat> stats = new List<TurnStat>();
 		public readonly Forecaster forecaster;
 		public readonly Admiral admiral;
+		public int currentTurn;
 
 		public GameState()
 		{

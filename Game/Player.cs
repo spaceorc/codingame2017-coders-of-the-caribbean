@@ -11,29 +11,28 @@ namespace Game
 
 		private static void Main(string[] args)
 		{
-			// game loop
-			var currentTurn = 0;
-			while (true)
-			{
-				currentTurn += 2;
-				Iteration(currentTurn, Console.In);
-			}
+			MainLoop(Console.In);
 		}
 
-		public static void Iteration(int currentTurn, TextReader input)
+		public static void MainLoop(TextReader input)
 		{
+			while (true)
+				Iteration(input);
+		}
+
+		public static void Iteration(TextReader input)
+		{
+			gameState.currentTurn += 2;
 			turnState = TurnState.ReadFrom(input);
-			Console.Error.WriteLine("Current turn: " + currentTurn);
-			if (currentTurn == Settings.DUMP_TURN)
+			Console.Error.WriteLine("Current turn: " + gameState.currentTurn);
+			if (gameState.currentTurn == Settings.DUMP_TURN)
 			{
 				turnState.WriteTo(Console.Error);
 				Console.Error.WriteLine("===");
 				gameState.Dump();
 			}
-
 			gameState.admiral.Iteration(turnState);
-
-			if (currentTurn == Settings.DUMP_STAT_TURN)
+			if (gameState.currentTurn == Settings.DUMP_STAT_TURN)
 				gameState.DumpStats();
 		}
 	}
