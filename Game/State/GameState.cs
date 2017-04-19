@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Game.Cannons;
 using Game.Entities;
@@ -49,6 +50,22 @@ namespace Game.State
 			if (!navigators.TryGetValue(ship.id, out navigator))
 				navigators.Add(ship.id, navigator = new Navigator(ship.id, this));
 			return navigator;
+		}
+
+		public void Iteration(TextReader input)
+		{
+			currentTurn += 2;
+			var turnState = TurnState.ReadFrom(input);
+			Console.Error.WriteLine("Current turn: " + currentTurn);
+			if (currentTurn == Settings.DUMP_TURN)
+			{
+				turnState.WriteTo(Console.Error);
+				Console.Error.WriteLine("===");
+				Dump();
+			}
+			admiral.Iteration(turnState);
+			if (currentTurn == Settings.DUMP_STAT_TURN)
+				DumpStats();
 		}
 
 		public void Dump()

@@ -10,12 +10,30 @@ namespace Game.Strategy
 	public class Admiral
 	{
 		public readonly GameState gameState;
-
 		public readonly Dictionary<int, IStrategy> strategies = new Dictionary<int, IStrategy>();
 
 		public Admiral(GameState gameState)
 		{
 			this.gameState = gameState;
+		}
+
+		public void Iteration(TurnState turnState)
+		{
+			turnState.stopwatch.Restart();
+			gameState.forecaster.BuildForecast(turnState);
+			var moves = gameState.admiral.Decide(turnState);
+			var isDouble = Settings.USE_DOUBLE_PATHFINDING && turnState.stopwatch.ElapsedMilliseconds < Settings.DOUBLE_PATHFINDING_TIMELIMIT;
+			if (isDouble)
+				moves = gameState.admiral.Decide(turnState);
+
+			for (var i = 0; i < turnState.myShips.Count; i++)
+			{
+				var ship = turnState.myShips[i];
+				ManualMove(turnState, ship, moves[i]);
+			}
+			turnState.stopwatch.Stop();
+			gameState.stats.Add(new TurnStat {isDouble = isDouble, time = turnState.stopwatch.ElapsedMilliseconds});
+			Console.Error.WriteLine($"Decision made in {turnState.stopwatch.ElapsedMilliseconds} ms (isDouble = {isDouble})");
 		}
 
 		private List<ShipMoveCommand> Decide(TurnState turnState)
@@ -64,31 +82,6 @@ namespace Game.Strategy
 			return action;
 		}
 
-		public void Dump(string admiralRef)
-		{
-			foreach (var strategy in strategies)
-				Console.Error.WriteLine($"{admiralRef}.{nameof(strategies)}[{strategy.Key}] = {strategy.Value.Dump($"{admiralRef}.{nameof(gameState)}")};");
-		}
-
-		public void Iteration(TurnState turnState)
-		{
-			turnState.stopwatch.Restart();
-			gameState.forecaster.BuildForecast(turnState);
-			var moves = gameState.admiral.Decide(turnState);
-			var isDouble = Settings.USE_DOUBLE_PATHFINDING && turnState.stopwatch.ElapsedMilliseconds < Settings.DOUBLE_PATHFINDING_TIMELIMIT;
-			if (isDouble)
-				moves = gameState.admiral.Decide(turnState);
-
-			for (var i = 0; i < turnState.myShips.Count; i++)
-			{
-				var ship = turnState.myShips[i];
-				ManualMove(turnState, ship, moves[i]);
-			}
-			turnState.stopwatch.Stop();
-			gameState.stats.Add(new TurnStat { isDouble = isDouble, time = turnState.stopwatch.ElapsedMilliseconds });
-			Console.Error.WriteLine($"Decision made in {turnState.stopwatch.ElapsedMilliseconds} ms (isDouble = {isDouble})");
-		}
-
 		private void ManualMove(TurnState turnState, Ship ship, ShipMoveCommand moveCommand)
 		{
 			var cannoneer = gameState.GetCannoneer(ship);
@@ -103,6 +96,12 @@ namespace Game.Strategy
 					return;
 			}
 			ship.Move(moveCommand);
+		}
+
+		public void Dump(string admiralRef)
+		{
+			foreach (var strategy in strategies)
+				Console.Error.WriteLine($"{admiralRef}.{nameof(strategies)}[{strategy.Key}] = {strategy.Value.Dump($"{admiralRef}.{nameof(gameState)}")};");
 		}
 	}
 }

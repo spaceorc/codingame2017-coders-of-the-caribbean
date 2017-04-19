@@ -30,11 +30,18 @@ namespace Experiments
 ".Trim();
 
 			//===
-			
-
+			var gameState = new GameState();
+			gameState.cannoneers[1] = new Cannoneer(1, gameState) { fire = true };
+			gameState.cannoneers[3] = new Cannoneer(3, gameState) { fire = true };
+			gameState.miners[1] = new Miner(1, gameState) { cooldown = 0 };
+			gameState.miners[3] = new Miner(3, gameState) { cooldown = 0 };
+			gameState.navigators[1] = new Navigator(1, gameState);
+			gameState.navigators[3] = new Navigator(3, gameState);
+			gameState.admiral.strategies[1] = new CollectBarrelsStrategy(1, gameState.admiral.gameState) { currentTargetId = 28 };
+			gameState.admiral.strategies[3] = new CollectBarrelsStrategy(3, gameState.admiral.gameState) { currentTargetId = 25 };
 			//===
 
-			Player.Iteration(new StringReader(state));
+			gameState.Iteration(new StringReader(state));
 		}
 		/*
 		private static void Main2(string[] args)
