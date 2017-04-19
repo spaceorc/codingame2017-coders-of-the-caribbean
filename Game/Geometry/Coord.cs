@@ -1,6 +1,8 @@
+using System;
+
 namespace Game.Geometry
 {
-	public struct Coord
+	public class Coord : IEquatable<Coord>
 	{
 		private static readonly int[][] DIRECTIONS_EVEN =
 			{new[] {1, 0}, new[] {0, -1}, new[] {-1, -1}, new[] {-1, 0}, new[] {-1, 1}, new[] {0, 1}};
@@ -44,6 +46,11 @@ namespace Game.Geometry
 			return $"{x}, {y}";
 		}
 
+		public int ToFastCoord()
+		{
+			return FastCoord.Create(this);
+		}
+
 		public CubeCoord ToCubeCoord()
 		{
 			var xp = x - (y - (y & 1)) / 2;
@@ -55,6 +62,44 @@ namespace Game.Geometry
 		public bool IsInsideMap()
 		{
 			return x >= 0 && x < Constants.MAP_WIDTH && y >= 0 && y < Constants.MAP_HEIGHT;
+		}
+
+		public bool Equals(Coord other)
+		{
+			if (ReferenceEquals(null, other))
+				return false;
+			if (ReferenceEquals(this, other))
+				return true;
+			return x == other.x && y == other.y;
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (ReferenceEquals(null, obj))
+				return false;
+			if (ReferenceEquals(this, obj))
+				return true;
+			if (obj.GetType() != this.GetType())
+				return false;
+			return Equals((Coord)obj);
+		}
+
+		public override int GetHashCode()
+		{
+			unchecked
+			{
+				return (x * 397) ^ y;
+			}
+		}
+
+		public static bool operator ==(Coord left, Coord right)
+		{
+			return Equals(left, right);
+		}
+
+		public static bool operator !=(Coord left, Coord right)
+		{
+			return !Equals(left, right);
 		}
 	}
 }

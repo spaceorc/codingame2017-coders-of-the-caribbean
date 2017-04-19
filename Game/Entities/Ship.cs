@@ -1,17 +1,19 @@
 using System;
-using System.Collections.Generic;
 using Game.Geometry;
 
 namespace Game.Entities
 {
 	public class Ship : Entity
 	{
-		public readonly Coord bow;
-		public readonly int orientation;
+		public readonly Coord _bow;
+		public readonly int fbow;
+		public readonly int _orientation;
 		public readonly int owner;
 		public readonly int rum;
-		public readonly int speed;
-		public readonly Coord stern;
+		public readonly int _speed;
+		public readonly Coord _stern;
+		public readonly int fstern;
+		public readonly int fposition;
 
 		public Ship(int id, Coord coord, int orientation, int speed, int rum, int owner) : this(id, coord.x, coord.y,
 			orientation, speed, rum, owner)
@@ -20,12 +22,15 @@ namespace Game.Entities
 
 		public Ship(int id, int x, int y, int orientation, int speed, int rum, int owner) : base(id, EntityType.Ship, x, y)
 		{
-			this.orientation = orientation;
-			this.speed = speed;
+			this._orientation = orientation;
+			this._speed = speed;
 			this.rum = rum;
 			this.owner = owner;
-			bow = coord.Neighbor(orientation);
-			stern = coord.Neighbor((orientation + 3) % 6);
+			_bow = _coord.Neighbor(orientation);
+			_stern = _coord.Neighbor((orientation + 3) % 6);
+			fposition = FastShipPosition.Create(x, y, orientation, speed);
+			fbow = FastShipPosition.Bow(fposition);
+			fstern = FastShipPosition.Stern(fposition);
 		}
 
 		public void Wait()
@@ -38,9 +43,19 @@ namespace Game.Entities
 			Console.WriteLine($"MOVE {coord.x} {coord.y}");
 		}
 
+		public void Move(int fastCoord)
+		{
+			Console.WriteLine($"MOVE {FastCoord.GetX(fastCoord)} {FastCoord.GetY(fastCoord)}");
+		}
+
 		public void Fire(Coord coord)
 		{
 			Console.WriteLine($"FIRE {coord.x} {coord.y}");
+		}
+
+		public void Fire(int fastCoord)
+		{
+			Console.WriteLine($"FIRE {FastCoord.GetX(fastCoord)} {FastCoord.GetY(fastCoord)}");
 		}
 
 		public void Mine()
@@ -90,86 +105,9 @@ namespace Game.Entities
 			}
 		}
 
-		public List<Ship> Apply(ShipMoveCommand moveCommand)
-		{
-			var result = new List<Ship>();
-			var newSpeed = speed;
-			switch (moveCommand)
-			{
-				case ShipMoveCommand.Faster:
-					newSpeed++;
-					break;
-				case ShipMoveCommand.Slower:
-					newSpeed--;
-					break;
-			}
-			if (newSpeed > Constants.MAX_SHIP_SPEED)
-				newSpeed = Constants.MAX_SHIP_SPEED;
-			if (newSpeed < 0)
-				newSpeed = 0;
-			var movedShip = this;
-			for (var sp = 1; sp <= newSpeed; sp++)
-			{
-				var newShip = new Ship(movedShip.id, movedShip.coord.Neighbor(orientation), orientation, sp, rum - 1, owner);
-				if (!newShip.IsInsideMap())
-					break;
-				movedShip = newShip;
-			}
-			if (movedShip.speed != newSpeed)
-				movedShip = new Ship(movedShip.id, movedShip.coord, orientation, 0, rum - 1, owner);
-			result.Add(movedShip);
-			switch (moveCommand)
-			{
-				case ShipMoveCommand.Port:
-					movedShip = new Ship(movedShip.id, movedShip.coord, (orientation + 1) % 6, movedShip.speed, rum - 1, owner);
-					break;
-				case ShipMoveCommand.Starboard:
-					movedShip = new Ship(movedShip.id, movedShip.coord, (orientation + 5) % 6, movedShip.speed, rum - 1, owner);
-					break;
-			}
-			result.Add(movedShip);
-			return result;
-		}
-
-		public bool IsInsideMap()
-		{
-			return coord.IsInsideMap();
-		}
-
-		public int DistanceTo(Coord target)
-		{
-			var dist = coord.DistanceTo(target);
-			if (dist == 0)
-				return 0;
-			var bowDist = bow.DistanceTo(target);
-			if (bowDist == 0)
-				return 0;
-			if (bowDist < dist)
-				return bowDist;
-			var sternDist = stern.DistanceTo(target);
-			if (sternDist == 0)
-				return 0;
-			return dist;
-		}
-
-		public bool Collides(Coord target)
-		{
-			return coord.Equals(target) || bow.Equals(target) || stern.Equals(target);
-		}
-
-		public bool Collides(Entity target)
-		{
-			return Collides(target.coord);
-		}
-
-		public bool Collides(Ship target)
-		{
-			return Collides(target.coord) || Collides(target.bow) || Collides(target.stern);
-		}
-
 		public override string ToString()
 		{
-			return $"{base.ToString()}, {nameof(orientation)}: {orientation}, {nameof(speed)}: {speed}";
+			return $"{base.ToString()}, {nameof(_orientation)}: {_orientation}, {nameof(_speed)}: {_speed}";
 		}
 	}
 }

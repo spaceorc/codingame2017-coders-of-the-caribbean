@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Game.Entities;
-using Game.Geometry;
 
 namespace Game.State
 {
@@ -28,7 +27,7 @@ namespace Game.State
 
 		private TurnState(TextReader input)
 		{
-			Dictionary<Coord, Barrel> usedBarrelCoords = new Dictionary<Coord, Barrel>();
+			Dictionary<int, Barrel> usedBarrelCoords = new Dictionary<int, Barrel>();
 			string line;
 			var myShipCount = int.Parse(line = input.ReadLine()); // the number of remaining ships
 			lines.Add(line);
@@ -52,9 +51,9 @@ namespace Game.State
 					case EntityType.Barrel:
 						var barrel = new Barrel(entityId, x, y, arg1);
 						Barrel prevBarrel;
-						if (!usedBarrelCoords.TryGetValue(barrel.coord, out prevBarrel))
+						if (!usedBarrelCoords.TryGetValue(barrel.fcoord, out prevBarrel))
 						{
-							usedBarrelCoords.Add(barrel.coord, barrel);
+							usedBarrelCoords.Add(barrel.fcoord, barrel);
 							barrels.Add(barrel);
 							barrelsById.Add(entityId, barrel);
 						}
@@ -103,15 +102,15 @@ namespace Game.State
 				output.WriteLine(myShips.Count);
 				output.WriteLine(myShips.Count + enemyShips.Count + barrels.Count + mines.Count + cannonballs.Count);
 				foreach (var entity in myShips)
-					output.WriteLine($"{entity.id} {entity.type.ToString().ToUpper()} {entity.coord.x} {entity.coord.y} {entity.orientation} {entity.speed} {entity.rum} {entity.owner}");
+					output.WriteLine($"{entity.id} {entity.type.ToString().ToUpper()} {entity._coord.x} {entity._coord.y} {entity._orientation} {entity._speed} {entity.rum} {entity.owner}");
 				foreach (var entity in enemyShips)
-					output.WriteLine($"{entity.id} {entity.type.ToString().ToUpper()} {entity.coord.x} {entity.coord.y} {entity.orientation} {entity.speed} {entity.rum} {entity.owner}");
+					output.WriteLine($"{entity.id} {entity.type.ToString().ToUpper()} {entity._coord.x} {entity._coord.y} {entity._orientation} {entity._speed} {entity.rum} {entity.owner}");
 				foreach (var entity in barrels)
-					output.WriteLine($"{entity.id} {entity.type.ToString().ToUpper()} {entity.coord.x} {entity.coord.y} {entity.rum} 0 0 0");
+					output.WriteLine($"{entity.id} {entity.type.ToString().ToUpper()} {entity._coord.x} {entity._coord.y} {entity.rum} 0 0 0");
 				foreach (var entity in mines)
-					output.WriteLine($"{entity.id} {entity.type.ToString().ToUpper()} {entity.coord.x} {entity.coord.y} 0 0 0 0");
+					output.WriteLine($"{entity.id} {entity.type.ToString().ToUpper()} {entity._coord.x} {entity._coord.y} 0 0 0 0");
 				foreach (var entity in cannonballs)
-					output.WriteLine($"{entity.id} {entity.type.ToString().ToUpper()} {entity.coord.x} {entity.coord.y} {entity.firedBy} {entity.turns} 0 0");
+					output.WriteLine($"{entity.id} {entity.type.ToString().ToUpper()} {entity._coord.x} {entity._coord.y} {entity.firedBy} {entity.turns} 0 0");
 			}
 		}
 	}
