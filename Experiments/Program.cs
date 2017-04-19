@@ -21,12 +21,15 @@ namespace Experiments
 		{
 			var state = @"
 2
-5
-1 SHIP 17 16 1 2 42 1
-3 SHIP 18 6 3 2 64 1
-0 SHIP 15 12 0 2 72 0
-2 SHIP 7 14 1 2 66 0
-50 CANNONBALL 16 15 1 2 0 0
+8
+1 SHIP 6 20 0 1 32 1
+3 SHIP 6 0 3 2 95 1
+0 SHIP 4 18 4 1 92 0
+2 SHIP 5 18 4 1 83 0
+58 CANNONBALL 4 17 1 2 0 0
+26 BARREL 1 19 16 0 0 0
+25 BARREL 1 1 16 0 0 0
+28 BARREL 5 19 19 0 0 0
 ".Trim();
 
 			//===
@@ -37,8 +40,8 @@ namespace Experiments
 			gameState.miners[3] = new Miner(3, gameState) { cooldown = 0 };
 			gameState.navigators[1] = new Navigator(1, gameState);
 			gameState.navigators[3] = new Navigator(3, gameState);
-			gameState.admiral.strategies[1] = new CollectBarrelsStrategy(1, gameState.admiral.gameState) { currentTargetId = 28 };
-			gameState.admiral.strategies[3] = new CollectBarrelsStrategy(3, gameState.admiral.gameState) { currentTargetId = 25 };
+			gameState.admiral.strategies[1] = new CollectBarrelsStrategy(1, gameState.admiral.gameState) { currentTargetId = 28, currentTarget = new Coord(5, 19) };
+			gameState.admiral.strategies[3] = new CollectBarrelsStrategy(3, gameState.admiral.gameState) { currentTargetId = 25, currentTarget = new Coord(1, 1) };
 			//===
 
 			gameState.Iteration(new StringReader(state));

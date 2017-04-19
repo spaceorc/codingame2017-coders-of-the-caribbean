@@ -62,7 +62,11 @@ namespace Game.Strategy
 
 		public string Dump(string gameStateRef)
 		{
-			return $"new {nameof(CollectBarrelsStrategy)}({shipId}, {gameStateRef}) {{ {nameof(currentTargetId)} = {(currentTargetId.HasValue ? currentTargetId.ToString() : "null")} }}";
+			return $"new {nameof(CollectBarrelsStrategy)}({shipId}, {gameStateRef}) " +
+			       $"{{" +
+			       $" {nameof(currentTargetId)} = {(currentTargetId.HasValue ? currentTargetId.ToString() : "null")}," +
+			       $" {nameof(currentTarget)} = {(currentTarget.HasValue ? $"new {nameof(Coord)}({currentTarget.Value.x}, {currentTarget.Value.y})" : "null")}" +
+			       $" }}";
 		}
 	}
 }
