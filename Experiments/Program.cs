@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -18,6 +19,115 @@ namespace Experiments
 	class Program
 	{
 		private static void Main(string[] args)
+		{
+			FastCoord.Init();
+
+			var coordsX = new List<Coord>();
+			for (int x = -1; x < Constants.MAP_WIDTH + 1; x++)
+			for (int y = -1; y < Constants.MAP_HEIGHT + 1; y++)
+			{
+				var coord = new Coord(x, y);
+				coordsX.Add(coord);
+			}
+
+			var indexes = Enumerable.Range(0, coordsX.Count).ToArray();
+			var random = new Random();
+			for (int i = 0; i < indexes.Length; i++)
+			{
+				var r = random.Next(i, indexes.Length);
+				var tmp = indexes[r];
+				indexes[r] = indexes[i];
+				indexes[i] = tmp;
+			}
+
+			var coords = indexes.Select(i => coordsX[i]).ToArray();
+			var fastCoords = indexes.Select(i => FastCoord.Create(coords[i])).ToArray();
+
+			var stopwatch = Stopwatch.StartNew();
+
+			Console.Out.WriteLine("IsInsideMap");
+			stopwatch.Restart();
+			int ind = 0;
+			for (int i = 0; i < 10000000; i++)
+			{
+				coords[ind++].IsInsideMap();
+				if (ind >= indexes.Length)
+					ind = 0;
+			}
+			stopwatch.Stop();
+			Console.Out.WriteLine(stopwatch.ElapsedMilliseconds);
+
+			stopwatch.Restart();
+			ind = 0;
+			for (int i = 0; i < 10000000; i++)
+			{
+				FastCoord.IsInsideMap(fastCoords[ind++]);
+				if (ind >= indexes.Length)
+					ind = 0;
+			}
+			stopwatch.Stop();
+			Console.Out.WriteLine(stopwatch.ElapsedMilliseconds);
+
+			Console.Out.WriteLine("DistanceTo");
+			stopwatch.Restart();
+			ind = 0;
+			for (int i = 0; i < 10000000; i++)
+			{
+				coords[ind++].DistanceTo(coords[0]);
+				if (ind >= indexes.Length)
+					ind = 0;
+			}
+			stopwatch.Stop();
+			Console.Out.WriteLine(stopwatch.ElapsedMilliseconds);
+
+			stopwatch.Restart();
+			ind = 0;
+			for (int i = 0; i < 10000000; i++)
+			{
+				FastCoord.Distance(fastCoords[ind++], fastCoords[0]);
+				if (ind >= indexes.Length)
+					ind = 0;
+			}
+			stopwatch.Stop();
+			Console.Out.WriteLine(stopwatch.ElapsedMilliseconds);
+
+			Console.Out.WriteLine("Neighbor");
+			stopwatch.Restart();
+			ind = 0;
+			for (int i = 0; i < 10000000; i++)
+			{
+				coords[ind].Neighbor(0);
+				coords[ind].Neighbor(1);
+				coords[ind].Neighbor(2);
+				coords[ind].Neighbor(3);
+				coords[ind].Neighbor(4);
+				coords[ind].Neighbor(5);
+				if (++ind >= indexes.Length)
+					ind = 0;
+			}
+			stopwatch.Stop();
+			Console.Out.WriteLine(stopwatch.ElapsedMilliseconds);
+
+			stopwatch.Restart();
+			ind = 0;
+			for (int i = 0; i < 10000000; i++)
+			{
+				FastCoord.Neighbor(fastCoords[ind], 0);
+				FastCoord.Neighbor(fastCoords[ind], 1);
+				FastCoord.Neighbor(fastCoords[ind], 2);
+				FastCoord.Neighbor(fastCoords[ind], 3);
+				FastCoord.Neighbor(fastCoords[ind], 4);
+				FastCoord.Neighbor(fastCoords[ind], 5);
+				if (++ind >= indexes.Length)
+					ind = 0;
+			}
+			stopwatch.Stop();
+			Console.Out.WriteLine(stopwatch.ElapsedMilliseconds);
+
+
+		}
+
+		private static void Main2(string[] args)
 		{
 			var state = @"
 2

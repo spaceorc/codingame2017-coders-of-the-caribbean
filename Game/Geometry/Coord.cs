@@ -25,7 +25,7 @@ namespace Game.Geometry
 		public Coord Neighbor(int orientation)
 		{
 			int newY, newX;
-			if (y % 2 == 1)
+			if (y % 2 == 1 || y % 2 == -1)
 			{
 				newY = y + DIRECTIONS_ODD[orientation][1];
 				newX = x + DIRECTIONS_ODD[orientation][0];
