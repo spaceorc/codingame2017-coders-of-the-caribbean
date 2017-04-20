@@ -65,8 +65,8 @@ namespace Game.FireTeam
 				foreach (var fireTarget in fireTargets)
 				{
 					if (bestFireTarget == null ||
-					    fireTarget.TargetType < bestFireTarget.TargetType ||
-					    fireTarget.TargetType == bestFireTarget.TargetType && fireTarget.turns < bestFireTarget.turns)
+						fireTarget.turns < bestFireTarget.turns ||
+						fireTarget.turns == bestFireTarget.turns && fireTarget.turns < bestFireTarget.turns)
 						bestFireTarget = fireTarget;
 				}
 			}
