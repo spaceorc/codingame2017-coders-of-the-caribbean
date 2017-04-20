@@ -6,7 +6,7 @@ using Game.State;
 
 namespace Game.Navigation
 {
-	public class Navigator
+	public class Navigator : ITeamMember
 	{
 		public readonly GameState gameState;
 		public readonly int shipId;
@@ -15,6 +15,14 @@ namespace Game.Navigation
 		{
 			this.shipId = shipId;
 			this.gameState = gameState;
+		}
+
+		public void StartTurn(TurnState turnState)
+		{
+		}
+
+		public void EndTurn(TurnState turnState)
+		{
 		}
 
 		public List<ShipMoveCommand> FindPath(TurnState turnState, int ftarget)
@@ -56,13 +64,13 @@ namespace Game.Navigation
 							if (nearEnemyShip)
 								damage = Math.Max(damage, Settings.NEAR_ENEMYSHIP_VIRTUAL_DAMAGE);
 
-							var onMyShip = current.depth == 0 && turnState.myShips.Where(m => m.id != shipId).Any(m =>  FastShipPosition.CollidesShip(newPos, m.fposition) || FastShipPosition.CollidesShip(newMovedPos, m.fposition))
-											|| gameState.forecaster.turnForecasts[current.depth].myShipsPositions
+							var onMyShip = current.depth == 0 && turnState.myShips.Where(m => m.id != shipId).Any(m => FastShipPosition.CollidesShip(newPos, m.fposition) || FastShipPosition.CollidesShip(newMovedPos, m.fposition))
+											|| gameState.forecaster.GetTurnForecast(current.depth).myShipsPositions
 												.Where((_, i) => i != ship.index)
 												.Any(m => FastShipPosition.CollidesShip(newPos, m) || FastShipPosition.CollidesShip(newMovedPos, m));
 
 							var onEnemyShip = current.depth == 0 && turnState.enemyShips.Any(m => FastShipPosition.CollidesShip(newPos, m.fposition) || FastShipPosition.CollidesShip(newMovedPos, m.fposition))
-											|| gameState.forecaster.turnForecasts[current.depth].enemyShipsPositions
+											|| gameState.forecaster.GetTurnForecast(current.depth).enemyShipsPositions
 												.Any(m => FastShipPosition.CollidesShip(newPos, m) || FastShipPosition.CollidesShip(newMovedPos, m));
 
 							if (!onMyShip && !onEnemyShip)
@@ -151,12 +159,12 @@ namespace Game.Navigation
 				}
 			}
 
-			public static bool operator==(ShipMovementState left, ShipMovementState right)
+			public static bool operator ==(ShipMovementState left, ShipMovementState right)
 			{
 				return Equals(left, right);
 			}
 
-			public static bool operator!=(ShipMovementState left, ShipMovementState right)
+			public static bool operator !=(ShipMovementState left, ShipMovementState right)
 			{
 				return !Equals(left, right);
 			}

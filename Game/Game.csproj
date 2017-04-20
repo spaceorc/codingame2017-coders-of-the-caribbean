@@ -47,7 +47,6 @@
     <Compile Include="Geometry\FastCoord.cs" />
     <Compile Include="Geometry\FastShipPosition.cs" />
     <Compile Include="Geometry\ShipPosition.cs" />
-    <Compile Include="Prediction\TurnForecast.cs" />
     <Compile Include="Strategy\Admiral.cs" />
     <Compile Include="Strategy\Decision.cs" />
     <Compile Include="Strategy\DecisionType.cs" />

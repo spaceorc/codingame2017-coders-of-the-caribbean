@@ -1,20 +1,35 @@
 ﻿using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Game.Entities;
 using Game.Geometry;
 using Game.State;
 
 namespace Game.Prediction
 {
-	public class Forecaster
+	public class Forecaster : ITeamMember
 	{
 		public readonly GameState gameState;
-		public TurnForecast[] turnForecasts;
-		
+		private TurnForecast[] turnForecasts;
+
 		public Forecaster(GameState gameState)
 		{
 			this.gameState = gameState;
 		}
-		
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public TurnForecast GetTurnForecast(int turn)
+		{
+			return turnForecasts[turn];
+		}
+
+		public void StartTurn(TurnState turnState)
+		{
+		}
+
+		public void EndTurn(TurnState turnState)
+		{
+		}
+
 		public void BuildForecast(TurnState turnState)
 		{
 			turnForecasts = new TurnForecast[Settings.NAVIGATION_PATH_DEPTH];
@@ -53,7 +68,7 @@ namespace Game.Prediction
 			}
 		}
 
-		public void ApplyPath(TurnState turnState, Ship ship, List<ShipMoveCommand> path)
+		public void ApplyPath(Ship ship, List<ShipMoveCommand> path)
 		{
 			var index = ship.index;
 			var movedShip = ship.fposition;
@@ -61,13 +76,19 @@ namespace Game.Prediction
 			{
 				var moveCommand = path[i];
 				movedShip = FastShipPosition.GetFinalPosition(FastShipPosition.Move(movedShip, moveCommand));
-				turnForecasts[i].myShipsPositions[index] = movedShip;
+				GetTurnForecast(i).myShipsPositions[index] = movedShip;
 			}
 			for (var i = path.Count; i < Settings.NAVIGATION_PATH_DEPTH; i++)
 			{
 				movedShip = FastShipPosition.GetFinalPosition(FastShipPosition.Move(movedShip, ShipMoveCommand.Wait));
-				turnForecasts[i].myShipsPositions[index] = movedShip;
+				GetTurnForecast(i).myShipsPositions[index] = movedShip;
 			}
+		}
+
+		public class TurnForecast
+		{
+			public int[] enemyShipsPositions;
+			public int[] myShipsPositions;
 		}
 	}
 }
