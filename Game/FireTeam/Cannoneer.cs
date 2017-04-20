@@ -80,7 +80,7 @@ namespace Game.FireTeam
 			var cannonCoord = FastShipPosition.Bow(ship.fposition);
 			for (var turn = 0; turn < 5; turn++)
 			{
-				var forecast = gameState.forecaster.turnForecasts[0];
+				var forecast = gameState.forecaster.turnForecasts[turn];
 				var enemyPosition = forecast.enemyShipsPositions[enemyIndex];
 
 				var coords = new[] { FastShipPosition.Coord(enemyPosition), FastShipPosition.Bow(enemyPosition), FastShipPosition.Stern(enemyPosition) };

@@ -17,8 +17,8 @@ namespace Game.Strategy
 		public readonly GameState gameState;
 		public readonly int shipId;
 
-		private int currentTarget;
-		private bool started;
+		public int currentTarget;
+		public bool started;
 
 		public WalkAroundStrategy(int shipId, GameState gameState)
 		{

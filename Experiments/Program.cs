@@ -233,27 +233,30 @@ namespace Experiments
 		{
 			var state = @"
 2
-8
-1 SHIP 6 20 0 1 32 1
-3 SHIP 6 0 3 2 95 1
-0 SHIP 4 18 4 1 92 0
-2 SHIP 5 18 4 1 83 0
-58 CANNONBALL 4 17 1 2 0 0
-26 BARREL 1 19 16 0 0 0
-25 BARREL 1 1 16 0 0 0
-28 BARREL 5 19 19 0 0 0
+10
+0 SHIP 4 15 0 2 100 1
+2 SHIP 7 4 4 2 87 1
+1 SHIP 12 7 5 1 91 0
+3 SHIP 11 12 3 2 81 0
+5 MINE 7 14 0 0 0 0
+4 MINE 7 6 0 0 0 0
+7 MINE 1 16 0 0 0 0
+33 MINE 9 4 0 0 0 0
+36 CANNONBALL 11 8 0 3 0 0
+37 CANNONBALL 11 8 2 2 0 0
 ".Trim();
 
 			//===
 			var gameState = new GameState();
-			gameState.cannoneers[1] = new Cannoneer(1, gameState) { fired = false };
-			gameState.cannoneers[3] = new Cannoneer(3, gameState) { fired = false };
-			gameState.miners[1] = new Miner(1, gameState) { cooldown = 0 };
-			gameState.miners[3] = new Miner(3, gameState) { cooldown = 0 };
-			gameState.navigators[1] = new Navigator(1, gameState);
-			gameState.navigators[3] = new Navigator(3, gameState);
-			gameState.admiral.strategies[1] = new CollectBarrelsStrategy(1, gameState.admiral.gameState) { currentTargetId = 28, currentTarget = new Coord(5, 19).ToFastCoord() };
-			gameState.admiral.strategies[3] = new CollectBarrelsStrategy(3, gameState.admiral.gameState) { currentTargetId = 25, currentTarget = new Coord(1, 1).ToFastCoord() };
+			gameState.cannoneers[0] = new Cannoneer(0, gameState) { fired = false };
+			gameState.cannoneers[2] = new Cannoneer(2, gameState) { fired = false };
+			gameState.miners[0] = new Miner(0, gameState) { cooldown = 0 };
+			gameState.miners[2] = new Miner(2, gameState) { cooldown = 0 };
+			gameState.navigators[0] = new Navigator(0, gameState);
+			gameState.navigators[2] = new Navigator(2, gameState);
+			gameState.admiral.strategies[0] = new WalkAroundStrategy(0, gameState.admiral.gameState) { currentTarget = 2, started = true };
+			gameState.admiral.strategies[2] = new CollectBarrelsStrategy(2, gameState.admiral.gameState) { currentTargetId = 17, currentTarget = 518 };
+
 			//===
 
 			gameState.Iteration(new StringReader(state));
