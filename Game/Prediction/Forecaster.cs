@@ -47,7 +47,10 @@ namespace Game.Prediction
 		private void BuildCannonballsForecast(TurnState turnState)
 		{
 			for (var i = 0; i < turnState.cannonballs.Count; i++)
-				GetTurnForecast(turnState.cannonballs[i].turns).cannonballCoordsMap[turnState.cannonballs[i].fcoord] = true;
+			{
+				if (turnState.cannonballs[i].turns - 1 >= 0 && turnState.cannonballs[i].turns - 1 < Settings.NAVIGATION_PATH_DEPTH)
+					GetTurnForecast(turnState.cannonballs[i].turns - 1).cannonballCoordsMap[turnState.cannonballs[i].fcoord] = true;
+			}
 
 			if (Settings.CANNONBALLS_FORECAST_TRAVEL_TIME_LIMIT > 0)
 			{
@@ -59,7 +62,7 @@ namespace Game.Prediction
 						var travelTime = (int)(1 + Math.Round(dist / 3.0));
 						if (travelTime > Settings.CANNONBALLS_FORECAST_TRAVEL_TIME_LIMIT)
 							break;
-						if (travelTime + 1 >= Settings.NAVIGATION_PATH_DEPTH)
+						if (travelTime >= Settings.NAVIGATION_PATH_DEPTH)
 							break;
 						for (var orientation = 0; orientation < 6; orientation++)
 							targets[orientation] = FastCoord.Neighbor(targets[orientation], orientation);
