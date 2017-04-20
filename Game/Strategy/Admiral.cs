@@ -26,6 +26,8 @@ namespace Game.Strategy
 			NotifyStartTurn(turnState);
 
 			gameState.forecaster.BuildForecast(turnState);
+			Console.Error.WriteLine($"Forecast made in {turnState.stopwatch.ElapsedMilliseconds} ms");
+
 			var moves = Decide(turnState);
 			var isDouble = Settings.USE_DOUBLE_PATHFINDING && turnState.stopwatch.ElapsedMilliseconds < Settings.DOUBLE_PATHFINDING_TIMELIMIT;
 			if (isDouble)
@@ -83,7 +85,7 @@ namespace Game.Strategy
 					case DecisionType.Goto:
 						var path = navigator.FindPath(turnState, action.fcoord);
 						moves.Add(path.FirstOrDefault());
-						gameState.forecaster.ApplyPath(turnState, ship, path);
+						gameState.forecaster.ApplyPath(ship, path);
 						break;
 					default:
 						moves.Add(ShipMoveCommand.Wait);

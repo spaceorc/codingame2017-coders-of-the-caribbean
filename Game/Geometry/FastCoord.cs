@@ -5,7 +5,7 @@ namespace Game.Geometry
 	public static class FastCoord
 	{
 		private const int bits = 10;
-		private const int count = 1 << bits;
+		public const int count = 1 << bits;
 		private const int shiftY = bits / 2;
 		private const int maskX = (1 << shiftY) - 1;
 		private const int orientationBits = 3;
@@ -96,7 +96,7 @@ namespace Game.Geometry
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static int Neighbor(int fastCoord, int orientation)
 		{
-			return neighbors[fastCoord << orientationBits | orientation];
+			return fastCoord < 0 ? -1 : neighbors[fastCoord << orientationBits | orientation];
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -56,9 +56,11 @@ namespace Game.State
 
 		public IEnumerable<ITeamMember> GetTeam(TurnState turnState)
 		{
+			yield return forecaster;
 			foreach (var ship in turnState.myShips)
 			{
 				yield return GetCannoneer(ship);
+				yield return GetNavigator(ship);
 				yield return GetMiner(ship);
 			}
 		}
@@ -81,7 +83,7 @@ namespace Game.State
 
 		public void Dump()
 		{
-			Console.Error.WriteLine("var gameState = new GameState();");
+			Console.Error.WriteLine($"var gameState = new GameState {{ {nameof(currentTurn)} = {currentTurn} }};");
 			foreach (var cannoneer in cannoneers)
 				Console.Error.WriteLine($"gameState.{nameof(cannoneers)}[{cannoneer.Key}] = {cannoneer.Value.Dump("gameState")};");
 			foreach (var miner in miners)

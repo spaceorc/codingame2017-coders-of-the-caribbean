@@ -140,18 +140,16 @@ namespace Game.Geometry
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static int DistanceTo(int fastShipPosition, int targetFastCoord)
 		{
-			var dist = FastCoord.Distance(Coord(fastShipPosition), targetFastCoord);
-			if (dist == 0)
-				return 0;
 			var bowDist = FastCoord.Distance(Bow(fastShipPosition), targetFastCoord);
 			if (bowDist == 0)
 				return 0;
-			if (bowDist < dist)
-				return bowDist;
+			var dist = FastCoord.Distance(Coord(fastShipPosition), targetFastCoord);
+			if (dist == 0)
+				return 0;
 			var sternDist = FastCoord.Distance(Stern(fastShipPosition), targetFastCoord);
 			if (sternDist == 0)
 				return 0;
-			return dist;
+			return bowDist;
 		}
 		
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
