@@ -7,11 +7,11 @@ using Game.State;
 
 namespace Game.FireTeam
 {
-	public class Cannoneer : IFireTeamMember
+	public class Cannoneer : ITeamMember
 	{
 		public readonly GameState gameState;
 		public readonly int shipId;
-		public bool fired;
+		public bool cooldown;
 		public bool canFire;
 		public FireTarget fireTarget;
 
@@ -23,8 +23,8 @@ namespace Game.FireTeam
 
 		public void StartTurn(TurnState turnState)
 		{
-			canFire = !fired;
-			fired = false;
+			canFire = !cooldown;
+			cooldown = false;
 			fireTarget = null;
 		}
 
@@ -46,14 +46,14 @@ namespace Game.FireTeam
 				return false;
 			var ship = turnState.myShipsById[shipId];
 			ship.Fire(fireTarget.ftarget);
-			fired = true;
+			cooldown = true;
 			return true;
 		}
 
 
 		public string Dump(string gameStateRef)
 		{
-			return $"new {nameof(Cannoneer)}({shipId}, {gameStateRef}) {{ {nameof(fired)} = {fired.ToString().ToLower()} }}";
+			return $"new {nameof(Cannoneer)}({shipId}, {gameStateRef}) {{ {nameof(cooldown)} = {cooldown.ToString().ToLower()} }}";
 		}
 
 		private FireTarget SelectFireTarget(TurnState turnState, Ship ship)

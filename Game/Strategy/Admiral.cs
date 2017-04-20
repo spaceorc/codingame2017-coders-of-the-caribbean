@@ -35,8 +35,8 @@ namespace Game.Strategy
 			{
 				if (moves[i] == ShipMoveCommand.Wait)
 				{
-					foreach (var fireTeamMember in gameState.GetShipFireTeam(turnState.myShips[i]))
-						fireTeamMember.PrepareToFire(turnState);
+					gameState.GetCannoneer(turnState.myShips[i]).PrepareToFire(turnState);
+					gameState.GetMiner(turnState.myShips[i]).PrepareToMine(turnState);
 				}
 			}
 
@@ -44,8 +44,9 @@ namespace Game.Strategy
 			{
 				if (moves[i] == ShipMoveCommand.Wait)
 				{
-					var fired = gameState.GetShipFireTeam(turnState.myShips[i]).Any(fireTeamMember => fireTeamMember.Fire(turnState));
-					if (fired)
+					if (gameState.GetCannoneer(turnState.myShips[i]).Fire(turnState))
+						continue;
+					if (gameState.GetMiner(turnState.myShips[i]).Mine(turnState))
 						continue;
 				}
 				turnState.myShips[i].Move(moves[i]);

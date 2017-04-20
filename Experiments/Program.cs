@@ -248,8 +248,8 @@ namespace Experiments
 
 			//===
 			var gameState = new GameState();
-			gameState.cannoneers[0] = new Cannoneer(0, gameState) { fired = false };
-			gameState.cannoneers[2] = new Cannoneer(2, gameState) { fired = false };
+			gameState.cannoneers[0] = new Cannoneer(0, gameState) { cooldown = false };
+			gameState.cannoneers[2] = new Cannoneer(2, gameState) { cooldown = false };
 			gameState.miners[0] = new Miner(0, gameState) { cooldown = 0 };
 			gameState.miners[2] = new Miner(2, gameState) { cooldown = 0 };
 			gameState.navigators[0] = new Navigator(0, gameState);

@@ -63,12 +63,6 @@ namespace Game.State
 			}
 		}
 
-		public IEnumerable<IFireTeamMember> GetShipFireTeam(Ship ship)
-		{
-			yield return GetCannoneer(ship);
-			yield return GetMiner(ship);
-		}
-
 		public void Iteration(TextReader input)
 		{
 			currentTurn += 2;

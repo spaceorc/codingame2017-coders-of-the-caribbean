@@ -2,7 +2,7 @@ using Game.State;
 
 namespace Game.FireTeam
 {
-	public class Miner : IFireTeamMember
+	public class Miner : ITeamMember
 	{
 		public readonly GameState gameState;
 		public readonly int shipId;
@@ -30,7 +30,7 @@ namespace Game.FireTeam
 		{
 		}
 
-		public void PrepareToFire(TurnState turnState)
+		public void PrepareToMine(TurnState turnState)
 		{
 			if (!canMine)
 				return;
@@ -38,7 +38,7 @@ namespace Game.FireTeam
 			doMine = true;
 		}
 
-		public bool Fire(TurnState turnState)
+		public bool Mine(TurnState turnState)
 		{
 			if (!doMine)
 				return false;

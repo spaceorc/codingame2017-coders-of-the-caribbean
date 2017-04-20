@@ -43,7 +43,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="FireTeam\Cannoneer.cs" />
-    <Compile Include="FireTeam\IFireTeamMember.cs" />
     <Compile Include="State\ITeamMember.cs" />
     <Compile Include="Geometry\FastCoord.cs" />
     <Compile Include="Geometry\FastShipPosition.cs" />
