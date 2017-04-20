@@ -1,12 +1,14 @@
 using Game.State;
 
-namespace Game.Mining
+namespace Game.FireTeam
 {
-	public class Miner
+	public class Miner : IFireTeamMember
 	{
 		public readonly GameState gameState;
 		public readonly int shipId;
 		public int cooldown;
+		public bool canMine;
+		public bool doMine;
 
 		public Miner(int shipId, GameState gameState)
 		{
@@ -14,22 +16,35 @@ namespace Game.Mining
 			this.shipId = shipId;
 		}
 
-		public void PrepareToMine(TurnState turnState)
-		{
-			if (cooldown > 0)
-				cooldown--;
-		}
-
-		public bool Mine(TurnState turnState)
+		public void StartTurn(TurnState turnState)
 		{
 			if (!Settings.USE_MINING)
-				return false;
-			// todo dont mine own ships!
+				return;
+			canMine = cooldown == 0;
 			if (cooldown > 0)
+				cooldown--;
+			doMine = false;
+		}
+
+		public void EndTurn(TurnState turnState)
+		{
+		}
+
+		public void PrepareToFire(TurnState turnState)
+		{
+			if (!canMine)
+				return;
+			// todo dont mine own ships!
+			doMine = true;
+		}
+
+		public bool Fire(TurnState turnState)
+		{
+			if (!doMine)
 				return false;
 			var ship = turnState.myShipsById[shipId];
 			ship.Mine();
-			cooldown = Constants.MINING_COOLDOWN + 1;
+			cooldown = Constants.MINING_COOLDOWN;
 			return true;
 		}
 		

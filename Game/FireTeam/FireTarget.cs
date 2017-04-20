@@ -1,6 +1,6 @@
 using Game.Geometry;
 
-namespace Game.Cannons
+namespace Game.FireTeam
 {
 	public class FireTarget
 	{

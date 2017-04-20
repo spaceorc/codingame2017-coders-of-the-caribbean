@@ -5,13 +5,15 @@ using Game.Entities;
 using Game.Geometry;
 using Game.State;
 
-namespace Game.Cannons
+namespace Game.FireTeam
 {
-	public class Cannoneer
+	public class Cannoneer : IFireTeamMember
 	{
 		public readonly GameState gameState;
 		public readonly int shipId;
-		public bool fire;
+		public bool fired;
+		public bool canFire;
+		public FireTarget fireTarget;
 
 		public Cannoneer(int shipId, GameState gameState)
 		{
@@ -19,27 +21,39 @@ namespace Game.Cannons
 			this.shipId = shipId;
 		}
 
+		public void StartTurn(TurnState turnState)
+		{
+			canFire = !fired;
+			fired = false;
+			fireTarget = null;
+		}
+
+		public void EndTurn(TurnState turnState)
+		{
+		}
+
 		public void PrepareToFire(TurnState turnState)
 		{
-			fire = !fire;
+			if (!canFire)
+				return;
+			var ship = turnState.myShipsById[shipId];
+			fireTarget = SelectFireTarget(turnState, ship);
 		}
 
 		public bool Fire(TurnState turnState)
 		{
-			if (!fire)
+			if (!canFire || fireTarget == null)
 				return false;
 			var ship = turnState.myShipsById[shipId];
-			var fireTarget = SelectFireTarget(turnState, ship);
-			if (fireTarget == null)
-				return false;
 			ship.Fire(fireTarget.ftarget);
+			fired = true;
 			return true;
 		}
 
 
 		public string Dump(string gameStateRef)
 		{
-			return $"new {nameof(Cannoneer)}({shipId}, {gameStateRef}) {{ {nameof(fire)} = {fire.ToString().ToLower()} }}";
+			return $"new {nameof(Cannoneer)}({shipId}, {gameStateRef}) {{ {nameof(fired)} = {fired.ToString().ToLower()} }}";
 		}
 
 		private FireTarget SelectFireTarget(TurnState turnState, Ship ship)

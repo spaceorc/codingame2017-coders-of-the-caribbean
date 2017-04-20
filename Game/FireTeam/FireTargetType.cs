@@ -1,4 +1,4 @@
-namespace Game.Cannons
+namespace Game.FireTeam
 {
 	public enum FireTargetType
 	{

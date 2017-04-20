@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Game.Entities;
+using Game.FireTeam;
 using Game.Geometry;
 using Game.State;
 using Game.Statistics;
@@ -21,20 +22,52 @@ namespace Game.Strategy
 		public void Iteration(TurnState turnState)
 		{
 			turnState.stopwatch.Restart();
+
+			NotifyStartTurn(turnState);
+
 			gameState.forecaster.BuildForecast(turnState);
-			var moves = gameState.admiral.Decide(turnState);
+			var moves = Decide(turnState);
 			var isDouble = Settings.USE_DOUBLE_PATHFINDING && turnState.stopwatch.ElapsedMilliseconds < Settings.DOUBLE_PATHFINDING_TIMELIMIT;
 			if (isDouble)
-				moves = gameState.admiral.Decide(turnState);
+				moves = Decide(turnState);
 
 			for (var i = 0; i < turnState.myShips.Count; i++)
 			{
-				var ship = turnState.myShips[i];
-				ManualMove(turnState, ship, moves[i]);
+				if (moves[i] == ShipMoveCommand.Wait)
+				{
+					foreach (var fireTeamMember in gameState.GetShipFireTeam(turnState.myShips[i]))
+						fireTeamMember.PrepareToFire(turnState);
+				}
 			}
+
+			for (var i = 0; i < turnState.myShips.Count; i++)
+			{
+				if (moves[i] == ShipMoveCommand.Wait)
+				{
+					var fired = gameState.GetShipFireTeam(turnState.myShips[i]).Any(fireTeamMember => fireTeamMember.Fire(turnState));
+					if (fired)
+						continue;
+				}
+				turnState.myShips[i].Move(moves[i]);
+			}
+
+			NotifyEndTurn(turnState);
+
 			turnState.stopwatch.Stop();
-			gameState.stats.Add(new TurnStat {isDouble = isDouble, time = turnState.stopwatch.ElapsedMilliseconds});
+			gameState.stats.Add(new TurnStat { isDouble = isDouble, time = turnState.stopwatch.ElapsedMilliseconds });
 			Console.Error.WriteLine($"Decision made in {turnState.stopwatch.ElapsedMilliseconds} ms (isDouble = {isDouble})");
+		}
+
+		private void NotifyStartTurn(TurnState turnState)
+		{
+			foreach (var teamMember in gameState.GetTeam(turnState))
+				teamMember.StartTurn(turnState);
+		}
+
+		private void NotifyEndTurn(TurnState turnState)
+		{
+			foreach (var teamMember in gameState.GetTeam(turnState))
+				teamMember.EndTurn(turnState);
 		}
 
 		private List<ShipMoveCommand> Decide(TurnState turnState)
@@ -81,22 +114,6 @@ namespace Game.Strategy
 				action = strategy.Decide(turnState);
 			}
 			return action;
-		}
-
-		private void ManualMove(TurnState turnState, Ship ship, ShipMoveCommand moveCommand)
-		{
-			var cannoneer = gameState.GetCannoneer(ship);
-			cannoneer.PrepareToFire(turnState);
-			var miner = gameState.GetMiner(ship);
-			miner.PrepareToMine(turnState);
-			if (moveCommand == ShipMoveCommand.Wait)
-			{
-				if (cannoneer.Fire(turnState))
-					return;
-				if (miner.Mine(turnState))
-					return;
-			}
-			ship.Move(moveCommand);
 		}
 
 		public void Dump(string admiralRef)

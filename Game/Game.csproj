@@ -42,7 +42,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Cannons\Cannoneer.cs" />
+    <Compile Include="FireTeam\Cannoneer.cs" />
+    <Compile Include="FireTeam\IFireTeamMember.cs" />
+    <Compile Include="State\ITeamMember.cs" />
     <Compile Include="Geometry\FastCoord.cs" />
     <Compile Include="Geometry\FastShipPosition.cs" />
     <Compile Include="Geometry\ShipPosition.cs" />
@@ -52,14 +54,14 @@
     <Compile Include="Strategy\DecisionType.cs" />
     <Compile Include="Strategy\CollectBarrelsStrategy.cs" />
     <Compile Include="Strategy\IStrategy.cs" />
-    <Compile Include="Mining\Miner.cs" />
+    <Compile Include="FireTeam\Miner.cs" />
     <Compile Include="Entities\Barrel.cs" />
     <Compile Include="Entities\Cannonball.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Entities\Entity.cs" />
     <Compile Include="Entities\EntityType.cs" />
-    <Compile Include="Cannons\FireTarget.cs" />
-    <Compile Include="Cannons\FireTargetType.cs" />
+    <Compile Include="FireTeam\FireTarget.cs" />
+    <Compile Include="FireTeam\FireTargetType.cs" />
     <Compile Include="Navigation\Navigator.cs" />
     <Compile Include="Prediction\Forecaster.cs" />
     <Compile Include="State\GameState.cs" />

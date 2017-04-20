@@ -2,10 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Game.Cannons;
 using Game.Entities;
+using Game.FireTeam;
 using Game.Geometry;
-using Game.Mining;
 using Game.Navigation;
 using Game.Prediction;
 using Game.Statistics;
@@ -53,6 +52,21 @@ namespace Game.State
 			if (!navigators.TryGetValue(ship.id, out navigator))
 				navigators.Add(ship.id, navigator = new Navigator(ship.id, this));
 			return navigator;
+		}
+
+		public IEnumerable<ITeamMember> GetTeam(TurnState turnState)
+		{
+			foreach (var ship in turnState.myShips)
+			{
+				yield return GetCannoneer(ship);
+				yield return GetMiner(ship);
+			}
+		}
+
+		public IEnumerable<IFireTeamMember> GetShipFireTeam(Ship ship)
+		{
+			yield return GetCannoneer(ship);
+			yield return GetMiner(ship);
 		}
 
 		public void Iteration(TextReader input)
