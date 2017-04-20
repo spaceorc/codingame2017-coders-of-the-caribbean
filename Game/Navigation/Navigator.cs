@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Game.Entities;
 using Game.Geometry;
 using Game.State;
 
@@ -18,16 +17,16 @@ namespace Game.Navigation
 			this.gameState = gameState;
 		}
 
-		public List<ShipMoveCommand> FindPath(TurnState turnState, Coord target)
+		public List<ShipMoveCommand> FindPath(TurnState turnState, int ftarget)
 		{
 			var ship = turnState.myShipsById[shipId];
 
 			// todo fix navigation here - iterate anyway!
-			if (ship.Collides(target))
+			if (FastShipPosition.Collides(ship.fposition, ftarget))
 				return new List<ShipMoveCommand>();
 
 			var queue = new Queue<ShipPathChainItem>();
-			queue.Enqueue(ShipPathChainItem.Start(ship, target));
+			queue.Enqueue(ShipPathChainItem.Start(ship.fposition, ftarget));
 
 			var used = new Dictionary<ShipMovementState, ShipPathChainItem>();
 
@@ -37,38 +36,38 @@ namespace Game.Navigation
 				if (current.depth != Settings.NAVIGATION_PATH_DEPTH)
 					foreach (var moveCommand in Enum.GetValues(typeof(ShipMoveCommand)).Cast<ShipMoveCommand>())
 					{
-						var newShips = current.ship.Apply(moveCommand);
-						var newMovedShip = newShips[0];
-						var newShip = newShips[1];
-						var newMovementState = new ShipMovementState(newShip, current.depth + 1);
+						var newShipMovement = FastShipPosition.Move(current.fposition, moveCommand);
+						var newMovedPos = FastShipPosition.GetMovedPosition(newShipMovement);
+						var newPos = FastShipPosition.GetFinalPosition(newShipMovement);
+						var newMovementState = new ShipMovementState(newPos, current.depth + 1);
 						if (!used.ContainsKey(newMovementState))
 						{
 							var damage = 0;
-							var onMine = turnState.mines.Any(m => newShip.Collides(m) || newMovedShip.Collides(m));
+							var onMine = turnState.mines.Any(m => FastShipPosition.Collides(newPos, m.fcoord) || FastShipPosition.Collides(newMovedPos, m.fcoord));
 							if (onMine)
 								damage = Math.Max(damage, Constants.MINE_DAMAGE);
-							var cannonedBowOrStern = turnState.cannonballs.Any(b => b.turns == current.depth + 1 &&
-							                                                        (newShip.bow.Equals(b.coord) || newShip.stern.Equals(b.coord)));
+							var cannonedBowOrStern = turnState.cannonballs.Any(b => b.turns == current.depth + 1 && (FastShipPosition.BowCollides(newPos, b.fcoord) || FastShipPosition.SternCollides(newPos, b.fcoord)));
 							if (cannonedBowOrStern)
 								damage = Math.Max(damage, Constants.LOW_DAMAGE);
-							var cannonedCenter = turnState.cannonballs.Any(b => b.turns == current.depth + 1 && newShip.coord.Equals(b.coord));
+							var cannonedCenter = turnState.cannonballs.Any(b => b.turns == current.depth + 1 && FastShipPosition.CenterCollides(newPos, b.fcoord));
 							if (cannonedCenter)
 								damage = Math.Max(damage, Constants.HIGH_DAMAGE);
-							var nearEnemyShip = turnState.enemyShips.Any(m => newShip.DistanceTo(m.coord) < Settings.NEAR_ENEMY_SHIP_MIN_DIST);
+							var nearEnemyShip = turnState.enemyShips.Any(m => FastShipPosition.DistanceTo(newPos, m.fcoord) < Settings.NEAR_ENEMY_SHIP_MIN_DIST);
 							if (nearEnemyShip)
-								damage = Math.Max(damage, Settings.NEAR_ENEMYSHIP_VIRTUAL_DAMAGE); // virtual
+								damage = Math.Max(damage, Settings.NEAR_ENEMYSHIP_VIRTUAL_DAMAGE);
 
-							var onMyShip = current.depth == 0 && turnState.myShips.Where(m => m.id != newShip.id)
-								               .Any(m => newShip.Collides(m) || newMovedShip.Collides(m))
-							               || gameState.forecaster.myShipsMoved[current.depth]
-								               .Where(m => m.id != newShip.id)
-								               .Any(m => newShip.Collides(m) || newMovedShip.Collides(m));
-							var onEnemyShipMoved = current.depth == 0 && turnState.enemyShips.Any(m => newShip.Collides(m) || newMovedShip.Collides(m))
-							                       || gameState.forecaster.enemyShipsMoved[current.depth]
-								                       .Any(m => newShip.Collides(m) || newMovedShip.Collides(m));
-							if (!onMyShip && !onEnemyShipMoved)
+							var onMyShip = current.depth == 0 && turnState.myShips.Where(m => m.id != shipId).Any(m =>  FastShipPosition.CollidesShip(newPos, m.fposition) || FastShipPosition.CollidesShip(newMovedPos, m.fposition))
+											|| gameState.forecaster.turnForecasts[current.depth].myShipsPositions
+												.Where((_, i) => i != ship.index)
+												.Any(m => FastShipPosition.CollidesShip(newPos, m) || FastShipPosition.CollidesShip(newMovedPos, m));
+
+							var onEnemyShip = current.depth == 0 && turnState.enemyShips.Any(m => FastShipPosition.CollidesShip(newPos, m.fposition) || FastShipPosition.CollidesShip(newMovedPos, m.fposition))
+											|| gameState.forecaster.turnForecasts[current.depth].enemyShipsPositions
+												.Any(m => FastShipPosition.CollidesShip(newPos, m) || FastShipPosition.CollidesShip(newMovedPos, m));
+
+							if (!onMyShip && !onEnemyShip)
 							{
-								var next = current.Next(newShip, moveCommand, target, damage);
+								var next = current.Next(newPos, moveCommand, ftarget, damage);
 								queue.Enqueue(next);
 								used.Add(newMovementState, next);
 							}
@@ -86,9 +85,9 @@ namespace Game.Navigation
 				if (chainItem.prev != null)
 				{
 					if (bestChainItem == null || chainItem.damage < bestChainItem.damage || chainItem.damage == bestChainItem.damage
-					    && (chainItem.dist < bestChainItem.dist || chainItem.dist == bestChainItem.dist
-					        && (chainItem.depth < bestChainItem.depth || chainItem.depth == bestChainItem.depth
-					            && chainItem.startCommand == ShipMoveCommand.Wait)))
+						&& (chainItem.dist < bestChainItem.dist || chainItem.dist == bestChainItem.dist
+							&& (chainItem.depth < bestChainItem.depth || chainItem.depth == bestChainItem.depth
+								&& chainItem.startCommand == ShipMoveCommand.Wait)))
 					{
 						bestChainItem = chainItem;
 					}
@@ -115,32 +114,32 @@ namespace Game.Navigation
 
 		private class ShipMovementState : IEquatable<ShipMovementState>
 		{
-			public readonly Coord coord;
-			public readonly int orientation;
-			public readonly int speed;
 			public readonly int depth;
+			public readonly int fposition;
 
-			public ShipMovementState(Ship ship, int depth)
+			public ShipMovementState(int fposition, int depth)
 			{
 				this.depth = depth;
-				coord = ship.coord;
-				orientation = ship.orientation;
-				speed = ship.speed;
+				this.fposition = fposition;
 			}
 
 			public bool Equals(ShipMovementState other)
 			{
-				if (ReferenceEquals(null, other)) return false;
-				if (ReferenceEquals(this, other)) return true;
-				return coord.Equals(other.coord) && orientation == other.orientation && speed == other.speed &&
-				       depth == other.depth;
+				if (ReferenceEquals(null, other))
+					return false;
+				if (ReferenceEquals(this, other))
+					return true;
+				return fposition == other.fposition && depth == other.depth;
 			}
 
 			public override bool Equals(object obj)
 			{
-				if (ReferenceEquals(null, obj)) return false;
-				if (ReferenceEquals(this, obj)) return true;
-				if (obj.GetType() != GetType()) return false;
+				if (ReferenceEquals(null, obj))
+					return false;
+				if (ReferenceEquals(this, obj))
+					return true;
+				if (obj.GetType() != this.GetType())
+					return false;
 				return Equals((ShipMovementState)obj);
 			}
 
@@ -148,20 +147,16 @@ namespace Game.Navigation
 			{
 				unchecked
 				{
-					var hashCode = coord.GetHashCode();
-					hashCode = (hashCode * 397) ^ orientation;
-					hashCode = (hashCode * 397) ^ speed;
-					hashCode = (hashCode * 397) ^ depth;
-					return hashCode;
+					return (fposition * 397) ^ depth;
 				}
 			}
 
-			public static bool operator ==(ShipMovementState left, ShipMovementState right)
+			public static bool operator==(ShipMovementState left, ShipMovementState right)
 			{
 				return Equals(left, right);
 			}
 
-			public static bool operator !=(ShipMovementState left, ShipMovementState right)
+			public static bool operator!=(ShipMovementState left, ShipMovementState right)
 			{
 				return !Equals(left, right);
 			}
@@ -169,27 +164,55 @@ namespace Game.Navigation
 
 		private class ShipPathChainItem
 		{
+			public static ShipPathChainItem Start(int fposition, int ftarget)
+			{
+				return new ShipPathChainItem(null, ShipMoveCommand.Wait, fposition, 0, ShipMoveCommand.Wait, ftarget, 0);
+			}
+
 			public readonly ShipMoveCommand command;
 			public readonly int depth;
 			public readonly int dist;
+			public readonly int fposition;
 			public readonly int pathDamage;
 			public readonly ShipPathChainItem prev;
-			public readonly Ship ship;
 			public readonly ShipMoveCommand startCommand;
 			public int damage = int.MaxValue;
 
-			private ShipPathChainItem(ShipPathChainItem prev, ShipMoveCommand command, Ship ship, int depth,
-				ShipMoveCommand startCommand, Coord target, int pathDamage)
+			private ShipPathChainItem(
+				ShipPathChainItem prev,
+				ShipMoveCommand command,
+				int fposition,
+				int depth,
+				ShipMoveCommand startCommand,
+				int ftarget,
+				int pathDamage)
 			{
 				this.prev = prev;
 				this.command = command;
-				this.ship = ship;
+				this.fposition = fposition;
 				this.depth = depth;
 				this.startCommand = startCommand;
-				dist = ship.DistanceTo(target);
+				dist = FastShipPosition.DistanceTo(fposition, ftarget);
 				this.pathDamage = pathDamage;
 				if (depth == Settings.NAVIGATION_PATH_DEPTH)
 					SetDamage(pathDamage);
+			}
+
+			public ShipPathChainItem Next(int nextPosition, ShipMoveCommand moveCommand, int ftarget, int nextDamage)
+			{
+				return new ShipPathChainItem(
+					this,
+					moveCommand,
+					nextPosition,
+					depth + 1,
+					prev == null ? moveCommand : startCommand,
+					ftarget,
+					pathDamage + nextDamage);
+			}
+
+			public override string ToString()
+			{
+				return $"{(prev == null ? "ROOT: " : "")}{nameof(command)}: {command}, {nameof(depth)}: {depth}, {nameof(startCommand)}: {startCommand}, {nameof(fposition)}: {FastShipPosition.ToShipPosition(fposition)}, {nameof(damage)}: {damage}, {nameof(pathDamage)}: {pathDamage}";
 			}
 
 			private void SetDamage(int newDamage)
@@ -200,22 +223,6 @@ namespace Game.Navigation
 					t.damage = newDamage;
 					t = t.prev;
 				}
-			}
-
-			public static ShipPathChainItem Start(Ship ship, Coord target)
-			{
-				return new ShipPathChainItem(null, ShipMoveCommand.Wait, ship, 0, ShipMoveCommand.Wait, target, 0);
-			}
-
-			public ShipPathChainItem Next(Ship nextShip, ShipMoveCommand moveCommand, Coord target, int nextDamage)
-			{
-				return new ShipPathChainItem(this, moveCommand, nextShip, depth + 1, prev == null ? moveCommand : startCommand,
-					target, pathDamage + nextDamage);
-			}
-
-			public override string ToString()
-			{
-				return $"{(prev == null ? "ROOT: " : "")}{nameof(command)}: {command}, {nameof(depth)}: {depth}, {nameof(startCommand)}: {startCommand}, {nameof(ship)}: {ship}, {nameof(damage)}: {damage}, {nameof(pathDamage)}: {pathDamage}";
 			}
 		}
 	}

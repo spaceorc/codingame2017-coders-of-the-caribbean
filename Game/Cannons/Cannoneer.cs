@@ -32,7 +32,7 @@ namespace Game.Cannons
 			var fireTarget = SelectFireTarget(turnState, ship);
 			if (fireTarget == null)
 				return false;
-			ship.Fire(fireTarget.target);
+			ship.Fire(fireTarget.ftarget);
 			return true;
 		}
 
@@ -42,12 +42,12 @@ namespace Game.Cannons
 			return $"new {nameof(Cannoneer)}({shipId}, {gameStateRef}) {{ {nameof(fire)} = {fire.ToString().ToLower()} }}";
 		}
 
-		private static FireTarget SelectFireTarget(TurnState turnState, Ship ship)
+		private FireTarget SelectFireTarget(TurnState turnState, Ship ship)
 		{
 			FireTarget bestFireTarget = null;
 			foreach (var enemyShip in turnState.enemyShips)
 			{
-				var fireTargets = GetFireTargets(turnState, ship, enemyShip);
+				var fireTargets = GetFireTargets(ship, enemyShip);
 				foreach (var fireTarget in fireTargets)
 				{
 					if (bestFireTarget == null ||
@@ -59,32 +59,36 @@ namespace Game.Cannons
 			return bestFireTarget;
 		}
 
-		private static IEnumerable<FireTarget> GetFireTargets(TurnState turnState, Ship ship, Ship enemyShip)
+		private List<FireTarget> GetFireTargets(Ship ship, Ship enemyShip)
 		{
-			var currentMyShips = turnState.myShips;
-			for (var turns = 0; turns < 5; turns++)
+			var result = new List<FireTarget>();
+			var enemyIndex = enemyShip.index;
+			var cannonCoord = FastShipPosition.Bow(ship.fposition);
+			for (var turn = 0; turn < 5; turn++)
 			{
-				enemyShip = enemyShip.Apply(ShipMoveCommand.Wait)[1];
-				var coords = new[] { enemyShip.coord, enemyShip.bow, enemyShip.stern };
+				var forecast = gameState.forecaster.turnForecasts[0];
+				var enemyPosition = forecast.enemyShipsPositions[enemyIndex];
+
+				var coords = new[] { FastShipPosition.Coord(enemyPosition), FastShipPosition.Bow(enemyPosition), FastShipPosition.Stern(enemyPosition) };
 				var targetTypes = new[] { FireTargetType.ShipCenter, FireTargetType.ShipBow, FireTargetType.ShipStern };
 				for (var i = 0; i < coords.Length; i++)
 				{
 					var target = coords[i];
-					if (target.IsInsideMap())
+					if (FastCoord.IsInsideMap(target))
 					{
-						if (currentMyShips.Any(m => m.DistanceTo(target) == 0))
+						if (forecast.myShipsPositions.Any(m => FastShipPosition.Collides(m, target)))
 							continue;
-						var distanceTo = ship.bow.DistanceTo(target);
+						var distanceTo = FastCoord.Distance(cannonCoord, target);
 						if (distanceTo <= 10)
 						{
 							var travelTime = (int)(1 + Math.Round(distanceTo / 3.0));
-							if (travelTime == turns)
-								yield return new FireTarget(target, turns, i == 0 ? Constants.HIGH_DAMAGE : Constants.LOW_DAMAGE, targetTypes[i]);
+							if (travelTime == turn)
+								result.Add(new FireTarget(target, turn, i == 0 ? Constants.HIGH_DAMAGE : Constants.LOW_DAMAGE, targetTypes[i]));
 						}
 					}
 				}
-				currentMyShips = currentMyShips.Select(c => c.Apply(ShipMoveCommand.Wait)[1]).ToList();
 			}
+			return result;
 		}
 	}
 }

@@ -5,8 +5,18 @@
 	<s:Boolean x:Key="/Default/Environment/InjectedLayers/FileInjectedLayer/=0C9F5372C4ACAF4BAD9F669B0EBC5ADF/@KeyIndexDefined">True</s:Boolean>
 	<s:String x:Key="/Default/Environment/InjectedLayers/FileInjectedLayer/=0C9F5372C4ACAF4BAD9F669B0EBC5ADF/AbsolutePath/@EntryValue">D:\Work\ke\forms.core\Forms.DotSettings</s:String>
 	<s:String x:Key="/Default/Environment/InjectedLayers/FileInjectedLayer/=0C9F5372C4ACAF4BAD9F669B0EBC5ADF/RelativePath/@EntryValue">..\..\..\Work\ke\forms.core\Forms.DotSettings</s:String>
+	<s:Boolean x:Key="/Default/Environment/InjectedLayers/FileInjectedLayer/=459258A3B768B24EAF04EB2DDD29B817/@KeyIndexDefined">True</s:Boolean>
+	<s:String x:Key="/Default/Environment/InjectedLayers/FileInjectedLayer/=459258A3B768B24EAF04EB2DDD29B817/AbsolutePath/@EntryValue">D:\Work\ke\code-style\CSharpCodeStyle.TabIndent.DotSettings</s:String>
+	<s:String x:Key="/Default/Environment/InjectedLayers/FileInjectedLayer/=459258A3B768B24EAF04EB2DDD29B817/RelativePath/@EntryValue">..\..\..\Work\ke\code-style\CSharpCodeStyle.TabIndent.DotSettings</s:String>
+	<s:Boolean x:Key="/Default/Environment/InjectedLayers/FileInjectedLayer/=549F2974A75A8640A2A5DCFA37D211D5/@KeyIndexDefined">True</s:Boolean>
+	<s:String x:Key="/Default/Environment/InjectedLayers/FileInjectedLayer/=549F2974A75A8640A2A5DCFA37D211D5/AbsolutePath/@EntryValue">D:\Work\ke\code-style\CSharpCodeStyle.DotSettings</s:String>
+	<s:String x:Key="/Default/Environment/InjectedLayers/FileInjectedLayer/=549F2974A75A8640A2A5DCFA37D211D5/RelativePath/@EntryValue">..\..\..\Work\ke\code-style\CSharpCodeStyle.DotSettings</s:String>
 	<s:Boolean x:Key="/Default/Environment/InjectedLayers/InjectedLayerCustomization/=File0C9F5372C4ACAF4BAD9F669B0EBC5ADF/@KeyIndexDefined">True</s:Boolean>
-	<s:Double x:Key="/Default/Environment/InjectedLayers/InjectedLayerCustomization/=File0C9F5372C4ACAF4BAD9F669B0EBC5ADF/RelativePriority/@EntryValue">1</s:Double>
+	<s:Double x:Key="/Default/Environment/InjectedLayers/InjectedLayerCustomization/=File0C9F5372C4ACAF4BAD9F669B0EBC5ADF/RelativePriority/@EntryValue">4</s:Double>
+	<s:Boolean x:Key="/Default/Environment/InjectedLayers/InjectedLayerCustomization/=File459258A3B768B24EAF04EB2DDD29B817/@KeyIndexDefined">True</s:Boolean>
+	<s:Double x:Key="/Default/Environment/InjectedLayers/InjectedLayerCustomization/=File459258A3B768B24EAF04EB2DDD29B817/RelativePriority/@EntryValue">5</s:Double>
+	<s:Boolean x:Key="/Default/Environment/InjectedLayers/InjectedLayerCustomization/=File549F2974A75A8640A2A5DCFA37D211D5/@KeyIndexDefined">True</s:Boolean>
+	<s:Double x:Key="/Default/Environment/InjectedLayers/InjectedLayerCustomization/=File549F2974A75A8640A2A5DCFA37D211D5/RelativePriority/@EntryValue">6</s:Double>
 	<s:Int64 x:Key="/Default/Environment/SearchAndNavigation/DefaultOccurrencesGroupingIndex/@EntryValue">2</s:Int64>
 	<s:Boolean x:Key="/Default/Environment/SettingsMigration/IsMigratorApplied/=JetBrains_002EReSharper_002EPsi_002ECSharp_002ECodeStyle_002ESettingsUpgrade_002EAddAccessorOwnerDeclarationBracesMigration/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/Environment/SettingsMigration/IsMigratorApplied/=JetBrains_002EReSharper_002EPsi_002ECSharp_002ECodeStyle_002ESettingsUpgrade_002EMigrateBlankLinesAroundFieldToBlankLinesAroundProperty/@EntryIndexedValue">True</s:Boolean>

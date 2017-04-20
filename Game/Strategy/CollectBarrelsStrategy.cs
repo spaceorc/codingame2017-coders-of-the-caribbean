@@ -12,7 +12,7 @@ namespace Game.Strategy
 		public readonly GameState gameState;
 		public readonly int shipId;
 		public int? currentTargetId;
-		public Coord? currentTarget;
+		public int? currentTarget;
 
 		public CollectBarrelsStrategy(int shipId, GameState gameState)
 		{
@@ -45,7 +45,7 @@ namespace Game.Strategy
 				foreach (var barrel in turnState.barrels)
 					if (!used.Contains(barrel.id))
 					{
-						var dist = ship.DistanceTo(barrel.coord);
+						var dist = FastShipPosition.DistanceTo(ship.fposition, barrel.fcoord);
 						if (dist < bestDist)
 						{
 							bestBarrel = barrel;
@@ -53,11 +53,11 @@ namespace Game.Strategy
 						}
 					}
 				currentTargetId = bestBarrel?.id;
-				currentTarget = bestBarrel?.coord;
+				currentTarget = bestBarrel?.fcoord;
 				Console.Error.WriteLine($"New target for {ship.id}: {bestBarrel}");
 			}
 
-			return currentTargetId == null ? Decision.Unknown() : Decision.Goto(currentTarget.Value);
+			return currentTarget == null ? Decision.Unknown() : Decision.Goto(currentTarget.Value);
 		}
 
 		public string Dump(string gameStateRef)
@@ -65,7 +65,7 @@ namespace Game.Strategy
 			return $"new {nameof(CollectBarrelsStrategy)}({shipId}, {gameStateRef}) " +
 			       $"{{" +
 			       $" {nameof(currentTargetId)} = {(currentTargetId.HasValue ? currentTargetId.ToString() : "null")}," +
-			       $" {nameof(currentTarget)} = {(currentTarget.HasValue ? $"new {nameof(Coord)}({currentTarget.Value.x}, {currentTarget.Value.y})" : "null")}" +
+			       $" {nameof(currentTarget)} = {(currentTarget.HasValue ? currentTarget.ToString() : "null")}" +
 			       $" }}";
 		}
 	}

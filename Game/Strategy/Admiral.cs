@@ -47,9 +47,9 @@ namespace Game.Strategy
 				switch (action.type)
 				{
 					case DecisionType.Goto:
-						var path = navigator.FindPath(turnState, action.coord);
+						var path = navigator.FindPath(turnState, action.fcoord);
 						moves.Add(path.FirstOrDefault());
-						gameState.forecaster.ApplyPath(ship, path);
+						gameState.forecaster.ApplyPath(turnState, ship, path);
 						break;
 					default:
 						moves.Add(ShipMoveCommand.Wait);

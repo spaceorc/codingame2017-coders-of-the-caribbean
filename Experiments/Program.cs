@@ -18,7 +18,7 @@ namespace Experiments
 {
 	class Program
 	{
-		private static void Main(string[] args)
+		private static void Main2(string[] args)
 		{
 			FastCoord.Init();
 
@@ -230,7 +230,7 @@ namespace Experiments
 			Console.Out.WriteLine(stopwatch.ElapsedMilliseconds);
 		}
 
-		private static void Main2(string[] args)
+		private static void Main(string[] args)
 		{
 			var state = @"
 2
@@ -253,8 +253,8 @@ namespace Experiments
 			gameState.miners[3] = new Miner(3, gameState) { cooldown = 0 };
 			gameState.navigators[1] = new Navigator(1, gameState);
 			gameState.navigators[3] = new Navigator(3, gameState);
-			gameState.admiral.strategies[1] = new CollectBarrelsStrategy(1, gameState.admiral.gameState) { currentTargetId = 28, currentTarget = new Coord(5, 19) };
-			gameState.admiral.strategies[3] = new CollectBarrelsStrategy(3, gameState.admiral.gameState) { currentTargetId = 25, currentTarget = new Coord(1, 1) };
+			gameState.admiral.strategies[1] = new CollectBarrelsStrategy(1, gameState.admiral.gameState) { currentTargetId = 28, currentTarget = new Coord(5, 19).ToFastCoord() };
+			gameState.admiral.strategies[3] = new CollectBarrelsStrategy(3, gameState.admiral.gameState) { currentTargetId = 25, currentTarget = new Coord(1, 1).ToFastCoord() };
 			//===
 
 			gameState.Iteration(new StringReader(state));

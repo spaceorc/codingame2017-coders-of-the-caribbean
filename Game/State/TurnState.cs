@@ -16,8 +16,8 @@ namespace Game.State
 		public readonly List<Cannonball> cannonballs = new List<Cannonball>();
 
 		public readonly Dictionary<int, Barrel> barrelsById = new Dictionary<int, Barrel>();
-		public readonly Dictionary<int, Ship> myShipsById = new Dictionary<int, Ship>();
-		public readonly Dictionary<int, Ship> enemyShipsById = new Dictionary<int, Ship>();
+		public readonly List<Ship> myShipsById = new List<Ship>();
+		public readonly List<Ship> enemyShipsById = new List<Ship>();
 		public readonly Dictionary<int, Mine> minesById = new Dictionary<int, Mine>();
 		public readonly Dictionary<int, Cannonball> cannonballsById = new Dictionary<int, Cannonball>();
 
@@ -61,16 +61,21 @@ namespace Game.State
 							prevBarrel.rum += barrel.rum;
 						break;
 					case EntityType.Ship:
-						var ship = new Ship(entityId, x, y, arg1, arg2, arg3, arg4);
-						if (ship.owner == 1)
+						if (arg4 == 1)
 						{
+							var ship = new Ship(myShips.Count, entityId, x, y, arg1, arg2, arg3, arg4);
 							myShips.Add(ship);
-							myShipsById.Add(entityId, ship);
+							while (myShipsById.Count <= entityId)
+								myShipsById.Add(null);
+							myShipsById[entityId] = ship;
 						}
 						else
 						{
+							var ship = new Ship(enemyShips.Count, entityId, x, y, arg1, arg2, arg3, arg4);
 							enemyShips.Add(ship);
-							enemyShipsById.Add(entityId, ship);
+							while (enemyShipsById.Count <= entityId)
+								enemyShipsById.Add(null);
+							enemyShipsById[entityId] = ship;
 						}
 						break;
 					case EntityType.Mine:

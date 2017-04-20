@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Game.Cannons;
 using Game.Entities;
+using Game.Geometry;
 using Game.Mining;
 using Game.Navigation;
 using Game.Prediction;
@@ -24,6 +25,8 @@ namespace Game.State
 
 		public GameState()
 		{
+			FastCoord.Init();
+			FastShipPosition.Init();
 			forecaster = new Forecaster(this);
 			admiral = new Admiral(this);
 		}

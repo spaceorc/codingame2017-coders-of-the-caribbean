@@ -6,12 +6,12 @@ namespace Game.Strategy
 {
 	public class WalkAroundStrategy : IStrategy
 	{
-		private static readonly Coord[] targets =
+		private static readonly int[] ftargets =
 		{
-			new Coord(5, 5),
-			new Coord(5, Constants.MAP_HEIGHT - 5),
-			new Coord(Constants.MAP_WIDTH - 5, Constants.MAP_HEIGHT - 5),
-			new Coord(Constants.MAP_WIDTH - 5, 5)
+			new Coord(5, 5).ToFastCoord(),
+			new Coord(5, Constants.MAP_HEIGHT - 5).ToFastCoord(),
+			new Coord(Constants.MAP_WIDTH - 5, Constants.MAP_HEIGHT - 5).ToFastCoord(),
+			new Coord(Constants.MAP_WIDTH - 5, 5).ToFastCoord()
 		};
 
 		public readonly GameState gameState;
@@ -29,17 +29,17 @@ namespace Game.Strategy
 		public Decision Decide(TurnState turnState)
 		{
 			var ship = turnState.myShipsById[shipId];
-			if (ship.DistanceTo(targets[currentTarget]) < Settings.FREE_WALK_TARGET_REACH_DIST)
+			if (FastShipPosition.DistanceTo(ship.fposition, ftargets[currentTarget]) < Settings.FREE_WALK_TARGET_REACH_DIST)
 			{
-				currentTarget = (currentTarget + 1) % targets.Length;
-				Console.Error.WriteLine($"New target for {ship.id}: {targets[currentTarget]}");
+				currentTarget = (currentTarget + 1) % ftargets.Length;
+				Console.Error.WriteLine($"New target for {ship.id}: {FastCoord.ToCoord(ftargets[currentTarget])}");
 			}
 			if (!started)
 			{
 				started = true;
-				Console.Error.WriteLine($"New target for {ship.id}: {targets[currentTarget]}");
+				Console.Error.WriteLine($"New target for {ship.id}: {FastCoord.ToCoord(ftargets[currentTarget])}");
 			}
-			return Decision.Goto(targets[currentTarget]);
+			return Decision.Goto(ftargets[currentTarget]);
 		}
 
 		public string Dump(string gameStateRef)

@@ -14,14 +14,16 @@ namespace Game.Entities
 		public readonly Coord _stern;
 		public readonly int fstern;
 		public readonly int fposition;
+		public readonly int index;
 
-		public Ship(int id, Coord coord, int orientation, int speed, int rum, int owner) : this(id, coord.x, coord.y,
+		public Ship(int index, int id, Coord coord, int orientation, int speed, int rum, int owner) : this(index, id, coord.x, coord.y,
 			orientation, speed, rum, owner)
 		{
 		}
 
-		public Ship(int id, int x, int y, int orientation, int speed, int rum, int owner) : base(id, EntityType.Ship, x, y)
+		public Ship(int index, int id, int x, int y, int orientation, int speed, int rum, int owner) : base(id, EntityType.Ship, x, y)
 		{
+			this.index = index;
 			this._orientation = orientation;
 			this._speed = speed;
 			this.rum = rum;
