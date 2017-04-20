@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using Game.Entities;
 using Game.Geometry;
@@ -36,22 +38,61 @@ namespace Game.Prediction
 			for (var depth = 0; depth < Settings.NAVIGATION_PATH_DEPTH; depth++)
 				turnForecasts[depth] = new TurnForecast();
 
-			var prevPositions = new int[turnState.enemyShips.Count];
-			for (var i = 0; i < turnState.enemyShips.Count; i++)
-				prevPositions[i] = turnState.enemyShips[i].fposition;
-			for (var depth = 0; depth < Settings.NAVIGATION_PATH_DEPTH; depth++)
+			BuildEnemyShipsForecast(turnState);
+			BuildMyShipsForecast(turnState);
+			BuildCannonballsForecast(turnState);
+			BuildMinesForecast(turnState);
+		}
+
+		private void BuildCannonballsForecast(TurnState turnState)
+		{
+			for (var i = 0; i < turnState.cannonballs.Count; i++)
+				GetTurnForecast(turnState.cannonballs[i].turns).cannonballCoordsMap[turnState.cannonballs[i].fcoord] = true;
+
+			if (Settings.CANNONBALLS_FORECAST_TRAVEL_TIME_LIMIT > 0)
 			{
-				var nextPositions = new int[prevPositions.Length];
-				for (var i = 0; i < prevPositions.Length; i++)
+				foreach (var enemyShip in turnState.enemyShips)
 				{
-					var position = prevPositions[i];
-					var movement = FastShipPosition.Move(position, ShipMoveCommand.Wait);
-					nextPositions[i] = FastShipPosition.GetFinalPosition(movement);
+					var targets = Enumerable.Range(0, 6).Select(o => enemyShip.fbow).ToArray();
+					for (var dist = 1; dist <= 10; dist++)
+					{
+						var travelTime = (int)(1 + Math.Round(dist / 3.0));
+						if (travelTime > Settings.CANNONBALLS_FORECAST_TRAVEL_TIME_LIMIT)
+							break;
+						if (travelTime + 1 >= Settings.NAVIGATION_PATH_DEPTH)
+							break;
+						for (var orientation = 0; orientation < 6; orientation++)
+							targets[orientation] = FastCoord.Neighbor(targets[orientation], orientation);
+						for (var orientation = 0; orientation < 6; orientation++)
+							if (FastCoord.IsInsideMap(targets[orientation]))
+								GetTurnForecast(travelTime).cannonballCoordsMap[targets[orientation]] = true;
+					}
 				}
-				turnForecasts[depth].enemyShipsPositions = nextPositions;
-				prevPositions = nextPositions;
+				
 			}
-			prevPositions = new int[turnState.myShips.Count];
+		}
+
+		private void BuildMinesForecast(TurnState turnState)
+		{
+			for (var i = 0; i < turnState.mines.Count; i++)
+				for (int depth = 0; depth < Settings.NAVIGATION_PATH_DEPTH; depth++)
+				{
+					var turnForecast = GetTurnForecast(depth);
+					turnForecast.mineDamageCoordMap[turnState.mines[i].fcoord] += Constants.MINE_DAMAGE;
+					if (turnForecast.cannonballCoordsMap[turnState.mines[i].fcoord])
+					{
+						for (int orientation = 0; orientation < 6; orientation++)
+						{
+							var neighbor = FastCoord.Neighbor(turnState.mines[i].fcoord, orientation);
+							turnForecast.nearMineDamageCoordMap[neighbor] += Constants.NEAR_MINE_DAMAGE;
+						}
+					}
+				}
+		}
+
+		private void BuildMyShipsForecast(TurnState turnState)
+		{
+			var prevPositions = new int[turnState.myShips.Count];
 			for (var i = 0; i < turnState.myShips.Count; i++)
 				prevPositions[i] = turnState.myShips[i].fposition;
 			for (int depth = 0; depth < Settings.NAVIGATION_PATH_DEPTH; depth++)
@@ -63,8 +104,26 @@ namespace Game.Prediction
 					var movement = FastShipPosition.Move(position, ShipMoveCommand.Wait);
 					nextPositions[i] = FastShipPosition.GetFinalPosition(movement);
 				}
-				turnForecasts[depth].myShipsPositions = nextPositions;
-				prevPositions = nextPositions;
+				prevPositions = turnForecasts[depth].myShipsPositions = nextPositions;
+			}
+		}
+
+		private void BuildEnemyShipsForecast(TurnState turnState)
+		{
+			var prevPositions = new int[turnState.enemyShips.Count];
+			for (var i = 0; i < turnState.enemyShips.Count; i++)
+				prevPositions[i] = turnState.enemyShips[i].fposition;
+
+			for (var depth = 0; depth < Settings.NAVIGATION_PATH_DEPTH; depth++)
+			{
+				var nextPositions = new int[prevPositions.Length];
+				for (var i = 0; i < prevPositions.Length; i++)
+				{
+					var position = prevPositions[i];
+					var movement = FastShipPosition.Move(position, ShipMoveCommand.Wait);
+					nextPositions[i] = FastShipPosition.GetFinalPosition(movement);
+				}
+				prevPositions = turnForecasts[depth].enemyShipsPositions = nextPositions;
 			}
 		}
 
@@ -89,6 +148,18 @@ namespace Game.Prediction
 		{
 			public int[] enemyShipsPositions;
 			public int[] myShipsPositions;
+			public bool[] cannonballCoordsMap = new bool[FastCoord.count];
+			public int[] mineDamageCoordMap = new int[FastCoord.count];
+			public int[] nearMineDamageCoordMap = new int[FastCoord.count];
+
+			public override string ToString()
+			{
+				return $"enemies: {string.Join("; ", enemyShipsPositions.Select(FastShipPosition.ToShipPosition))} | " +
+						$"myships: {string.Join("; ", myShipsPositions.Select(FastShipPosition.ToShipPosition))} | " +
+						$"cannonballs: {string.Join("; ", cannonballCoordsMap.Select((b, i) => new { b, i }).Where(x => x.b).Select(x => FastCoord.ToCoord(x.i)))} | " +
+						$"mines: {string.Join("; ", mineDamageCoordMap.Select((d, i) => new { d, i }).Where(x => x.d != 0).Select(x => FastCoord.ToCoord(x.i)))} | " +
+						$"nearMines: {string.Join("; ", nearMineDamageCoordMap.Select((d, i) => new { d, i }).Where(x => x.d != 0).Select(x => FastCoord.ToCoord(x.i)))}";
+			}
 		}
 	}
 }

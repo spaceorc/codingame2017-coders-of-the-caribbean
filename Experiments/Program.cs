@@ -232,31 +232,25 @@ namespace Experiments
 		private static void Main(string[] args)
 		{
 			var state = @"
-2
-10
-0 SHIP 4 15 0 2 100 1
-2 SHIP 7 4 4 2 87 1
-1 SHIP 12 7 5 1 91 0
-3 SHIP 11 12 3 2 81 0
-5 MINE 7 14 0 0 0 0
+1
+5
+2 SHIP 10 6 3 2 19 1
+3 SHIP 11 4 2 2 2 0
 4 MINE 7 6 0 0 0 0
-7 MINE 1 16 0 0 0 0
-33 MINE 9 4 0 0 0 0
-36 CANNONBALL 11 8 0 3 0 0
-37 CANNONBALL 11 8 2 2 0 0
+30 MINE 10 10 0 0 0 0
+66 CANNONBALL 8 4 2 2 0 0
 ".Trim();
 
 			//===
-			var gameState = new GameState();
+			var gameState = new GameState { currentTurn = 170 };
 			gameState.cannoneers[0] = new Cannoneer(0, gameState) { cooldown = false };
-			gameState.cannoneers[2] = new Cannoneer(2, gameState) { cooldown = false };
+			gameState.cannoneers[2] = new Cannoneer(2, gameState) { cooldown = true };
 			gameState.miners[0] = new Miner(0, gameState) { cooldown = 0 };
 			gameState.miners[2] = new Miner(2, gameState) { cooldown = 0 };
 			gameState.navigators[0] = new Navigator(0, gameState);
 			gameState.navigators[2] = new Navigator(2, gameState);
 			gameState.admiral.strategies[0] = new WalkAroundStrategy(0, gameState.admiral.gameState) { currentTarget = 2, started = true };
-			gameState.admiral.strategies[2] = new CollectBarrelsStrategy(2, gameState.admiral.gameState) { currentTargetId = 17, currentTarget = 518 };
-
+			gameState.admiral.strategies[2] = new WalkAroundStrategy(2, gameState.admiral.gameState) { currentTarget = 0, started = true };
 			//===
 
 			gameState.Iteration(new StringReader(state));

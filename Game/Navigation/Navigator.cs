@@ -29,7 +29,6 @@ namespace Game.Navigation
 		{
 			var ship = turnState.myShipsById[shipId];
 
-			// todo fix navigation here - iterate anyway!
 			if (FastShipPosition.Collides(ship.fposition, ftarget))
 				return new List<ShipMoveCommand>();
 
@@ -42,6 +41,8 @@ namespace Game.Navigation
 			{
 				var current = queue.Dequeue();
 				if (current.depth != Settings.NAVIGATION_PATH_DEPTH)
+				{
+					var turnForecast = gameState.forecaster.GetTurnForecast(current.depth);
 					foreach (var moveCommand in Enum.GetValues(typeof(ShipMoveCommand)).Cast<ShipMoveCommand>())
 					{
 						var newShipMovement = FastShipPosition.Move(current.fposition, moveCommand);
@@ -50,27 +51,40 @@ namespace Game.Navigation
 						var newMovementState = new ShipMovementState(newPos, current.depth + 1);
 						if (!used.ContainsKey(newMovementState))
 						{
-							var damage = 0;
-							var onMine = turnState.mines.Any(m => FastShipPosition.Collides(newPos, m.fcoord) || FastShipPosition.Collides(newMovedPos, m.fcoord));
-							if (onMine)
-								damage = Math.Max(damage, Constants.MINE_DAMAGE);
-							var cannonedBowOrStern = turnState.cannonballs.Any(b => b.turns == current.depth + 1 && (FastShipPosition.BowCollides(newPos, b.fcoord) || FastShipPosition.SternCollides(newPos, b.fcoord)));
+							var damage = turnForecast.mineDamageCoordMap[FastShipPosition.Coord(newPos)] 
+								+ turnForecast.mineDamageCoordMap[FastShipPosition.Bow(newPos)] 
+								+ turnForecast.mineDamageCoordMap[FastShipPosition.Stern(newPos)]
+								+ turnForecast.nearMineDamageCoordMap[FastShipPosition.Bow(newPos)] 
+								+ turnForecast.nearMineDamageCoordMap[FastShipPosition.Stern(newPos)];
+
+							if (newMovedPos != newPos)
+								damage += turnForecast.mineDamageCoordMap[FastShipPosition.Bow(newMovedPos)] 
+									+ turnForecast.mineDamageCoordMap[FastShipPosition.Stern(newMovedPos)]
+									+ turnForecast.nearMineDamageCoordMap[FastShipPosition.Bow(newMovedPos)] 
+									+ turnForecast.nearMineDamageCoordMap[FastShipPosition.Stern(newMovedPos)];
+
+							var cannonedBowOrStern = turnForecast.cannonballCoordsMap[FastShipPosition.Bow(newPos)] || turnForecast.cannonballCoordsMap[FastShipPosition.Stern(newPos)];
 							if (cannonedBowOrStern)
-								damage = Math.Max(damage, Constants.LOW_DAMAGE);
-							var cannonedCenter = turnState.cannonballs.Any(b => b.turns == current.depth + 1 && FastShipPosition.CenterCollides(newPos, b.fcoord));
+								damage += Constants.LOW_DAMAGE;
+
+							var cannonedCenter = turnForecast.cannonballCoordsMap[FastShipPosition.Coord(newPos)];
 							if (cannonedCenter)
-								damage = Math.Max(damage, Constants.HIGH_DAMAGE);
-							var nearEnemyShip = turnState.enemyShips.Any(m => FastShipPosition.DistanceTo(newPos, m.fcoord) < Settings.NEAR_ENEMY_SHIP_MIN_DIST);
-							if (nearEnemyShip)
-								damage = Math.Max(damage, Settings.NEAR_ENEMYSHIP_VIRTUAL_DAMAGE);
+								damage += Constants.HIGH_DAMAGE;
+
+							if (Settings.NEAR_ENEMYSHIP_VIRTUAL_DAMAGE > 0)
+							{
+								var nearEnemyShip = turnState.enemyShips.Any(m => FastShipPosition.DistanceTo(newPos, m.fcoord) < Settings.NEAR_ENEMY_SHIP_MIN_DIST);
+								if (nearEnemyShip)
+									damage += Settings.NEAR_ENEMYSHIP_VIRTUAL_DAMAGE;
+							}
 
 							var onMyShip = current.depth == 0 && turnState.myShips.Where(m => m.id != shipId).Any(m => FastShipPosition.CollidesShip(newPos, m.fposition) || FastShipPosition.CollidesShip(newMovedPos, m.fposition))
-											|| gameState.forecaster.GetTurnForecast(current.depth).myShipsPositions
+											|| turnForecast.myShipsPositions
 												.Where((_, i) => i != ship.index)
 												.Any(m => FastShipPosition.CollidesShip(newPos, m) || FastShipPosition.CollidesShip(newMovedPos, m));
 
 							var onEnemyShip = current.depth == 0 && turnState.enemyShips.Any(m => FastShipPosition.CollidesShip(newPos, m.fposition) || FastShipPosition.CollidesShip(newMovedPos, m.fposition))
-											|| gameState.forecaster.GetTurnForecast(current.depth).enemyShipsPositions
+											|| turnForecast.enemyShipsPositions
 												.Any(m => FastShipPosition.CollidesShip(newPos, m) || FastShipPosition.CollidesShip(newMovedPos, m));
 
 							if (!onMyShip && !onEnemyShip)
@@ -85,6 +99,8 @@ namespace Game.Navigation
 							}
 						}
 					}
+					
+				}
 			}
 
 			ShipPathChainItem bestChainItem = null;
@@ -105,11 +121,22 @@ namespace Game.Navigation
 			if (bestChainItem == null)
 				return new List<ShipMoveCommand>();
 
+			var chainDump = new List<ShipPathChainItem>();
 			var chain = new List<ShipMoveCommand>();
 			while (bestChainItem.prev != null)
 			{
 				chain.Add(bestChainItem.command);
+				chainDump.Add(bestChainItem);
 				bestChainItem = bestChainItem.prev;
+			}
+			chainDump.Reverse();
+			if (Settings.DUMP_BEST_PATH)
+			{
+				Console.Error.WriteLine($"Best path for ship {shipId}");
+				foreach (var item in chainDump)
+				{
+					Console.Error.WriteLine($"{item.command} - {FastShipPosition.ToShipPosition(item.fposition)} - dmg:{item.damage}");
+				}
 			}
 			chain.Reverse();
 			return chain;
@@ -168,6 +195,11 @@ namespace Game.Navigation
 			{
 				return !Equals(left, right);
 			}
+
+			public override string ToString()
+			{
+				return $"{nameof(depth)}: {depth}, {nameof(fposition)}: {FastShipPosition.ToShipPosition(fposition)}";
+			}
 		}
 
 		private class ShipPathChainItem
@@ -220,7 +252,7 @@ namespace Game.Navigation
 
 			public override string ToString()
 			{
-				return $"{(prev == null ? "ROOT: " : "")}{nameof(command)}: {command}, {nameof(depth)}: {depth}, {nameof(startCommand)}: {startCommand}, {nameof(fposition)}: {FastShipPosition.ToShipPosition(fposition)}, {nameof(damage)}: {damage}, {nameof(pathDamage)}: {pathDamage}";
+				return $"{(prev == null ? "ROOT: " : "")}{nameof(command)}: {command}, {nameof(depth)}: {depth}, {nameof(startCommand)}: {startCommand}, {nameof(fposition)}: {FastShipPosition.ToShipPosition(fposition)}, {nameof(damage)}: {damage}, {nameof(pathDamage)}: {pathDamage}, {nameof(dist)}: {dist}";
 			}
 
 			private void SetDamage(int newDamage)
