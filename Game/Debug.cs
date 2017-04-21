@@ -5,7 +5,7 @@ namespace Game
 	// pack: 1
 	public static class Debug
 	{
-		public const bool USE_DEBUG = true;
+		public const bool USE_DEBUG = false;
 
 		public static int[] startPositions =
 		{

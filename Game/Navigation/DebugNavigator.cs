@@ -43,7 +43,7 @@ namespace Game.Navigation
 				if (current.depth != Settings.NAVIGATION_PATH_DEPTH)
 				{
 					var turnForecast = gameState.forecaster.GetTurnForecast(current.depth);
-					foreach (var moveCommand in Enum.GetValues(typeof(ShipMoveCommand)).Cast<ShipMoveCommand>())
+					foreach (var moveCommand in ShipMoveCommands.all)
 					{
 						var newShipMovement = FastShipPosition.Move(current.fposition, moveCommand);
 						var newMovedPos = FastShipPosition.GetMovedPosition(newShipMovement);

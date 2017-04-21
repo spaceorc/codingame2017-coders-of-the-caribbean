@@ -43,7 +43,7 @@ namespace Game.Navigation
 				if (current.depth != Settings.NAVIGATION_PATH_DEPTH)
 				{
 					var turnForecast = gameState.forecaster.GetTurnForecast(current.depth);
-					foreach (var moveCommand in Enum.GetValues(typeof(ShipMoveCommand)).Cast<ShipMoveCommand>())
+					foreach (var moveCommand in ShipMoveCommands.all)
 					{
 						var newShipMovement = FastShipPosition.Move(current.fposition, moveCommand);
 						var newMovedPos = FastShipPosition.GetMovedPosition(newShipMovement);
@@ -51,25 +51,56 @@ namespace Game.Navigation
 						var newMovementState = new ShipMovementState(newPos, current.depth + 1);
 						if (!used.ContainsKey(newMovementState))
 						{
-							//foreach (var enemyShipMovedPosition in turnForecast.enemyShipsMovedPositions)
-							//{
-							//	if (FastShipPosition.CollidesShip(newMovedPos, enemyShipMovedPosition))
-							//	{
-							//		if ()
-							//	}
-							//}
+							var onMyShip = current.depth == 0 && turnState.myShips.Where(m => m.id != shipId).Any(m => FastShipPosition.CollidesShip(newPos, m.fposition) || FastShipPosition.CollidesShip(newMovedPos, m.fposition))
+											|| turnForecast.myShipsPositions
+												.Where((_, i) => i != ship.index)
+												.Any(m => FastShipPosition.CollidesShip(newPos, m) || FastShipPosition.CollidesShip(newMovedPos, m));
+							if (onMyShip)
+							{
+								used.Add(newMovementState, null);
+								continue;
+							}
 
-							var damage = turnForecast.mineDamageCoordMap[FastShipPosition.Coord(newPos)] 
-								+ turnForecast.mineDamageCoordMap[FastShipPosition.Bow(newPos)] 
-								+ turnForecast.mineDamageCoordMap[FastShipPosition.Stern(newPos)]
-								+ turnForecast.nearMineDamageCoordMap[FastShipPosition.Bow(newPos)] 
-								+ turnForecast.nearMineDamageCoordMap[FastShipPosition.Stern(newPos)];
+							var onEnemyShip = false;
+							if (current.depth == 0)
+							{
+								foreach (var enemyShip in turnState.enemyShips)
+								{
+									var enemyPosition = enemyShip.fposition;
+									foreach (var enemyMoveCommand in ShipMoveCommands.all)
+									{
+										uint myMovement;
+										uint enemyMovement;
+										var collisionType = CollisionChecker.Move(current.fposition, moveCommand, enemyPosition, enemyMoveCommand, out myMovement, out enemyMovement);
+										if ((collisionType & (CollisionType.MyMove | CollisionType.MyRotation)) != CollisionType.None)
+											onEnemyShip = true;
+									}
+								}
+							}
+							else
+							{
+								onEnemyShip = gameState.forecaster.GetTurnForecast(Math.Min(current.depth, Settings.NAVIGATOR_ENEMY_POSITION_DEPTH)).enemyShipsFinalPositions
+									.Any(m => FastShipPosition.CollidesShip(newPos, m) || FastShipPosition.CollidesShip(newMovedPos, m));
+
+							}
+
+							if (onEnemyShip)
+							{
+								used.Add(newMovementState, null);
+								continue;
+							}
+
+							var damage = turnForecast.mineDamageCoordMap[FastShipPosition.Coord(newPos)]
+										+ turnForecast.mineDamageCoordMap[FastShipPosition.Bow(newPos)]
+										+ turnForecast.mineDamageCoordMap[FastShipPosition.Stern(newPos)]
+										+ turnForecast.nearMineDamageCoordMap[FastShipPosition.Bow(newPos)]
+										+ turnForecast.nearMineDamageCoordMap[FastShipPosition.Stern(newPos)];
 
 							if (newMovedPos != newPos)
-								damage += turnForecast.mineDamageCoordMap[FastShipPosition.Bow(newMovedPos)] 
-									+ turnForecast.mineDamageCoordMap[FastShipPosition.Stern(newMovedPos)]
-									+ turnForecast.nearMineDamageCoordMap[FastShipPosition.Bow(newMovedPos)] 
-									+ turnForecast.nearMineDamageCoordMap[FastShipPosition.Stern(newMovedPos)];
+								damage += turnForecast.mineDamageCoordMap[FastShipPosition.Bow(newMovedPos)]
+										+ turnForecast.mineDamageCoordMap[FastShipPosition.Stern(newMovedPos)]
+										+ turnForecast.nearMineDamageCoordMap[FastShipPosition.Bow(newMovedPos)]
+										+ turnForecast.nearMineDamageCoordMap[FastShipPosition.Stern(newMovedPos)];
 
 							var cannonedBowOrStern = turnForecast.cannonballCoordsMap[FastShipPosition.Bow(newPos)] || turnForecast.cannonballCoordsMap[FastShipPosition.Stern(newPos)];
 							if (cannonedBowOrStern)
@@ -86,30 +117,11 @@ namespace Game.Navigation
 									damage += Settings.NEAR_ENEMYSHIP_VIRTUAL_DAMAGE;
 							}
 
-							var onMyShip = current.depth == 0 && turnState.myShips.Where(m => m.id != shipId).Any(m => FastShipPosition.CollidesShip(newPos, m.fposition) || FastShipPosition.CollidesShip(newMovedPos, m.fposition))
-											|| turnForecast.myShipsPositions
-												.Where((_, i) => i != ship.index)
-												.Any(m => FastShipPosition.CollidesShip(newPos, m) || FastShipPosition.CollidesShip(newMovedPos, m));
-
-							
-
-							var onEnemyShip = current.depth == 0 && turnState.enemyShips.Any(m => FastShipPosition.CollidesShip(newPos, m.fposition) || FastShipPosition.CollidesShip(newMovedPos, m.fposition))
-											|| turnForecast.enemyShipsFinalPositions
-												.Any(m => FastShipPosition.CollidesShip(newPos, m) || FastShipPosition.CollidesShip(newMovedPos, m));
-
-							if (!onMyShip && !onEnemyShip)
-							{
-								var next = current.Next(newPos, moveCommand, ftarget, damage);
-								queue.Enqueue(next);
-								used.Add(newMovementState, next);
-							}
-							else
-							{
-								used.Add(newMovementState, null);
-							}
+							var next = current.Next(newPos, moveCommand, ftarget, damage);
+							queue.Enqueue(next);
+							used.Add(newMovementState, next);
 						}
 					}
-					
 				}
 			}
 

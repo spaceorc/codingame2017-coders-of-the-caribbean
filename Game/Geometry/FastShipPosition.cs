@@ -34,7 +34,7 @@ namespace Game.Geometry
 					for (int x = 0; x < Constants.MAP_WIDTH; x++)
 						for (int y = 0; y < Constants.MAP_HEIGHT; y++)
 						{
-							foreach (var moveCommand in Enum.GetValues(typeof(ShipMoveCommand)).Cast<ShipMoveCommand>())
+							foreach (var moveCommand in ShipMoveCommands.all)
 							{
 								var shipPosition = new ShipPosition(new Coord(x, y), orientation, speed);
 								var nextPositions = shipPosition.Apply(moveCommand);

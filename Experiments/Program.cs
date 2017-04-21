@@ -17,7 +17,7 @@ namespace Experiments
 {
 	class Program
 	{
-		private static void Main(string[] args)
+		private static void Main22(string[] args)
 		{
 			FastCoord.Init();
 
@@ -204,7 +204,7 @@ namespace Experiments
 			ind = 0;
 			for (int i = 0; i < 1_000_000; i++)
 			{
-				foreach (var moveCommand in Enum.GetValues(typeof(ShipMoveCommand)).Cast<ShipMoveCommand>())
+				foreach (var moveCommand in ShipMoveCommands.all)
 					ships[ind].Apply(moveCommand);
 				if (++ind >= indexes.Length)
 					ind = 0;
@@ -216,7 +216,7 @@ namespace Experiments
 			ind = 0;
 			for (int i = 0; i < 1_000_000; i++)
 			{
-				foreach (var moveCommand in Enum.GetValues(typeof(ShipMoveCommand)).Cast<ShipMoveCommand>())
+				foreach (var moveCommand in ShipMoveCommands.all)
 				{
 					var moved = FastShipPosition.Move(fastShips[ind], moveCommand);
 					FastShipPosition.GetMovedPosition(moved);
@@ -232,7 +232,7 @@ namespace Experiments
 			ind = 0;
 			for (int i = 0; i < 1_000_000; i++)
 			{
-				foreach (var moveCommand in Enum.GetValues(typeof(ShipMoveCommand)).Cast<ShipMoveCommand>())
+				foreach (var moveCommand in ShipMoveCommands.all)
 				{
 					uint myMovement;
 					uint otherMovement;
@@ -247,7 +247,7 @@ namespace Experiments
 			Console.Out.WriteLine(stopwatch.ElapsedMilliseconds);
 		}
 
-		private static void Main2(string[] args)
+		private static void Main(string[] args)
 		{
 			var state = @"
 1

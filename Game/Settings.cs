@@ -3,6 +3,8 @@ namespace Game
 	// pack: 0
 	public static class Settings
 	{
+		public const int NAVIGATOR_ENEMY_POSITION_DEPTH = 1;
+
 		public const bool USE_MINING = false;
 
 		public const bool USE_DOUBLE_PATHFINDING = true;

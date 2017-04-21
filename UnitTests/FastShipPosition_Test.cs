@@ -109,7 +109,7 @@ namespace UnitTests
 			for (int speed = 0; speed <= Constants.MAX_SHIP_SPEED; speed++)
 			for (int orientation = 0; orientation < 6; orientation++)
 			{
-				foreach (var moveCommand in Enum.GetValues(typeof(ShipMoveCommand)).Cast<ShipMoveCommand>())
+				foreach (var moveCommand in ShipMoveCommands.all)
 				{
 					var shipPosition = new ShipPosition(new Coord(x, y), orientation, speed);
 					var nextPositions = shipPosition.Apply(moveCommand);
