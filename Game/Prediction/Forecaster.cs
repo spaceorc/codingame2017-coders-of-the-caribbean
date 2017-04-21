@@ -12,6 +12,8 @@ namespace Game.Prediction
 	{
 		public readonly GameState gameState;
 		private TurnForecast[] turnForecasts;
+		private readonly HashSet<int> knownCannonBalls = new HashSet<int>();
+		private readonly HashSet<int> enemiesCanFire = new HashSet<int>();
 
 		public Forecaster(GameState gameState)
 		{
@@ -24,8 +26,16 @@ namespace Game.Prediction
 			return turnForecasts[turn];
 		}
 
+		public bool EnemyCanFire(int enemyId)
+		{
+			return enemiesCanFire.Contains(enemyId);
+		}
+
 		public void StartTurn(TurnState turnState)
 		{
+			enemiesCanFire.Clear();
+			foreach (var enemyShip in turnState.enemyShips)
+				enemiesCanFire.Add(enemyShip.id);
 		}
 
 		public void EndTurn(TurnState turnState)
@@ -37,6 +47,12 @@ namespace Game.Prediction
 			turnForecasts = new TurnForecast[Settings.NAVIGATION_PATH_DEPTH];
 			for (var depth = 0; depth < Settings.NAVIGATION_PATH_DEPTH; depth++)
 				turnForecasts[depth] = new TurnForecast();
+
+			foreach (var cannonball in turnState.cannonballs)
+			{
+				if (knownCannonBalls.Add(cannonball.id))
+					enemiesCanFire.Remove(cannonball.firedBy);
+			}
 
 			BuildEnemyShipsForecast(turnState);
 			BuildMyShipsForecast(turnState);
@@ -56,6 +72,8 @@ namespace Game.Prediction
 			{
 				foreach (var enemyShip in turnState.enemyShips)
 				{
+					if (!enemiesCanFire.Contains(enemyShip.id))
+						continue;
 					var targets = Enumerable.Range(0, 6).Select(o => enemyShip.fbow).ToArray();
 					for (var dist = 1; dist <= 10; dist++)
 					{

@@ -73,7 +73,14 @@ namespace Game.Navigation
 										uint enemyMovement;
 										var collisionType = CollisionChecker.Move(current.fposition, moveCommand, enemyPosition, enemyMoveCommand, out myMovement, out enemyMovement);
 										if ((collisionType & (CollisionType.MyMove | CollisionType.MyRotation)) != CollisionType.None)
-											onEnemyShip = true;
+										{
+											newShipMovement = myMovement;
+											newMovedPos = FastShipPosition.GetMovedPosition(newShipMovement);
+											newPos = FastShipPosition.GetFinalPosition(newShipMovement);
+											newMovementState = new ShipMovementState(newPos, current.depth + 1);
+											onEnemyShip = used.ContainsKey(newMovementState);
+											break;
+										}
 									}
 								}
 							}
@@ -86,7 +93,14 @@ namespace Game.Navigation
 									uint enemyMovement;
 									var collisionType = CollisionChecker.Move(current.fposition, moveCommand, enemyPosition, ShipMoveCommand.Wait, out myMovement, out enemyMovement);
 									if ((collisionType & (CollisionType.MyMove | CollisionType.MyRotation)) != CollisionType.None)
-										onEnemyShip = true;
+									{
+										newShipMovement = myMovement;
+										newMovedPos = FastShipPosition.GetMovedPosition(newShipMovement);
+										newPos = FastShipPosition.GetFinalPosition(newShipMovement);
+										newMovementState = new ShipMovementState(newPos, current.depth + 1);
+										onEnemyShip = used.ContainsKey(newMovementState);
+										break;
+									}
 								}
 
 								//onEnemyShip = gameState.forecaster.GetTurnForecast(Math.Min(current.depth, Settings.NAVIGATOR_ENEMY_POSITION_DEPTH)).enemyShipsFinalPositions
@@ -96,7 +110,7 @@ namespace Game.Navigation
 
 							if (onEnemyShip)
 							{
-								used.Add(newMovementState, null);
+								//used.Add(newMovementState, null);
 								continue;
 							}
 
