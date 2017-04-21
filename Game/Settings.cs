@@ -3,7 +3,7 @@ namespace Game
 	// pack: 0
 	public static class Settings
 	{
-		public const int NAVIGATOR_ENEMY_POSITION_DEPTH = 1;
+		public const int NAVIGATOR_ENEMY_POSITION_DEPTH = 3;
 
 		public const bool USE_MINING = false;
 

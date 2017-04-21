@@ -79,8 +79,18 @@ namespace Game.Navigation
 							}
 							else
 							{
-								onEnemyShip = gameState.forecaster.GetTurnForecast(Math.Min(current.depth, Settings.NAVIGATOR_ENEMY_POSITION_DEPTH)).enemyShipsFinalPositions
-									.Any(m => FastShipPosition.CollidesShip(newPos, m) || FastShipPosition.CollidesShip(newMovedPos, m));
+								var prevEnemyFinalPositions = gameState.forecaster.GetTurnForecast(Math.Min(current.depth - 1, Settings.NAVIGATOR_ENEMY_POSITION_DEPTH)).enemyShipsFinalPositions;
+								foreach (var enemyPosition in prevEnemyFinalPositions)
+								{
+									uint myMovement;
+									uint enemyMovement;
+									var collisionType = CollisionChecker.Move(current.fposition, moveCommand, enemyPosition, ShipMoveCommand.Wait, out myMovement, out enemyMovement);
+									if ((collisionType & (CollisionType.MyMove | CollisionType.MyRotation)) != CollisionType.None)
+										onEnemyShip = true;
+								}
+
+								//onEnemyShip = gameState.forecaster.GetTurnForecast(Math.Min(current.depth, Settings.NAVIGATOR_ENEMY_POSITION_DEPTH)).enemyShipsFinalPositions
+								//	.Any(m => FastShipPosition.CollidesShip(newPos, m) || FastShipPosition.CollidesShip(newMovedPos, m));
 
 							}
 

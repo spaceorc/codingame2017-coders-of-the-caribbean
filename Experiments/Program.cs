@@ -251,24 +251,29 @@ namespace Experiments
 		{
 			var state = @"
 1
-8
-0 SHIP 10 11 2 2 95 1
-1 SHIP 11 4 1 2 96 0
-7 MINE 12 13 0 0 0 0
-6 MINE 12 7 0 0 0 0
-24 CANNONBALL 11 11 1 0 0 0
-11 BARREL 8 17 17 0 0 0
-10 BARREL 8 3 17 0 0 0
-12 BARREL 8 8 16 0 0 0
+10
+3 SHIP 3 0 3 1 33 1
+0 SHIP 5 2 1 0 67 0
+2 SHIP 3 4 2 2 86 0
+5 MINE 7 19 0 0 0 0
+4 MINE 7 1 0 0 0 0
+7 MINE 8 14 0 0 0 0
+9 MINE 6 17 0 0 0 0
+8 MINE 6 3 0 0 0 0
+31 CANNONBALL 3 0 0 1 0 0
+32 CANNONBALL 4 1 3 0 0 0
 ".Trim();
 
 			//===
-			var gameState = new GameState { currentTurn = 46 };
-			gameState.cannoneers[0] = new Cannoneer(0, gameState) { cooldown = false };
-			gameState.miners[0] = new Miner(0, gameState) { cooldown = 0 };
-			gameState.navigators[0] = new Navigator(0, gameState);
-			gameState.admiral.strategies[0] = new CollectBarrelsStrategy(0, gameState.admiral.gameState) { currentTargetId = 12, currentTarget = 297 };
-
+			var gameState = new GameState { currentTurn = 52 };
+			gameState.cannoneers[1] = new Cannoneer(1, gameState) { cooldown = false };
+			gameState.cannoneers[3] = new Cannoneer(3, gameState) { cooldown = false };
+			gameState.miners[1] = new Miner(1, gameState) { cooldown = 0 };
+			gameState.miners[3] = new Miner(3, gameState) { cooldown = 0 };
+			gameState.navigators[1] = new Navigator(1, gameState);
+			gameState.navigators[3] = new Navigator(3, gameState);
+			gameState.admiral.strategies[1] = new WalkAroundStrategy(1, gameState.admiral.gameState) { currentTarget = 2, started = true };
+			gameState.admiral.strategies[3] = new CollectBarrelsStrategy(3, gameState.admiral.gameState) { currentTargetId = 14, currentTarget = 70 };
 			//===
 
 			gameState.Iteration(new StringReader(state));
