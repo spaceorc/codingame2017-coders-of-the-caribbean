@@ -1,6 +1,6 @@
 namespace Game
 {
-	// pack: 1
+	// pack: 0
 	public static class Settings
 	{
 		public const bool USE_MINING = false;

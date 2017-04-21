@@ -119,14 +119,17 @@ namespace Game.Prediction
 
 			for (var depth = 0; depth < Settings.NAVIGATION_PATH_DEPTH; depth++)
 			{
-				var nextPositions = new int[prevPositions.Length];
+				var nextMovedPositions = new int[prevPositions.Length];
+				var nextFinalPositions = new int[prevPositions.Length];
 				for (var i = 0; i < prevPositions.Length; i++)
 				{
 					var position = prevPositions[i];
 					var movement = FastShipPosition.Move(position, ShipMoveCommand.Wait);
-					nextPositions[i] = FastShipPosition.GetFinalPosition(movement);
+					nextMovedPositions[i] = FastShipPosition.GetMovedPosition(movement);
+					nextFinalPositions[i] = FastShipPosition.GetFinalPosition(movement);
 				}
-				prevPositions = turnForecasts[depth].enemyShipsPositions = nextPositions;
+				turnForecasts[depth].enemyShipsMovedPositions = nextMovedPositions;
+				prevPositions = turnForecasts[depth].enemyShipsFinalPositions = nextFinalPositions;
 			}
 		}
 
@@ -149,7 +152,8 @@ namespace Game.Prediction
 
 		public class TurnForecast
 		{
-			public int[] enemyShipsPositions;
+			public int[] enemyShipsMovedPositions;
+			public int[] enemyShipsFinalPositions;
 			public int[] myShipsPositions;
 			public bool[] cannonballCoordsMap = new bool[FastCoord.count];
 			public int[] mineDamageCoordMap = new int[FastCoord.count];
@@ -157,7 +161,8 @@ namespace Game.Prediction
 
 			public override string ToString()
 			{
-				return $"enemies: {string.Join("; ", enemyShipsPositions.Select(FastShipPosition.ToShipPosition))} | " +
+				return $"enemiesMov: {string.Join("; ", enemyShipsMovedPositions.Select(FastShipPosition.ToShipPosition))} | " +
+						$"enemiesFin: {string.Join("; ", enemyShipsFinalPositions.Select(FastShipPosition.ToShipPosition))} | " +
 						$"myships: {string.Join("; ", myShipsPositions.Select(FastShipPosition.ToShipPosition))} | " +
 						$"cannonballs: {string.Join("; ", cannonballCoordsMap.Select((b, i) => new { b, i }).Where(x => x.b).Select(x => FastCoord.ToCoord(x.i)))} | " +
 						$"mines: {string.Join("; ", mineDamageCoordMap.Select((d, i) => new { d, i }).Where(x => x.d != 0).Select(x => FastCoord.ToCoord(x.i)))} | " +

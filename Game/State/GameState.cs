@@ -17,6 +17,7 @@ namespace Game.State
 		public readonly Dictionary<int, Cannoneer> cannoneers = new Dictionary<int, Cannoneer>();
 		public readonly Dictionary<int, Miner> miners = new Dictionary<int, Miner>();
 		public readonly Dictionary<int, Navigator> navigators = new Dictionary<int, Navigator>();
+		public readonly Dictionary<int, DebugNavigator> debugNavigators = new Dictionary<int, DebugNavigator>();
 		public readonly List<TurnStat> stats = new List<TurnStat>();
 		public readonly Forecaster forecaster;
 		public readonly Admiral admiral;
@@ -54,6 +55,14 @@ namespace Game.State
 			return navigator;
 		}
 
+		public DebugNavigator GetDebugNavigator(Ship ship)
+		{
+			DebugNavigator navigator;
+			if (!debugNavigators.TryGetValue(ship.id, out navigator))
+				debugNavigators.Add(ship.id, navigator = new DebugNavigator(ship.id, this));
+			return navigator;
+		}
+
 		public IEnumerable<ITeamMember> GetTeam(TurnState turnState)
 		{
 			yield return forecaster;
@@ -61,6 +70,7 @@ namespace Game.State
 			{
 				yield return GetCannoneer(ship);
 				yield return GetNavigator(ship);
+				yield return GetDebugNavigator(ship);
 				yield return GetMiner(ship);
 			}
 		}

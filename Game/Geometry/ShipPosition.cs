@@ -37,18 +37,16 @@ namespace Game.Geometry
 
 		public int DistanceTo(Coord target)
 		{
-			var dist = coord.DistanceTo(target);
-			if (dist == 0)
-				return 0;
 			var bowDist = bow.DistanceTo(target);
 			if (bowDist == 0)
 				return 0;
-			if (bowDist < dist)
-				return bowDist;
+			var dist = coord.DistanceTo(target);
+			if (dist == 0)
+				return 0;
 			var sternDist = stern.DistanceTo(target);
 			if (sternDist == 0)
 				return 0;
-			return dist;
+			return bowDist;
 		}
 
 		public List<ShipPosition> Apply(ShipMoveCommand moveCommand)

@@ -81,7 +81,7 @@ namespace Game.FireTeam
 			for (var turn = 0; turn < Settings.CANNONS_TRAVEL_TIME_LIMIT + 1; turn++)
 			{
 				var forecast = gameState.forecaster.GetTurnForecast(turn);
-				var enemyPosition = forecast.enemyShipsPositions[enemyIndex];
+				var enemyPosition = forecast.enemyShipsFinalPositions[enemyIndex];
 
 				var coords = new[] { FastShipPosition.Coord(enemyPosition), FastShipPosition.Bow(enemyPosition), FastShipPosition.Stern(enemyPosition) };
 				var targetTypes = new[] { FireTargetType.ShipCenter, FireTargetType.ShipBow, FireTargetType.ShipStern };

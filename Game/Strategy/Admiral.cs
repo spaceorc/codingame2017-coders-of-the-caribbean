@@ -28,10 +28,19 @@ namespace Game.Strategy
 			gameState.forecaster.BuildForecast(turnState);
 			Console.Error.WriteLine($"Forecast made in {turnState.stopwatch.ElapsedMilliseconds} ms");
 
-			var moves = Decide(turnState);
-			var isDouble = Settings.USE_DOUBLE_PATHFINDING && turnState.stopwatch.ElapsedMilliseconds < Settings.DOUBLE_PATHFINDING_TIMELIMIT;
-			if (isDouble)
+			List<ShipMoveCommand> moves;
+			bool isDouble = false;
+			if (Debug.USE_DEBUG)
+			{
+				moves = DebugDecide(turnState);
+			}
+			else
+			{
 				moves = Decide(turnState);
+				isDouble = Settings.USE_DOUBLE_PATHFINDING && turnState.stopwatch.ElapsedMilliseconds < Settings.DOUBLE_PATHFINDING_TIMELIMIT;
+				if (isDouble)
+					moves = Decide(turnState);
+			}
 
 			for (var i = 0; i < turnState.myShips.Count; i++)
 			{
@@ -71,6 +80,27 @@ namespace Game.Strategy
 		{
 			foreach (var teamMember in gameState.GetTeam(turnState))
 				teamMember.EndTurn(turnState);
+		}
+
+		private int stage;
+
+		private List<ShipMoveCommand> DebugDecide(TurnState turnState)
+		{
+			var navs = Debug.startPositions.Select((x, i) => gameState.GetDebugNavigator(turnState.myShips[i])).ToList();
+
+			if (stage == 0)
+			{
+				var paths = navs.Select((n,i) => n.FindPath(turnState, Debug.startPositions[i])).ToArray();
+				if (paths.All(p => p.Count == 0))
+					stage = 1;
+				else
+					return paths.Select(p => p.FirstOrDefault()).ToList();
+			}
+			var cmdIndex = stage - 1;
+			stage++;
+			if (cmdIndex < Debug.debugCommands.Length)
+				return Debug.debugCommands[cmdIndex].ToList();
+			return new ShipMoveCommand[navs.Count].ToList();
 		}
 
 		private List<ShipMoveCommand> Decide(TurnState turnState)

@@ -6,12 +6,12 @@ using Game.State;
 
 namespace Game.Navigation
 {
-	public class Navigator : ITeamMember
+	public class DebugNavigator : ITeamMember
 	{
 		public readonly GameState gameState;
 		public readonly int shipId;
 
-		public Navigator(int shipId, GameState gameState)
+		public DebugNavigator(int shipId, GameState gameState)
 		{
 			this.shipId = shipId;
 			this.gameState = gameState;
@@ -25,15 +25,15 @@ namespace Game.Navigation
 		{
 		}
 
-		public List<ShipMoveCommand> FindPath(TurnState turnState, int ftarget)
+		public List<ShipMoveCommand> FindPath(TurnState turnState, int ftargetPos)
 		{
 			var ship = turnState.myShipsById[shipId];
 
-			if (FastShipPosition.Collides(ship.fposition, ftarget))
+			if (ship.fposition == ftargetPos)
 				return new List<ShipMoveCommand>();
 
 			var queue = new Queue<ShipPathChainItem>();
-			queue.Enqueue(ShipPathChainItem.Start(ship.fposition, ftarget));
+			queue.Enqueue(ShipPathChainItem.Start(ship.fposition, ftargetPos));
 
 			var used = new Dictionary<ShipMovementState, ShipPathChainItem>();
 
@@ -51,47 +51,12 @@ namespace Game.Navigation
 						var newMovementState = new ShipMovementState(newPos, current.depth + 1);
 						if (!used.ContainsKey(newMovementState))
 						{
-							//foreach (var enemyShipMovedPosition in turnForecast.enemyShipsMovedPositions)
-							//{
-							//	if (FastShipPosition.CollidesShip(newMovedPos, enemyShipMovedPosition))
-							//	{
-							//		if ()
-							//	}
-							//}
-
-							var damage = turnForecast.mineDamageCoordMap[FastShipPosition.Coord(newPos)] 
-								+ turnForecast.mineDamageCoordMap[FastShipPosition.Bow(newPos)] 
-								+ turnForecast.mineDamageCoordMap[FastShipPosition.Stern(newPos)]
-								+ turnForecast.nearMineDamageCoordMap[FastShipPosition.Bow(newPos)] 
-								+ turnForecast.nearMineDamageCoordMap[FastShipPosition.Stern(newPos)];
-
-							if (newMovedPos != newPos)
-								damage += turnForecast.mineDamageCoordMap[FastShipPosition.Bow(newMovedPos)] 
-									+ turnForecast.mineDamageCoordMap[FastShipPosition.Stern(newMovedPos)]
-									+ turnForecast.nearMineDamageCoordMap[FastShipPosition.Bow(newMovedPos)] 
-									+ turnForecast.nearMineDamageCoordMap[FastShipPosition.Stern(newMovedPos)];
-
-							var cannonedBowOrStern = turnForecast.cannonballCoordsMap[FastShipPosition.Bow(newPos)] || turnForecast.cannonballCoordsMap[FastShipPosition.Stern(newPos)];
-							if (cannonedBowOrStern)
-								damage += Constants.LOW_DAMAGE;
-
-							var cannonedCenter = turnForecast.cannonballCoordsMap[FastShipPosition.Coord(newPos)];
-							if (cannonedCenter)
-								damage += Constants.HIGH_DAMAGE;
-
-							if (Settings.NEAR_ENEMYSHIP_VIRTUAL_DAMAGE > 0)
-							{
-								var nearEnemyShip = turnState.enemyShips.Any(m => FastShipPosition.DistanceTo(newPos, m.fcoord) < Settings.NEAR_ENEMY_SHIP_MIN_DIST);
-								if (nearEnemyShip)
-									damage += Settings.NEAR_ENEMYSHIP_VIRTUAL_DAMAGE;
-							}
-
 							var onMyShip = current.depth == 0 && turnState.myShips.Where(m => m.id != shipId).Any(m => FastShipPosition.CollidesShip(newPos, m.fposition) || FastShipPosition.CollidesShip(newMovedPos, m.fposition))
 											|| turnForecast.myShipsPositions
 												.Where((_, i) => i != ship.index)
 												.Any(m => FastShipPosition.CollidesShip(newPos, m) || FastShipPosition.CollidesShip(newMovedPos, m));
 
-							
+
 
 							var onEnemyShip = current.depth == 0 && turnState.enemyShips.Any(m => FastShipPosition.CollidesShip(newPos, m.fposition) || FastShipPosition.CollidesShip(newMovedPos, m.fposition))
 											|| turnForecast.enemyShipsFinalPositions
@@ -99,7 +64,7 @@ namespace Game.Navigation
 
 							if (!onMyShip && !onEnemyShip)
 							{
-								var next = current.Next(newPos, moveCommand, ftarget, damage);
+								var next = current.Next(newPos, moveCommand, ftargetPos);
 								queue.Enqueue(next);
 								used.Add(newMovementState, next);
 							}
@@ -109,7 +74,7 @@ namespace Game.Navigation
 							}
 						}
 					}
-					
+
 				}
 			}
 
@@ -118,10 +83,10 @@ namespace Game.Navigation
 			{
 				if (chainItem.prev != null)
 				{
-					if (bestChainItem == null || chainItem.damage < bestChainItem.damage || chainItem.damage == bestChainItem.damage
-						&& (chainItem.dist < bestChainItem.dist || chainItem.dist == bestChainItem.dist
-							&& (chainItem.depth < bestChainItem.depth || chainItem.depth == bestChainItem.depth
-								&& chainItem.startCommand == ShipMoveCommand.Wait)))
+					if (bestChainItem == null || chainItem.dist < bestChainItem.dist || chainItem.dist == bestChainItem.dist
+						&& (chainItem.speedScore < bestChainItem.speedScore || chainItem.speedScore == bestChainItem.speedScore
+						&& (chainItem.orientationScore < bestChainItem.orientationScore || chainItem.orientationScore == bestChainItem.orientationScore
+							&& chainItem.depth < bestChainItem.depth)))
 					{
 						bestChainItem = chainItem;
 					}
@@ -145,7 +110,7 @@ namespace Game.Navigation
 				Console.Error.WriteLine($"Best path for ship {shipId}");
 				foreach (var item in chainDump)
 				{
-					Console.Error.WriteLine($"{item.command} - {FastShipPosition.ToShipPosition(item.fposition)} - dmg:{item.damage}");
+					Console.Error.WriteLine($"{item.command} - {FastShipPosition.ToShipPosition(item.fposition)}");
 				}
 			}
 			chain.Reverse();
@@ -154,7 +119,7 @@ namespace Game.Navigation
 
 		public string Dump(string gameStateRef)
 		{
-			return $"new {nameof(Navigator)}({shipId}, {gameStateRef})";
+			return $"new {nameof(DebugNavigator)}({shipId}, {gameStateRef})";
 		}
 
 		private class ShipMovementState : IEquatable<ShipMovementState>
@@ -214,19 +179,19 @@ namespace Game.Navigation
 
 		private class ShipPathChainItem
 		{
-			public static ShipPathChainItem Start(int fposition, int ftarget)
+			public static ShipPathChainItem Start(int fposition, int ftargetPos)
 			{
-				return new ShipPathChainItem(null, ShipMoveCommand.Wait, fposition, 0, ShipMoveCommand.Wait, ftarget, 0);
+				return new ShipPathChainItem(null, ShipMoveCommand.Wait, fposition, 0, ShipMoveCommand.Wait, ftargetPos);
 			}
 
 			public readonly ShipMoveCommand command;
 			public readonly int depth;
 			public readonly int dist;
+			public readonly int speedScore;
+			public readonly int orientationScore;
 			public readonly int fposition;
-			public readonly int pathDamage;
 			public readonly ShipPathChainItem prev;
 			public readonly ShipMoveCommand startCommand;
-			public int damage = int.MaxValue;
 
 			private ShipPathChainItem(
 				ShipPathChainItem prev,
@@ -234,21 +199,19 @@ namespace Game.Navigation
 				int fposition,
 				int depth,
 				ShipMoveCommand startCommand,
-				int ftarget,
-				int pathDamage)
+				int ftargetPos)
 			{
 				this.prev = prev;
 				this.command = command;
 				this.fposition = fposition;
 				this.depth = depth;
 				this.startCommand = startCommand;
-				dist = FastShipPosition.DistanceTo(fposition, ftarget);
-				this.pathDamage = pathDamage;
-				if (depth == Settings.NAVIGATION_PATH_DEPTH)
-					SetDamage(pathDamage);
+				dist = FastCoord.Distance(FastShipPosition.Coord(fposition), FastShipPosition.Coord(ftargetPos));
+				speedScore = Math.Abs(FastShipPosition.Speed(fposition) - FastShipPosition.Speed(ftargetPos));
+				orientationScore = Math.Abs(FastShipPosition.Orientation(fposition) - FastShipPosition.Orientation(ftargetPos));
 			}
 
-			public ShipPathChainItem Next(int nextPosition, ShipMoveCommand moveCommand, int ftarget, int nextDamage)
+			public ShipPathChainItem Next(int nextPosition, ShipMoveCommand moveCommand, int ftargetPos)
 			{
 				return new ShipPathChainItem(
 					this,
@@ -256,23 +219,12 @@ namespace Game.Navigation
 					nextPosition,
 					depth + 1,
 					prev == null ? moveCommand : startCommand,
-					ftarget,
-					pathDamage + nextDamage);
+					ftargetPos);
 			}
 
 			public override string ToString()
 			{
-				return $"{(prev == null ? "ROOT: " : "")}{nameof(command)}: {command}, {nameof(depth)}: {depth}, {nameof(startCommand)}: {startCommand}, {nameof(fposition)}: {FastShipPosition.ToShipPosition(fposition)}, {nameof(damage)}: {damage}, {nameof(pathDamage)}: {pathDamage}, {nameof(dist)}: {dist}";
-			}
-
-			private void SetDamage(int newDamage)
-			{
-				var t = this;
-				while (t != null && t.damage > newDamage)
-				{
-					t.damage = newDamage;
-					t = t.prev;
-				}
+				return $"{(prev == null ? "ROOT: " : "")}{nameof(command)}: {command}, {nameof(depth)}: {depth}, {nameof(startCommand)}: {startCommand}, {nameof(fposition)}: {FastShipPosition.ToShipPosition(fposition)}, {nameof(dist)}: {dist}";
 			}
 		}
 	}
