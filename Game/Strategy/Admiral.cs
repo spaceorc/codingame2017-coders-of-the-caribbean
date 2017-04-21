@@ -88,18 +88,21 @@ namespace Game.Strategy
 		{
 			var navs = Debug.startPositions.Select((x, i) => gameState.GetDebugNavigator(turnState.myShips[i])).ToList();
 
-			if (stage == 0)
+			if (stage < Debug.preCommands.Length)
+				return Debug.postCommands[stage++].ToList();
+
+			if (stage == Debug.preCommands.Length)
 			{
 				var paths = navs.Select((n,i) => n.FindPath(turnState, Debug.startPositions[i])).ToArray();
 				if (paths.All(p => p.Count == 0))
-					stage = 1;
+					stage++;
 				else
 					return paths.Select(p => p.FirstOrDefault()).ToList();
 			}
-			var cmdIndex = stage - 1;
+			var cmdIndex = stage - Debug.preCommands.Length - 1;
 			stage++;
-			if (cmdIndex < Debug.debugCommands.Length)
-				return Debug.debugCommands[cmdIndex].ToList();
+			if (cmdIndex < Debug.postCommands.Length)
+				return Debug.postCommands[cmdIndex].ToList();
 			return new ShipMoveCommand[navs.Count].ToList();
 		}
 

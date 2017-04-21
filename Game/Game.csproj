@@ -44,6 +44,8 @@
   <ItemGroup>
     <Compile Include="Debug.cs" />
     <Compile Include="FireTeam\Cannoneer.cs" />
+    <Compile Include="Geometry\CollisionChecker.cs" />
+    <Compile Include="Geometry\CollisionType.cs" />
     <Compile Include="Navigation\DebugNavigator.cs" />
     <Compile Include="State\ITeamMember.cs" />
     <Compile Include="Geometry\FastCoord.cs" />

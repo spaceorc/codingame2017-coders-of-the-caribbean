@@ -5,17 +5,21 @@ namespace Game
 	// pack: 1
 	public static class Debug
 	{
-		public const bool USE_DEBUG = false;
+		public const bool USE_DEBUG = true;
 
 		public static int[] startPositions =
 		{
-			FastShipPosition.Create(7, 5, 1, 0),
-			FastShipPosition.Create(9, 6, 2, 0)
+			FastShipPosition.Create(14, 12, 2, 0),
+			FastShipPosition.Create(11, 13, 1, 0)
 		};
 
-		public static ShipMoveCommand[][] debugCommands = {
-			new [] { ShipMoveCommand.Faster, ShipMoveCommand.Wait },
+		public static ShipMoveCommand[][] preCommands = {
+			new [] { ShipMoveCommand.Faster, ShipMoveCommand.Faster }
+		};
+
+		public static ShipMoveCommand[][] postCommands = {
 			new [] { ShipMoveCommand.Faster, ShipMoveCommand.Faster },
+			new [] { ShipMoveCommand.Wait, ShipMoveCommand.Wait },
 		};
 	}
 }

@@ -30,29 +30,35 @@ namespace Game.Geometry
 			FastCoord.Init();
 
 			for (int speed = 0; speed <= Constants.MAX_SHIP_SPEED; speed++)
-			for (int orientation = 0; orientation < 6; orientation++)
-			for (int x = 0; x < Constants.MAP_WIDTH; x++)
-			for (int y = 0; y < Constants.MAP_HEIGHT; y++)
-			{
-				foreach (var moveCommand in Enum.GetValues(typeof(ShipMoveCommand)).Cast<ShipMoveCommand>())
-				{
-					var shipPosition = new ShipPosition(new Coord(x, y), orientation, speed);
-					var nextPositions = shipPosition.Apply(moveCommand);
-					if (nextPositions.Count != 2)
-						throw new InvalidOperationException("nextPositions.Count != 2");
-					var fastShipPosition = Create(shipPosition);
-					var moved = 0u;
-					for (int phase = 0; phase < nextPositions.Count; phase++)
-						moved = unchecked((moved << 16) | (uint)Create(nextPositions[phase]));
-					moves[fastShipPosition | ((int)moveCommand << positionBits)] = moved;
-				}
-			}
+				for (int orientation = 0; orientation < 6; orientation++)
+					for (int x = 0; x < Constants.MAP_WIDTH; x++)
+						for (int y = 0; y < Constants.MAP_HEIGHT; y++)
+						{
+							foreach (var moveCommand in Enum.GetValues(typeof(ShipMoveCommand)).Cast<ShipMoveCommand>())
+							{
+								var shipPosition = new ShipPosition(new Coord(x, y), orientation, speed);
+								var nextPositions = shipPosition.Apply(moveCommand);
+								if (nextPositions.Count != 2)
+									throw new InvalidOperationException("nextPositions.Count != 2");
+								var fastShipPosition = Create(shipPosition);
+								var moved = 0u;
+								for (int phase = 0; phase < nextPositions.Count; phase++)
+									moved = unchecked((moved << 16) | (uint)Create(nextPositions[phase]));
+								moves[fastShipPosition | ((int)moveCommand << positionBits)] = moved;
+							}
+						}
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static int Create(int x, int y, int orientation, int speed)
 		{
-			return (FastCoord.Create(x, y) & coordMask) | (speed << speedShift) | (orientation << orientationShift);
+			return Create(FastCoord.Create(x, y), orientation, speed);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static int Create(int coord, int orientation, int speed)
+		{
+			return (coord & coordMask) | (speed << speedShift) | (orientation << orientationShift);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -86,6 +92,12 @@ namespace Game.Geometry
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static int SetSpeed(int fastShipPosition, int speed)
+		{
+			return (fastShipPosition & ~speedMask) | (speed << speedShift);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static int Orientation(int fastShipPosition)
 		{
 			return fastShipPosition >> orientationShift;
@@ -107,8 +119,8 @@ namespace Game.Geometry
 		public static bool Collides(int fastShipPosition, int otherFastCoord)
 		{
 			return Coord(fastShipPosition) == otherFastCoord
-			       || Bow(fastShipPosition) == otherFastCoord
-			       || Stern(fastShipPosition) == otherFastCoord;
+				   || Bow(fastShipPosition) == otherFastCoord
+				   || Stern(fastShipPosition) == otherFastCoord;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -133,8 +145,8 @@ namespace Game.Geometry
 		public static bool CollidesShip(int fastShipPosition, int otherFastShipPosition)
 		{
 			return Collides(fastShipPosition, Coord(otherFastShipPosition))
-			       || Collides(fastShipPosition, Bow(otherFastShipPosition))
-			       || Collides(fastShipPosition, Stern(otherFastShipPosition));
+				   || Collides(fastShipPosition, Bow(otherFastShipPosition))
+				   || Collides(fastShipPosition, Stern(otherFastShipPosition));
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -151,11 +163,17 @@ namespace Game.Geometry
 				return 0;
 			return bowDist;
 		}
-		
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static uint Move(int fastShipPosition, ShipMoveCommand moveCommand)
 		{
 			return moves[fastShipPosition | ((int)moveCommand << positionBits)];
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static uint Move(int moved, int final)
+		{
+			return unchecked(((uint)moved << 16) | (uint)final);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
