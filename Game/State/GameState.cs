@@ -21,6 +21,8 @@ namespace Game.State
 		public readonly List<TurnStat> stats = new List<TurnStat>();
 		public readonly Forecaster forecaster;
 		public readonly Admiral admiral;
+		public readonly Strateg strateg;
+		public readonly DebugAdmiral debugAdmiral;
 		public int currentTurn;
 
 		public GameState()
@@ -29,6 +31,8 @@ namespace Game.State
 			FastShipPosition.Init();
 			forecaster = new Forecaster(this);
 			admiral = new Admiral(this);
+			debugAdmiral = new DebugAdmiral(this);
+			strateg = new Strateg(this);
 		}
 
 		public Cannoneer GetCannoneer(Ship ship)
@@ -66,6 +70,7 @@ namespace Game.State
 		public IEnumerable<ITeamMember> GetTeam(TurnState turnState)
 		{
 			yield return forecaster;
+			yield return strateg;
 			foreach (var ship in turnState.myShips)
 			{
 				yield return GetCannoneer(ship);
@@ -86,9 +91,39 @@ namespace Game.State
 				Console.Error.WriteLine("===");
 				Dump();
 			}
-			admiral.Iteration(turnState);
+
+			turnState.stopwatch.Restart();
+
+			NotifyStartTurn(turnState);
+
+			forecaster.BuildForecast(turnState);
+			Console.Error.WriteLine($"Forecast made in {turnState.stopwatch.ElapsedMilliseconds} ms");
+
+			if (Debug.USE_DEBUG)
+				debugAdmiral.Iteration(turnState);
+			else
+				admiral.Iteration(turnState);
+
+			NotifyEndTurn(turnState);
+
+			turnState.stopwatch.Stop();
+			stats.Add(new TurnStat { time = turnState.stopwatch.ElapsedMilliseconds });
+			Console.Error.WriteLine($"Decision made in {turnState.stopwatch.ElapsedMilliseconds} ms");
+
 			if (currentTurn == Settings.DUMP_STAT_TURN)
 				DumpStats();
+		}
+
+		private void NotifyStartTurn(TurnState turnState)
+		{
+			foreach (var teamMember in GetTeam(turnState))
+				teamMember.StartTurn(turnState);
+		}
+
+		private void NotifyEndTurn(TurnState turnState)
+		{
+			foreach (var teamMember in GetTeam(turnState))
+				teamMember.EndTurn(turnState);
 		}
 
 		public void Dump()
@@ -100,21 +135,17 @@ namespace Game.State
 				Console.Error.WriteLine($"gameState.{nameof(miners)}[{miner.Key}] = {miner.Value.Dump("gameState")};");
 			foreach (var navigator in navigators)
 				Console.Error.WriteLine($"gameState.{nameof(navigators)}[{navigator.Key}] = {navigator.Value.Dump("gameState")};");
-			admiral.Dump("gameState.admiral");
+			strateg.Dump($"gameState.{nameof(strateg)}");
 		}
 
 		public void DumpStats()
 		{
 			Console.Error.WriteLine("--- STATISTICS ---");
 			Console.Error.WriteLine($"TotalCount: {stats.Count}");
-			Console.Error.WriteLine($"DoublePathCount: {stats.Count(t => t.isDouble)}");
 			Console.Error.WriteLine($"Time_Max: {stats.Max(t => t.time)}");
 			Console.Error.WriteLine($"Time_Avg: {stats.Average(t => t.time)}");
 			Console.Error.WriteLine($"Time_95: {stats.Percentile(t => t.time, 95)}");
 			Console.Error.WriteLine($"Time_50: {stats.Percentile(t => t.time, 50)}");
-			Console.Error.WriteLine($"TimeCorrected_Avg: {stats.Average(t => t.CorrectedTime())}");
-			Console.Error.WriteLine($"TimeCorrected_95: {stats.Percentile(t => t.CorrectedTime(), 95)}");
-			Console.Error.WriteLine($"TimeCorrected_50: {stats.Percentile(t => t.CorrectedTime(), 50)}");
 			Console.Error.WriteLine("---");
 		}
 	}

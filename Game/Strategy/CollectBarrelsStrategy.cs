@@ -30,7 +30,7 @@ namespace Game.Strategy
 			foreach (var myShip in turnState.myShips)
 			{
 				IStrategy otherStrategy;
-				if (myShip.id != ship.id && gameState.admiral.strategies.TryGetValue(myShip.id, out otherStrategy))
+				if (myShip.id != ship.id && gameState.strateg.strategies.TryGetValue(myShip.id, out otherStrategy))
 				{
 					var otherBarrelId = (otherStrategy as CollectBarrelsStrategy)?.currentTargetId;
 					if (otherBarrelId.HasValue)
