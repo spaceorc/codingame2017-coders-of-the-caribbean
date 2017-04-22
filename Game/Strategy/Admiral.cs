@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Game.Geometry;
+using Game.Navigation;
 using Game.State;
 
 namespace Game.Strategy
@@ -63,7 +64,7 @@ namespace Game.Strategy
 					var navigator = gameState.GetNavigator(ship);
 					if (decision.targetCoord.HasValue)
 					{
-						var path = navigator.FindPath(turnState, decision.targetCoord.Value);
+						var path = navigator.FindPath(turnState, decision.targetCoord.Value, decision.role == StrategicRole.Approach ? NavigationMethod.Approach : NavigationMethod.Default);
 						moves.Add(path.FirstOrDefault());
 						gameState.forecaster.ApplyPath(ship, path);
 					}

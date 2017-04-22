@@ -1,11 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Game.Entities;
 using Game.Geometry;
 using Game.State;
 
 namespace Game.Navigation
 {
+	public enum NavigationMethod
+	{
+		Default,
+		Approach
+	}
+
 	public class Navigator : ITeamMember
 	{
 		public readonly GameState gameState;
@@ -25,7 +32,7 @@ namespace Game.Navigation
 		{
 		}
 
-		public List<ShipMoveCommand> FindPath(TurnState turnState, int ftarget)
+		public List<ShipMoveCommand> FindPath(TurnState turnState, int ftarget, NavigationMethod navigationMethod)
 		{
 			var ship = turnState.FindMyShip(shipId);
 
@@ -156,28 +163,16 @@ namespace Game.Navigation
 				{
 					if (bestChainItem == null)
 						bestChainItem = chainItem;
-					else if (chainItem.damage < bestChainItem.damage)
-						bestChainItem = chainItem;
-					else if (chainItem.damage == bestChainItem.damage)
+					else
 					{
-						if (chainItem.dist < bestChainItem.dist)
-							bestChainItem = chainItem;
-						else if (chainItem.dist == bestChainItem.dist)
+						switch (navigationMethod)
 						{
-							if (chainItem.depth < bestChainItem.depth)
-								bestChainItem = chainItem;
-							else if (chainItem.depth == bestChainItem.depth)
-							{
-								if (ship._speed == 0)
-								{
-									if (chainItem.startCommand != ShipMoveCommand.Wait && bestChainItem.startCommand == ShipMoveCommand.Wait)
-										bestChainItem = chainItem;
-								}
-								else if (chainItem.startCommand == ShipMoveCommand.Wait)
-								{
-									bestChainItem = chainItem;
-								}
-							}
+							case NavigationMethod.Approach:
+								bestChainItem = SelectBestPath_Approach(chainItem, bestChainItem, ship);
+								break;
+							default:
+								bestChainItem = SelectBestPath(chainItem, bestChainItem, ship);
+								break;
 						}
 					}
 				}
@@ -205,6 +200,82 @@ namespace Game.Navigation
 			}
 			chain.Reverse();
 			return chain;
+		}
+
+		private static ShipPathChainItem SelectBestPath(ShipPathChainItem chainItem, ShipPathChainItem bestChainItem, Ship ship)
+		{
+			if (chainItem.damage < bestChainItem.damage)
+				bestChainItem = chainItem;
+			else if (chainItem.damage == bestChainItem.damage)
+			{
+				if (chainItem.dist < bestChainItem.dist)
+					bestChainItem = chainItem;
+				else if (chainItem.dist == bestChainItem.dist)
+				{
+					if (chainItem.depth < bestChainItem.depth)
+						bestChainItem = chainItem;
+					else if (chainItem.depth == bestChainItem.depth)
+					{
+						if (ship._speed == 0)
+						{
+							if (chainItem.startCommand != ShipMoveCommand.Wait && bestChainItem.startCommand == ShipMoveCommand.Wait)
+								bestChainItem = chainItem;
+						}
+						else if (chainItem.startCommand == ShipMoveCommand.Wait)
+						{
+							bestChainItem = chainItem;
+						}
+					}
+				}
+			}
+			return bestChainItem;
+		}
+
+		private static ShipPathChainItem SelectBestPath_Approach(ShipPathChainItem chainItem, ShipPathChainItem bestChainItem, Ship ship)
+		{
+			if (chainItem.damage < bestChainItem.damage)
+				return chainItem;
+			if (chainItem.damage != bestChainItem.damage)
+				return bestChainItem;
+
+			var speed = FastShipPosition.Speed(chainItem.fposition);
+			var bestSpeed = FastShipPosition.Speed(bestChainItem.fposition);
+			if (bestChainItem.dist <= 2)
+			{
+				if (chainItem.depth < bestChainItem.depth)
+					return chainItem;
+				if (chainItem.depth != bestChainItem.depth)
+					return bestChainItem;
+				if (speed < bestSpeed)
+					return chainItem;
+				if (speed != bestSpeed)
+					return bestChainItem;
+				if (chainItem.dist < bestChainItem.dist)
+					return chainItem;
+				if (chainItem.dist != bestChainItem.dist)
+					return bestChainItem;
+			}
+			else
+			{
+				if (chainItem.dist < bestChainItem.dist)
+					return chainItem;
+				if (chainItem.dist != bestChainItem.dist)
+					return bestChainItem;
+				if (chainItem.depth < bestChainItem.depth)
+					return chainItem;
+				if (chainItem.depth != bestChainItem.depth)
+					return bestChainItem;
+			}
+
+			if (ship._speed == 0)
+			{
+				if (chainItem.startCommand != ShipMoveCommand.Wait && bestChainItem.startCommand == ShipMoveCommand.Wait)
+					return chainItem;
+				return bestChainItem;
+			}
+			if (chainItem.startCommand == ShipMoveCommand.Wait)
+				return chainItem;
+			return bestChainItem;
 		}
 
 		public string Dump(string gameStateRef)
