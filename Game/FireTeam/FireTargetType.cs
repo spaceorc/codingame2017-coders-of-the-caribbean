@@ -4,6 +4,7 @@ namespace Game.FireTeam
 	{
 		ShipCenter,
 		ShipBow,
-		ShipStern
+		ShipStern,
+		Explicit
 	}
 }

@@ -251,44 +251,27 @@ namespace Experiments
 		{
 			var state = @"
 1
-25
-3 SHIP 14 10 1 2 100 1
-0 SHIP 5 9 3 2 99 0
-2 SHIP 14 7 4 1 90 0
-5 MINE 16 11 0 0 0 0
-4 MINE 16 9 0 0 0 0
-9 MINE 16 14 0 0 0 0
-8 MINE 16 6 0 0 0 0
-33 CANNONBALL 17 11 2 1 0 0
-34 CANNONBALL 14 10 0 2 0 0
-35 CANNONBALL 19 10 2 3 0 0
-36 CANNONBALL 13 9 1 2 0 0
-37 CANNONBALL 13 9 3 2 0 0
-17 BARREL 5 13 20 0 0 0
-16 BARREL 5 7 20 0 0 0
-19 BARREL 19 13 17 0 0 0
-18 BARREL 19 7 17 0 0 0
-21 BARREL 21 11 13 0 0 0
-20 BARREL 21 9 13 0 0 0
-23 BARREL 3 19 10 0 0 0
-22 BARREL 3 1 10 0 0 0
-24 BARREL 3 10 20 0 0 0
-26 BARREL 6 11 13 0 0 0
-29 BARREL 19 10 19 0 0 0
-31 BARREL 2 15 16 0 0 0
-30 BARREL 2 5 16 0 0 0
+12
+0 SHIP 17 14 1 2 66 1
+1 SHIP 12 10 0 2 63 0
+6 MINE 14 19 0 0 0 0
+8 MINE 17 12 0 0 0 0
+42 CANNONBALL 17 10 0 1 0 0
+17 BARREL 17 10 13 0 0 0
+19 BARREL 21 13 15 0 0 0
+18 BARREL 21 7 15 0 0 0
+21 BARREL 21 12 20 0 0 0
+20 BARREL 21 8 20 0 0 0
+30 BARREL 20 18 17 0 0 0
+29 BARREL 20 2 17 0 0 0
 ".Trim();
 
 			//===
-			var gameState = new GameState { currentTurn = 24 };
-			gameState.cannoneers[1] = new Cannoneer(1, gameState) { cooldown = true };
-			gameState.cannoneers[3] = new Cannoneer(3, gameState) { cooldown = true };
-			gameState.miners[1] = new Miner(1, gameState) { cooldown = 0 };
-			gameState.miners[3] = new Miner(3, gameState) { cooldown = 0 };
-			gameState.navigators[1] = new Navigator(1, gameState);
-			gameState.navigators[3] = new Navigator(3, gameState);
-			//gameState.strateg.strategies[1] = new CollectBarrelsStrategy(1, gameState.strateg.gameState) { currentTargetId = 29, currentTarget = 372 };
-			//gameState.strateg.strategies[3] = new CollectBarrelsStrategy(3, gameState.strateg.gameState) { currentTargetId = 14, currentTarget = 335 };
+			var gameState = new GameState { currentTurn = 64 };
+			gameState.cannoneers[0] = new Cannoneer(0, gameState) { cooldown = false };
+			gameState.miners[0] = new Miner(0, gameState) { cooldown = 0 };
+			gameState.navigators[0] = new Navigator(0, gameState);
+			((Strateg)gameState.strateg).decisions[0] = new StrategicDecision { role = StrategicRole.Collector, targetBarrelId = 17, preferredFireTargetCoord = null, targetCoord = 370 };
 
 			//===
 

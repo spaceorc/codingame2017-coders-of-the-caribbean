@@ -19,8 +19,7 @@ namespace Game.FireTeam
 
 		public override string ToString()
 		{
-			return
-				$"{nameof(ftarget)}: {FastCoord.ToCoord(ftarget)}, {nameof(rum)}: {rum}, {nameof(turns)}: {turns}, {nameof(TargetType)}: {TargetType}";
+			return $"{nameof(ftarget)}: {FastCoord.ToCoord(ftarget)}, {nameof(rum)}: {rum}, {nameof(turns)}: {turns}, {nameof(TargetType)}: {TargetType}";
 		}
 	}
 }

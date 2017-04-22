@@ -32,12 +32,25 @@ namespace Game.FireTeam
 		{
 		}
 
-		public void PrepareToFire(TurnState turnState)
+		public void PrepareToFire(TurnState turnState, int? preferredFireTargetCoord)
 		{
 			if (!canFire)
 				return;
 			var ship = turnState.FindMyShip(shipId);
-			fireTarget = SelectFireTarget(turnState, ship);
+			fireTarget = TryGetPreferredFireTarget(ship, preferredFireTargetCoord) ?? SelectFireTarget(turnState, ship);
+		}
+
+		private static FireTarget TryGetPreferredFireTarget(Ship ship, int? preferredFireTargetCoord)
+		{
+			if (!preferredFireTargetCoord.HasValue)
+				return null;
+
+			var distanceTo = FastCoord.Distance(ship.fbow, preferredFireTargetCoord.Value);
+			if (distanceTo > 10)
+				return null;
+
+			var travelTime = (int)(1 + Math.Round(distanceTo / 3.0));
+			return new FireTarget(preferredFireTargetCoord.Value, travelTime, 0, FireTargetType.Explicit);
 		}
 
 		public bool Fire(TurnState turnState)
@@ -66,7 +79,7 @@ namespace Game.FireTeam
 				{
 					if (bestFireTarget == null ||
 						fireTarget.turns < bestFireTarget.turns ||
-						fireTarget.turns == bestFireTarget.turns && fireTarget.turns < bestFireTarget.turns)
+						fireTarget.turns == bestFireTarget.turns && fireTarget.TargetType < bestFireTarget.TargetType)
 						bestFireTarget = fireTarget;
 				}
 			}

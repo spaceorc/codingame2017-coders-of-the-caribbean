@@ -16,12 +16,13 @@ namespace Game.Strategy
 
 		public void Iteration(TurnState turnState)
 		{
-			var moves = Decide(turnState);
+			var decisions = gameState.strateg.MakeDecisions(turnState);
+			var moves = FindBestMoveCommands(turnState, decisions);
 			for (var i = 0; i < turnState.myShips.Count; i++)
 			{
 				if (moves[i] == ShipMoveCommand.Wait)
 				{
-					gameState.GetCannoneer(turnState.myShips[i]).PrepareToFire(turnState);
+					gameState.GetCannoneer(turnState.myShips[i]).PrepareToFire(turnState, decisions[i].preferredFireTargetCoord);
 					gameState.GetMiner(turnState.myShips[i]).PrepareToMine(turnState);
 				}
 			}
@@ -36,12 +37,6 @@ namespace Game.Strategy
 				}
 				turnState.myShips[i].Move(moves[i]);
 			}
-		}
-
-		private List<ShipMoveCommand> Decide(TurnState turnState)
-		{
-			var decisions = gameState.strateg.MakeDecisions(turnState);
-			return FindBestMoveCommands(turnState, decisions);
 		}
 
 		private List<ShipMoveCommand> FindBestMoveCommands(TurnState turnState, List<StrategicDecision> decisions)
