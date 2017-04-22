@@ -63,19 +63,23 @@ namespace Game.Strategy
 			var enemyBarrel2 = enemyBarrel1 == null ? null : FindNearestBarrelToCollect(turnState, enemyShip, new HashSet<int> { enemyBarrel1.barrel.id });
 
 			if (enemyBarrel1 == null)
-				return WalkFree(ship, prevDecision);
+			{
+				if (myBarrel != null)
+					return Collect(myBarrel.barrel);
+				return WalkFree(turnState, ship, prevDecision);
+			}
 
 			if (enemyBarrel2 == null)
 			{
-				if (myBarrel.barrel == enemyBarrel1.barrel && enemyBarrel1.dist - myBarrel.dist > 3)
+				if (myBarrel != null && myBarrel.barrel == enemyBarrel1.barrel && enemyBarrel1.dist - myBarrel.dist > 3)
 					return Collect(myBarrel.barrel);
-				return FireBarrowIfNotYet(WalkFree(ship, prevDecision), turnState, enemyBarrel1.barrel);
+				return FireBarrowIfNotYet(WalkFree(turnState, ship, prevDecision), turnState, enemyBarrel1.barrel);
 			}
 
-			if (myBarrel.barrel == enemyBarrel1.barrel && enemyBarrel1.dist - myBarrel.dist > 3 && myBarrel.dist <= 3)
+			if (myBarrel != null && myBarrel.barrel == enemyBarrel1.barrel && enemyBarrel1.dist - myBarrel.dist > 3 && myBarrel.dist <= 3)
 				return FireBarrowIfNotYet(Collect(enemyBarrel1.barrel), turnState, enemyBarrel2.barrel);
 
-			if (myBarrel.barrel != enemyBarrel1.barrel && myBarrel.dist <= 3)
+			if (myBarrel != null && myBarrel.barrel != enemyBarrel1.barrel && myBarrel.dist <= 3)
 				return FireBarrowIfNotYet(Collect(myBarrel.barrel), turnState, enemyBarrel1.barrel);
 
 			return FireBarrowIfNotYet(Collect(enemyBarrel2.barrel), turnState, enemyBarrel1.barrel);
@@ -93,7 +97,7 @@ namespace Game.Strategy
 			return prevDecision.FireTo(barrel.fcoord);
 		}
 
-		private static StrategicDecision WalkFree(Ship ship, StrategicDecision prevDecision)
+		private static StrategicDecision WalkFree(TurnState turnState, Ship ship, StrategicDecision prevDecision)
 		{
 			switch (prevDecision?.role)
 			{
@@ -125,7 +129,7 @@ namespace Game.Strategy
 					if (barrel != null)
 						decisions[ship.id] = new StrategicDecision { role = StrategicRole.Collector, targetBarrelId = barrel.barrel.id, targetCoord = barrel.barrel.fcoord };
 					else
-						decisions[ship.id] = WalkFree(ship, null);
+						decisions[ship.id] = WalkFree(turnState, ship, null);
 				}
 				else
 				{
@@ -139,7 +143,7 @@ namespace Game.Strategy
 								decisions[ship.id] = new StrategicDecision { role = StrategicRole.Collector, targetBarrelId = barrel.barrel.id, targetCoord = barrel.barrel.fcoord };
 								break;
 							}
-							decisions[ship.id] = WalkFree(ship, decision);
+							decisions[ship.id] = WalkFree(turnState, ship, decision);
 							break;
 					}
 				}
