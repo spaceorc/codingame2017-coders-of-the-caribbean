@@ -251,28 +251,22 @@ namespace Experiments
 		{
 			var state = @"
 1
-12
-0 SHIP 17 14 1 2 66 1
-1 SHIP 12 10 0 2 63 0
-6 MINE 14 19 0 0 0 0
-8 MINE 17 12 0 0 0 0
-42 CANNONBALL 17 10 0 1 0 0
-17 BARREL 17 10 13 0 0 0
-19 BARREL 21 13 15 0 0 0
-18 BARREL 21 7 15 0 0 0
-21 BARREL 21 12 20 0 0 0
-20 BARREL 21 8 20 0 0 0
-30 BARREL 20 18 17 0 0 0
-29 BARREL 20 2 17 0 0 0
+7
+1 SHIP 20 10 1 1 87 1
+0 SHIP 22 16 2 1 90 0
+6 MINE 19 13 0 0 0 0
+5 MINE 19 7 0 0 0 0
+42 CANNONBALL 21 7 1 1 0 0
+9 BARREL 21 7 18 0 0 0
+29 BARREL 20 1 13 0 0 0
 ".Trim();
 
 			//===
-			var gameState = new GameState { currentTurn = 64 };
-			gameState.cannoneers[0] = new Cannoneer(0, gameState) { cooldown = false };
-			gameState.miners[0] = new Miner(0, gameState) { cooldown = 0 };
-			gameState.navigators[0] = new Navigator(0, gameState);
-			((Strateg)gameState.strateg).decisions[0] = new StrategicDecision { role = StrategicRole.Collector, targetBarrelId = 17, preferredFireTargetCoord = null, targetCoord = 370 };
-
+			var gameState = new GameState { currentTurn = 106 };
+			gameState.cannoneers[1] = new Cannoneer(1, gameState) { cooldown = false };
+			gameState.miners[1] = new Miner(1, gameState) { cooldown = 0 };
+			gameState.navigators[1] = new Navigator(1, gameState);
+			((Strateg)gameState.strateg).decisions[1] = new StrategicDecision { role = StrategicRole.Collector, targetBarrelId = 9, fireToCoord = 85, targetCoord = 278 };
 			//===
 
 			gameState.Iteration(new StringReader(state));

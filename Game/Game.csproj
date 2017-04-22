@@ -82,6 +82,8 @@
     <Compile Include="Strategy\Old\OldStrateg.cs" />
     <Compile Include="Strategy\Strateg.cs" />
     <Compile Include="Strategy\Old\WalkAroundStrategy.cs" />
+    <Compile Include="Strategy\StrategicDecision.cs" />
+    <Compile Include="Strategy\StrategicRole.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

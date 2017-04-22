@@ -7,36 +7,6 @@ using Game.State;
 
 namespace Game.Strategy
 {
-	public enum StrategicRole
-	{
-		Unknown,
-		Collector,
-		Free
-	}
-
-	public class StrategicDecision
-	{
-		public StrategicRole role;
-		public int? targetCoord;
-		public int? targetBarrelId;
-		public int? preferredFireTargetCoord;
-
-		public StrategicDecision FireTo(int? coord)
-		{
-			var result = (StrategicDecision)MemberwiseClone();
-			result.preferredFireTargetCoord = coord;
-			return result;
-		}
-
-		public string Dump()
-		{
-			return $"new {nameof(StrategicDecision)} {{ {nameof(role)} = {nameof(StrategicRole)}.{role}," +
-					$" {nameof(targetBarrelId)} = {(targetBarrelId.HasValue ? targetBarrelId.ToString() : "null")}, " +
-					$" {nameof(preferredFireTargetCoord)} = {(preferredFireTargetCoord.HasValue ? preferredFireTargetCoord.ToString() : "null")}, " +
-					$" {nameof(targetCoord)} = {(targetCoord.HasValue ? targetCoord.ToString() : "null")} }}";
-		}
-	}
-
 	public class Strateg : IStrateg
 	{
 		public readonly GameState gameState;
@@ -79,9 +49,11 @@ namespace Game.Strategy
 			var enemyShip = turnState.enemyShips[0];
 			StrategicDecision decision;
 			decisions.TryGetValue(ship.id, out decision);
-			decision = MakeOneVsOneStrategicDecision(turnState, decision, ship, enemyShip);
-			decisions[ship.id] = decision;
-			return new List<StrategicDecision> { decision };
+			var newDecision = MakeOneVsOneStrategicDecision(turnState, decision, ship, enemyShip);
+			if (!newDecision.Equals(decision))
+				Console.Error.WriteLine($"New decision for {ship.id}: {newDecision}");
+			decisions[ship.id] = newDecision;
+			return new List<StrategicDecision> { newDecision };
 		}
 
 		private StrategicDecision MakeOneVsOneStrategicDecision(TurnState turnState, StrategicDecision prevDecision, Ship ship, Ship enemyShip)
@@ -136,7 +108,6 @@ namespace Game.Strategy
 			if (FastShipPosition.DistanceTo(ship.fposition, prevDecision.targetCoord.Value) < Settings.FREE_WALK_TARGET_REACH_DIST)
 			{
 				var freeIndex = (Array.IndexOf(freeTargets, prevDecision.targetCoord.Value) + 1) % freeTargets.Length;
-				Console.Error.WriteLine($"New free target: {FastCoord.ToCoord(freeTargets[freeIndex])}");
 				return new StrategicDecision { role = StrategicRole.Free, targetCoord = freeTargets[freeIndex] };
 			}
 			return prevDecision;
@@ -192,6 +163,20 @@ namespace Game.Strategy
 
 		private CollectableBarrel FindNearestBarrelToCollect(TurnState turnState, Ship ship, HashSet<int> used = null)
 		{
+			var barrelsHitTurns = new Dictionary<int, int>();
+			foreach (var barrel in turnState.barrels)
+			{
+				foreach (var cannonball in turnState.cannonballs)
+				{
+					if (cannonball.fcoord == barrel.fcoord)
+					{
+						int prevTurns;
+						if (!barrelsHitTurns.TryGetValue(barrel.id, out prevTurns) || prevTurns > cannonball.turns)
+							barrelsHitTurns[barrel.id] = cannonball.turns;
+					}
+				}
+			}
+
 			var nextShipPosition = FastShipPosition.GetFinalPosition(FastShipPosition.Move(ship.fposition, ShipMoveCommand.Faster));
 			var bestDist = int.MaxValue;
 			Barrel bestBarrel = null;
@@ -201,6 +186,9 @@ namespace Game.Strategy
 					var dist = FastShipPosition.DistanceTo(nextShipPosition, barrel.fcoord);
 					if (dist < bestDist)
 					{
+						int hitTurns;
+						if (barrelsHitTurns.TryGetValue(barrel.id, out hitTurns) && dist >= hitTurns - 1)
+							continue;
 						bestBarrel = barrel;
 						bestDist = dist;
 					}

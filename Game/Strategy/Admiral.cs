@@ -22,7 +22,7 @@ namespace Game.Strategy
 			{
 				if (moves[i] == ShipMoveCommand.Wait)
 				{
-					gameState.GetCannoneer(turnState.myShips[i]).PrepareToFire(turnState, decisions[i].preferredFireTargetCoord);
+					gameState.GetCannoneer(turnState.myShips[i]).PrepareToFire(turnState, decisions[i].fireToCoord);
 					gameState.GetMiner(turnState.myShips[i]).PrepareToMine(turnState);
 				}
 			}
