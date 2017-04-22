@@ -1,10 +1,10 @@
 ﻿using Game.State;
 
-namespace Game.Strategy
+namespace Game.Strategy.Old
 {
 	public interface IStrategy
 	{
-		Decision Decide(TurnState turnState);
+		int? Decide(TurnState turnState);
 		string Dump(string gameStateRef);
 	}
 }

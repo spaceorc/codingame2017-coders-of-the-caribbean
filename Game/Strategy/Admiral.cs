@@ -44,7 +44,7 @@ namespace Game.Strategy
 			return FindBestMoveCommands(turnState, decisions);
 		}
 
-		private List<ShipMoveCommand> FindBestMoveCommands(TurnState turnState, List<Decision> decisions)
+		private List<ShipMoveCommand> FindBestMoveCommands(TurnState turnState, List<StrategicDecision> decisions)
 		{
 			var moves = FindBestMoveCommands2(turnState, decisions);
 			var isDouble = Settings.USE_DOUBLE_PATHFINDING && turnState.stopwatch.ElapsedMilliseconds < Settings.DOUBLE_PATHFINDING_TIMELIMIT;
@@ -53,24 +53,21 @@ namespace Game.Strategy
 			return moves;
 		}
 
-		private List<ShipMoveCommand> FindBestMoveCommands2(TurnState turnState, List<Decision> decisions)
+		private List<ShipMoveCommand> FindBestMoveCommands2(TurnState turnState, List<StrategicDecision> decisions)
 		{
 			var moves = new List<ShipMoveCommand>();
 			foreach (var ship in turnState.myShips)
 			{
 				var action = decisions[ship.index];
 				var navigator = gameState.GetNavigator(ship);
-				switch (action.type)
+				if (action.targetCoord.HasValue)
 				{
-					case DecisionType.Goto:
-						var path = navigator.FindPath(turnState, action.fcoord);
-						moves.Add(path.FirstOrDefault());
-						gameState.forecaster.ApplyPath(ship, path);
-						break;
-					default:
-						moves.Add(ShipMoveCommand.Wait);
-						break;
+					var path = navigator.FindPath(turnState, action.targetCoord.Value);
+					moves.Add(path.FirstOrDefault());
+					gameState.forecaster.ApplyPath(ship, path);
 				}
+				else
+					moves.Add(ShipMoveCommand.Wait);
 			}
 			return moves;
 		}

@@ -2,7 +2,7 @@ using System;
 using Game.Geometry;
 using Game.State;
 
-namespace Game.Strategy
+namespace Game.Strategy.Old
 {
 	public class WalkAroundStrategy : IStrategy
 	{
@@ -26,7 +26,7 @@ namespace Game.Strategy
 			this.gameState = gameState;
 		}
 
-		public Decision Decide(TurnState turnState)
+		public int? Decide(TurnState turnState)
 		{
 			var ship = turnState.myShipsById[shipId];
 			if (FastShipPosition.DistanceTo(ship.fposition, ftargets[currentTarget]) < Settings.FREE_WALK_TARGET_REACH_DIST)
@@ -39,7 +39,7 @@ namespace Game.Strategy
 				started = true;
 				Console.Error.WriteLine($"New target for {ship.id}: {FastCoord.ToCoord(ftargets[currentTarget])}");
 			}
-			return Decision.Goto(ftargets[currentTarget]);
+			return ftargets[currentTarget];
 		}
 
 		public string Dump(string gameStateRef)

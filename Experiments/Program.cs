@@ -287,8 +287,8 @@ namespace Experiments
 			gameState.miners[3] = new Miner(3, gameState) { cooldown = 0 };
 			gameState.navigators[1] = new Navigator(1, gameState);
 			gameState.navigators[3] = new Navigator(3, gameState);
-			gameState.strateg.strategies[1] = new CollectBarrelsStrategy(1, gameState.strateg.gameState) { currentTargetId = 29, currentTarget = 372 };
-			gameState.strateg.strategies[3] = new CollectBarrelsStrategy(3, gameState.strateg.gameState) { currentTargetId = 14, currentTarget = 335 };
+			//gameState.strateg.strategies[1] = new CollectBarrelsStrategy(1, gameState.strateg.gameState) { currentTargetId = 29, currentTarget = 372 };
+			//gameState.strateg.strategies[3] = new CollectBarrelsStrategy(3, gameState.strateg.gameState) { currentTargetId = 14, currentTarget = 335 };
 
 			//===
 

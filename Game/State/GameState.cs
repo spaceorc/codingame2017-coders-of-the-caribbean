@@ -9,6 +9,7 @@ using Game.Navigation;
 using Game.Prediction;
 using Game.Statistics;
 using Game.Strategy;
+using Game.Strategy.Old;
 
 namespace Game.State
 {
@@ -21,7 +22,7 @@ namespace Game.State
 		public readonly List<TurnStat> stats = new List<TurnStat>();
 		public readonly Forecaster forecaster;
 		public readonly Admiral admiral;
-		public readonly Strateg strateg;
+		public readonly IStrateg strateg;
 		public readonly DebugAdmiral debugAdmiral;
 		public int currentTurn;
 
@@ -32,7 +33,7 @@ namespace Game.State
 			forecaster = new Forecaster(this);
 			admiral = new Admiral(this);
 			debugAdmiral = new DebugAdmiral(this);
-			strateg = new Strateg(this);
+			strateg = new OldStrateg(this);
 		}
 
 		public Cannoneer GetCannoneer(Ship ship)

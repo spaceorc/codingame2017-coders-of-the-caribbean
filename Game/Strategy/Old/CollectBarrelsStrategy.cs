@@ -5,7 +5,7 @@ using Game.Entities;
 using Game.Geometry;
 using Game.State;
 
-namespace Game.Strategy
+namespace Game.Strategy.Old
 {
 	public class CollectBarrelsStrategy : IStrategy
 	{
@@ -20,17 +20,17 @@ namespace Game.Strategy
 			this.gameState = gameState;
 		}
 
-		public Decision Decide(TurnState turnState)
+		public int? Decide(TurnState turnState)
 		{
 			var ship = turnState.myShipsById[shipId];
 			if (!turnState.barrels.Any())
-				return Decision.Unknown();
+				return null;
 
 			var used = new HashSet<int>();
 			foreach (var myShip in turnState.myShips)
 			{
 				IStrategy otherStrategy;
-				if (myShip.id != ship.id && gameState.strateg.strategies.TryGetValue(myShip.id, out otherStrategy))
+				if (myShip.id != ship.id && ((OldStrateg)gameState.strateg).strategies.TryGetValue(myShip.id, out otherStrategy))
 				{
 					var otherBarrelId = (otherStrategy as CollectBarrelsStrategy)?.currentTargetId;
 					if (otherBarrelId.HasValue)
@@ -57,7 +57,7 @@ namespace Game.Strategy
 				Console.Error.WriteLine($"New target for {ship.id}: {bestBarrel}");
 			}
 
-			return currentTarget == null ? Decision.Unknown() : Decision.Goto(currentTarget.Value);
+			return currentTarget;
 		}
 
 		public string Dump(string gameStateRef)
