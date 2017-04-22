@@ -53,16 +53,23 @@ namespace Game.Strategy
 			var moves = new List<ShipMoveCommand>();
 			foreach (var ship in turnState.myShips)
 			{
-				var action = decisions[ship.index];
-				var navigator = gameState.GetNavigator(ship);
-				if (action.targetCoord.HasValue)
+				var decision = decisions[ship.index];
+				if (decision.role == StrategicRole.Explicit)
 				{
-					var path = navigator.FindPath(turnState, action.targetCoord.Value);
-					moves.Add(path.FirstOrDefault());
-					gameState.forecaster.ApplyPath(ship, path);
+					moves.Add(decision.explicitCommand.Value);
 				}
 				else
-					moves.Add(ShipMoveCommand.Wait);
+				{
+					var navigator = gameState.GetNavigator(ship);
+					if (decision.targetCoord.HasValue)
+					{
+						var path = navigator.FindPath(turnState, decision.targetCoord.Value);
+						moves.Add(path.FirstOrDefault());
+						gameState.forecaster.ApplyPath(ship, path);
+					}
+					else
+						moves.Add(ShipMoveCommand.Wait);
+				}
 			}
 			return moves;
 		}

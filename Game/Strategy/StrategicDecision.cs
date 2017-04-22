@@ -9,6 +9,7 @@ namespace Game.Strategy
 		public int? targetCoord;
 		public int? targetBarrelId;
 		public int? fireToCoord;
+		public ShipMoveCommand? explicitCommand;
 
 		public StrategicDecision FireTo(int? coord)
 		{
@@ -23,7 +24,7 @@ namespace Game.Strategy
 				return false;
 			if (ReferenceEquals(this, other))
 				return true;
-			return role == other.role && targetCoord == other.targetCoord && targetBarrelId == other.targetBarrelId && fireToCoord == other.fireToCoord;
+			return role == other.role && targetCoord == other.targetCoord && targetBarrelId == other.targetBarrelId && fireToCoord == other.fireToCoord && explicitCommand == other.explicitCommand;
 		}
 
 		public override bool Equals(object obj)
@@ -45,6 +46,7 @@ namespace Game.Strategy
 				hashCode = (hashCode * 397) ^ targetCoord.GetHashCode();
 				hashCode = (hashCode * 397) ^ targetBarrelId.GetHashCode();
 				hashCode = (hashCode * 397) ^ fireToCoord.GetHashCode();
+				hashCode = (hashCode * 397) ^ explicitCommand.GetHashCode();
 				return hashCode;
 			}
 		}
@@ -64,7 +66,8 @@ namespace Game.Strategy
 			var targetCoordString = targetCoord.HasValue ? $", {nameof(targetCoord)}: {FastCoord.ToCoord(targetCoord.Value)}" : "";
 			var targetBarrelIdString = targetBarrelId.HasValue ? $", {nameof(targetBarrelId)}: {targetBarrelId.Value}" : "";
 			var fireToCoordString = fireToCoord.HasValue ? $", {nameof(fireToCoord)}: {FastCoord.ToCoord(fireToCoord.Value)}" : "";
-			return $"{role}{targetCoordString}{targetBarrelIdString}{fireToCoordString}";
+			var explicitCommandString = explicitCommand.HasValue ? $", {nameof(explicitCommand)}: {explicitCommand.Value}" : "";
+			return $"{role}{targetCoordString}{targetBarrelIdString}{fireToCoordString}{explicitCommandString}";
 		}
 
 		public string Dump()
@@ -72,6 +75,7 @@ namespace Game.Strategy
 			return $"new {nameof(StrategicDecision)} {{ {nameof(role)} = {nameof(StrategicRole)}.{role}," +
 					$" {nameof(targetBarrelId)} = {(targetBarrelId.HasValue ? targetBarrelId.ToString() : "null")}, " +
 					$" {nameof(fireToCoord)} = {(fireToCoord.HasValue ? fireToCoord.ToString() : "null")}, " +
+					$" {nameof(explicitCommand)} = {(explicitCommand.HasValue ? $"{nameof(ShipMoveCommand)}.{explicitCommand.Value}" : "null")}, " +
 					$" {nameof(targetCoord)} = {(targetCoord.HasValue ? targetCoord.ToString() : "null")} }}";
 		}
 	}

@@ -85,41 +85,55 @@ namespace Game.Strategy
 				return;
 			}
 
-			if (turnState.myShips.Count == 2)
-			{
-				var ship1 = turnState.myShips[0];
-				var ship2 = turnState.myShips[1];
-				if (ship1.rum > ship2.rum)
-				{
-					var tmp = ship1;
-					ship1 = ship2;
-					ship2 = tmp;
-				}
-				if (FastCoord.Distance(ship1.fbow, ship2.fbow) <= 4)
-				{
-					var nextShip1Position = FastShipPosition.GetFinalPosition(FastShipPosition.Move(ship1.fposition, ShipMoveCommand.Wait));
-					decisions[ship1.id] = new StrategicDecision { role = StrategicRole.Fire, fireToCoord = FastShipPosition.Coord(nextShip1Position) };
-					decisions[ship2.id] = new StrategicDecision { role = StrategicRole.Unknown, targetCoord = FastShipPosition.Coord(nextShip1Position) };
-				}
-				else
-				{
-					var x = (FastCoord.GetX(ship1.fcoord) + FastCoord.GetX(ship2.fcoord)) / 2;
-					var y = (FastCoord.GetY(ship1.fcoord) + FastCoord.GetY(ship2.fcoord)) / 2;
-					if (x < 5) x = 5;
-					if (x > Constants.MAP_WIDTH - 6) x = Constants.MAP_WIDTH - 6;
-					if (y < 5) y = 5;
-					if (y > Constants.MAP_HEIGHT - 6) x = Constants.MAP_HEIGHT - 6;
-
-					decisions[ship1.id] = new StrategicDecision { role = StrategicRole.Unknown, targetCoord = FastCoord.Create(x, y) };
-					decisions[ship2.id] = new StrategicDecision { role = StrategicRole.Unknown, targetCoord = FastCoord.Create(x, y) };
-				}
-			}
-
+			if (turnState.myShips.Count == 1)
 			{
 				var ship = turnState.myShips[0];
 				StrategicDecision prevDecision;
 				decisions.TryGetValue(ship.id, out prevDecision);
 				decisions[ship.id] = RunAway(turnState, ship, prevDecision);
+				return;
+			}
+
+			var ship1 = turnState.myShips[0];
+			var ship2 = turnState.myShips[1];
+			if (ship1.rum > ship2.rum)
+			{
+				var tmp = ship1;
+				ship1 = ship2;
+				ship2 = tmp;
+			}
+			if (FastCoord.Distance(ship1.fbow, ship2.fbow) <= 4)
+			{
+				StrategicDecision prevDecision;
+				decisions.TryGetValue(ship1.id, out prevDecision);
+				if (prevDecision?.role == StrategicRole.Fire || prevDecision?.role == StrategicRole.Explicit)
+				{
+					decisions[ship1.id] = new StrategicDecision { role = StrategicRole.Explicit, explicitCommand = ShipMoveCommand.Slower };
+					decisions[ship2.id] = new StrategicDecision { role = StrategicRole.Unknown, targetCoord = prevDecision.fireToCoord };
+				}
+				else
+				{
+					var nextShip1Position = FastShipPosition.GetFinalPosition(FastShipPosition.Move(ship1.fposition, ShipMoveCommand.Wait));
+					nextShip1Position = FastShipPosition.GetFinalPosition(FastShipPosition.Move(nextShip1Position, ShipMoveCommand.Slower));
+					decisions[ship1.id] = new StrategicDecision { role = StrategicRole.Fire, fireToCoord = FastShipPosition.Coord(nextShip1Position) };
+					decisions[ship2.id] = new StrategicDecision { role = StrategicRole.Unknown, targetCoord = FastShipPosition.Coord(nextShip1Position) };
+				}
+			}
+			else
+			{
+				var x = (FastCoord.GetX(ship1.fcoord) + FastCoord.GetX(ship2.fcoord)) / 2;
+				var y = (FastCoord.GetY(ship1.fcoord) + FastCoord.GetY(ship2.fcoord)) / 2;
+				if (x < 5)
+					x = 5;
+				if (x > Constants.MAP_WIDTH - 6)
+					x = Constants.MAP_WIDTH - 6;
+				if (y < 5)
+					y = 5;
+				if (y > Constants.MAP_HEIGHT - 6)
+					x = Constants.MAP_HEIGHT - 6;
+
+				decisions[ship1.id] = new StrategicDecision { role = StrategicRole.Unknown, targetCoord = FastCoord.Create(x, y) };
+				decisions[ship2.id] = new StrategicDecision { role = StrategicRole.Unknown, targetCoord = FastCoord.Create(x, y) };
 			}
 		}
 
@@ -256,7 +270,7 @@ namespace Game.Strategy
 					if (barrel != null)
 						decisions[ship.id] = new StrategicDecision { role = StrategicRole.Collector, targetBarrelId = barrel.barrel.id, targetCoord = barrel.barrel.fcoord };
 					else
-						decisions[ship.id] = WalkFree(turnState, ship, null);
+						decisions[ship.id] = RunAway(turnState, ship, null);
 				}
 				else
 				{
@@ -271,7 +285,7 @@ namespace Game.Strategy
 								decisions[ship.id] = new StrategicDecision { role = StrategicRole.Collector, targetBarrelId = barrel.barrel.id, targetCoord = barrel.barrel.fcoord };
 								break;
 							}
-							decisions[ship.id] = WalkFree(turnState, ship, decision);
+							decisions[ship.id] = RunAway(turnState, ship, decision);
 							break;
 					}
 				}

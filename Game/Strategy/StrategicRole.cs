@@ -6,6 +6,8 @@ namespace Game.Strategy
 		Collector,
 		Free,
 		RunAway,
-		Fire
+		Approach,
+		Fire,
+		Explicit
 	}
 }

@@ -55,8 +55,6 @@
     <Compile Include="Strategy\Admiral.cs" />
     <Compile Include="Strategy\DebugAdmiral.cs" />
     <Compile Include="Strategy\IStrateg.cs" />
-    <Compile Include="Strategy\Old\CollectBarrelsStrategy.cs" />
-    <Compile Include="Strategy\Old\IStrategy.cs" />
     <Compile Include="FireTeam\Miner.cs" />
     <Compile Include="Entities\Barrel.cs" />
     <Compile Include="Entities\Cannonball.cs" />
@@ -79,9 +77,7 @@
     <Compile Include="Geometry\ShipMoveCommand.cs" />
     <Compile Include="Statistics\StatExtensions.cs" />
     <Compile Include="Statistics\TurnStat.cs" />
-    <Compile Include="Strategy\Old\OldStrateg.cs" />
     <Compile Include="Strategy\Strateg.cs" />
-    <Compile Include="Strategy\Old\WalkAroundStrategy.cs" />
     <Compile Include="Strategy\StrategicDecision.cs" />
     <Compile Include="Strategy\StrategicRole.cs" />
   </ItemGroup>
