@@ -17,12 +17,10 @@ namespace Game.State
 		public readonly Dictionary<int, Cannoneer> cannoneers = new Dictionary<int, Cannoneer>();
 		public readonly Dictionary<int, Miner> miners = new Dictionary<int, Miner>();
 		public readonly Dictionary<int, Navigator> navigators = new Dictionary<int, Navigator>();
-		public readonly Dictionary<int, DebugNavigator> debugNavigators = new Dictionary<int, DebugNavigator>();
 		public readonly List<TurnStat> stats = new List<TurnStat>();
 		public readonly Forecaster forecaster;
 		public readonly Admiral admiral;
 		public readonly IStrateg strateg;
-		public readonly DebugAdmiral debugAdmiral;
 		public int currentTurn;
 
 		public GameState()
@@ -31,7 +29,6 @@ namespace Game.State
 			FastShipPosition.Init();
 			forecaster = new Forecaster(this);
 			admiral = new Admiral(this);
-			debugAdmiral = new DebugAdmiral(this);
 			strateg = new Strateg(this);
 		}
 
@@ -59,14 +56,6 @@ namespace Game.State
 			return navigator;
 		}
 
-		public DebugNavigator GetDebugNavigator(Ship ship)
-		{
-			DebugNavigator navigator;
-			if (!debugNavigators.TryGetValue(ship.id, out navigator))
-				debugNavigators.Add(ship.id, navigator = new DebugNavigator(ship.id, this));
-			return navigator;
-		}
-
 		public IEnumerable<ITeamMember> GetTeam(TurnState turnState)
 		{
 			yield return forecaster;
@@ -75,7 +64,6 @@ namespace Game.State
 			{
 				yield return GetCannoneer(ship);
 				yield return GetNavigator(ship);
-				yield return GetDebugNavigator(ship);
 				yield return GetMiner(ship);
 			}
 		}
@@ -99,10 +87,7 @@ namespace Game.State
 			forecaster.BuildForecast(turnState);
 			Console.Error.WriteLine($"Forecast made in {turnState.stopwatch.ElapsedMilliseconds} ms");
 
-			if (Debug.USE_DEBUG)
-				debugAdmiral.Iteration(turnState);
-			else
-				admiral.Iteration(turnState);
+			admiral.Iteration(turnState);
 
 			NotifyEndTurn(turnState);
 
