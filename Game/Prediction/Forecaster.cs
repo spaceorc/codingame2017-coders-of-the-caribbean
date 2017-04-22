@@ -12,8 +12,11 @@ namespace Game.Prediction
 	{
 		public readonly GameState gameState;
 		private TurnForecast[] turnForecasts;
-		private readonly HashSet<int> knownCannonBalls = new HashSet<int>();
+		private readonly HashSet<int> knownCannonballs = new HashSet<int>();
 		private readonly HashSet<int> enemiesCanFire = new HashSet<int>();
+		private readonly Dictionary<int, int> enemiesMineCooldown = new Dictionary<int, int>();
+		private readonly Dictionary<int, int> lastEnemiesPositions = new Dictionary<int, int>();
+		private readonly HashSet<int> knownMines = new HashSet<int>();
 
 		public Forecaster(GameState gameState)
 		{
@@ -26,20 +29,52 @@ namespace Game.Prediction
 			return turnForecasts[turn];
 		}
 
-		public bool EnemyCanFire(int enemyId)
+		public void StartTurn(TurnState turnState)
 		{
-			return enemiesCanFire.Contains(enemyId);
+			PredictEnemiesCanFire(turnState);
+			PredictEnemiesCanMine(turnState);
 		}
 
-		public void StartTurn(TurnState turnState)
+		private void PredictEnemiesCanFire(TurnState turnState)
 		{
 			enemiesCanFire.Clear();
 			foreach (var enemyShip in turnState.enemyShips)
 				enemiesCanFire.Add(enemyShip.id);
+			foreach (var cannonball in turnState.cannonballs)
+			{
+				if (knownCannonballs.Add(cannonball.id))
+					enemiesCanFire.Remove(cannonball.firedBy);
+			}
+		}
+
+		private void PredictEnemiesCanMine(TurnState turnState)
+		{
+			foreach (var kvp in enemiesMineCooldown.ToList())
+			{
+				var cooldown = kvp.Value - 1;
+				if (cooldown == 0)
+					enemiesMineCooldown.Remove(kvp.Key);
+				else
+					enemiesMineCooldown[kvp.Key] = cooldown;
+			}
+			foreach (var mine in turnState.mines)
+			{
+				if (knownMines.Add(mine.id))
+				{
+					foreach (var kvp in lastEnemiesPositions)
+					{
+						if (FastShipPosition.Mine(kvp.Value) == mine.fcoord)
+							enemiesMineCooldown[kvp.Key] = Constants.MINING_COOLDOWN;
+					}
+				}
+			}
 		}
 
 		public void EndTurn(TurnState turnState)
 		{
+			lastEnemiesPositions.Clear();
+			foreach (var enemyShip in turnState.enemyShips)
+				lastEnemiesPositions[enemyShip.id] = enemyShip.fposition;
 		}
 
 		public void BuildForecast(TurnState turnState)
@@ -47,12 +82,6 @@ namespace Game.Prediction
 			turnForecasts = new TurnForecast[Settings.NAVIGATION_PATH_DEPTH];
 			for (var depth = 0; depth < Settings.NAVIGATION_PATH_DEPTH; depth++)
 				turnForecasts[depth] = new TurnForecast();
-
-			foreach (var cannonball in turnState.cannonballs)
-			{
-				if (knownCannonBalls.Add(cannonball.id))
-					enemiesCanFire.Remove(cannonball.firedBy);
-			}
 
 			BuildEnemyShipsForecast(turnState);
 			BuildMyShipsForecast(turnState);
@@ -89,26 +118,44 @@ namespace Game.Prediction
 								GetTurnForecast(travelTime).cannonballCoordsMap[targets[orientation]] = true;
 					}
 				}
-				
+
 			}
 		}
 
 		private void BuildMinesForecast(TurnState turnState)
 		{
 			for (var i = 0; i < turnState.mines.Count; i++)
-				for (int depth = 0; depth < Settings.NAVIGATION_PATH_DEPTH; depth++)
+			{
+				var mineCoord = turnState.mines[i].fcoord;
+				BuildMineForecast(mineCoord);
+			}
+			foreach (var enemyShip in turnState.enemyShips)
+			{
+				if (!enemiesMineCooldown.ContainsKey(enemyShip.id))
 				{
-					var turnForecast = GetTurnForecast(depth);
-					turnForecast.mineDamageCoordMap[turnState.mines[i].fcoord] += Constants.MINE_DAMAGE;
-					if (turnForecast.cannonballCoordsMap[turnState.mines[i].fcoord])
+					var mineCoord = FastShipPosition.Mine(enemyShip.fposition);
+					BuildMineForecast(mineCoord);
+				}
+			}
+		}
+
+		private void BuildMineForecast(int mineCoord)
+		{
+			if (!FastCoord.IsInsideMap(mineCoord))
+				return;
+			for (var depth = 0; depth < Settings.NAVIGATION_PATH_DEPTH; depth++)
+			{
+				var turnForecast = GetTurnForecast(depth);
+				turnForecast.mineDamageCoordMap[mineCoord] += Constants.MINE_DAMAGE;
+				if (turnForecast.cannonballCoordsMap[mineCoord])
+				{
+					for (int orientation = 0; orientation < 6; orientation++)
 					{
-						for (int orientation = 0; orientation < 6; orientation++)
-						{
-							var neighbor = FastCoord.Neighbor(turnState.mines[i].fcoord, orientation);
-							turnForecast.nearMineDamageCoordMap[neighbor] += Constants.NEAR_MINE_DAMAGE;
-						}
+						var neighbor = FastCoord.Neighbor(mineCoord, orientation);
+						turnForecast.nearMineDamageCoordMap[neighbor] += Constants.NEAR_MINE_DAMAGE;
 					}
 				}
+			}
 		}
 
 		private void BuildMyShipsForecast(TurnState turnState)

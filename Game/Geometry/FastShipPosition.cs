@@ -165,6 +165,13 @@ namespace Game.Geometry
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static int Mine(int fastShipPosition)
+		{
+			var backOrientation = (Orientation(fastShipPosition) + 3) % 6;
+			return FastCoord.Neighbor(FastCoord.Neighbor(Coord(fastShipPosition), backOrientation), backOrientation);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static uint Move(int fastShipPosition, ShipMoveCommand moveCommand)
 		{
 			return moves[fastShipPosition | ((int)moveCommand << positionBits)];
