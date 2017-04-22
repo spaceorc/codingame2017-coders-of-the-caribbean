@@ -154,12 +154,31 @@ namespace Game.Navigation
 			{
 				if (chainItem.prev != null)
 				{
-					if (bestChainItem == null || chainItem.damage < bestChainItem.damage || chainItem.damage == bestChainItem.damage
-						&& (chainItem.dist < bestChainItem.dist || chainItem.dist == bestChainItem.dist
-							&& (chainItem.depth < bestChainItem.depth || chainItem.depth == bestChainItem.depth
-								&& chainItem.startCommand == ShipMoveCommand.Wait)))
-					{
+					if (bestChainItem == null)
 						bestChainItem = chainItem;
+					else if (chainItem.damage < bestChainItem.damage)
+						bestChainItem = chainItem;
+					else if (chainItem.damage == bestChainItem.damage)
+					{
+						if (chainItem.dist < bestChainItem.dist)
+							bestChainItem = chainItem;
+						else if (chainItem.dist == bestChainItem.dist)
+						{
+							if (chainItem.depth < bestChainItem.depth)
+								bestChainItem = chainItem;
+							else if (chainItem.depth == bestChainItem.depth)
+							{
+								if (ship._speed == 0)
+								{
+									if (chainItem.startCommand != ShipMoveCommand.Wait && bestChainItem.startCommand == ShipMoveCommand.Wait)
+										bestChainItem = chainItem;
+								}
+								else if (chainItem.startCommand == ShipMoveCommand.Wait)
+								{
+									bestChainItem = chainItem;
+								}
+							}
+						}
 					}
 				}
 			}

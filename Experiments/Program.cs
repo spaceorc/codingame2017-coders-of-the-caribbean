@@ -251,22 +251,20 @@ namespace Experiments
 		{
 			var state = @"
 1
-7
-1 SHIP 20 10 1 1 87 1
-0 SHIP 22 16 2 1 90 0
-6 MINE 19 13 0 0 0 0
-5 MINE 19 7 0 0 0 0
-42 CANNONBALL 21 7 1 1 0 0
-9 BARREL 21 7 18 0 0 0
-29 BARREL 20 1 13 0 0 0
+3
+0 SHIP 0 16 3 0 90 1
+1 SHIP 19 14 2 2 94 0
+6 MINE 2 11 0 0 0 0
 ".Trim();
 
 			//===
-			var gameState = new GameState { currentTurn = 106 };
-			gameState.cannoneers[1] = new Cannoneer(1, gameState) { cooldown = false };
-			gameState.miners[1] = new Miner(1, gameState) { cooldown = 0 };
-			gameState.navigators[1] = new Navigator(1, gameState);
-			((Strateg)gameState.strateg).decisions[1] = new StrategicDecision { role = StrategicRole.Collector, targetBarrelId = 9, fireToCoord = 85, targetCoord = 278 };
+			var gameState = new GameState { currentTurn = 112 };
+			gameState.cannoneers[0] = new Cannoneer(0, gameState) { cooldown = false };
+			gameState.miners[0] = new Miner(0, gameState) { cooldown = 0 };
+			gameState.navigators[0] = new Navigator(0, gameState);
+			((Strateg)gameState.strateg).decisions[0] = new StrategicDecision { role = StrategicRole.Free, targetBarrelId = null, fireToCoord = null, targetCoord = 198 };
+
+
 			//===
 
 			gameState.Iteration(new StringReader(state));
