@@ -22,7 +22,7 @@ namespace Game.Strategy.Old
 
 		public int? Decide(TurnState turnState)
 		{
-			var ship = turnState.myShipsById[shipId];
+			var ship = turnState.FindMyShip(shipId);
 			if (!turnState.barrels.Any())
 				return null;
 

@@ -36,7 +36,7 @@ namespace Game.FireTeam
 		{
 			if (!canFire)
 				return;
-			var ship = turnState.myShipsById[shipId];
+			var ship = turnState.FindMyShip(shipId);
 			fireTarget = SelectFireTarget(turnState, ship);
 		}
 
@@ -44,7 +44,7 @@ namespace Game.FireTeam
 		{
 			if (!canFire || fireTarget == null)
 				return false;
-			var ship = turnState.myShipsById[shipId];
+			var ship = turnState.FindMyShip(shipId);
 			ship.Fire(fireTarget.ftarget);
 			cooldown = true;
 			return true;

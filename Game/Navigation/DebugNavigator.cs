@@ -27,7 +27,7 @@ namespace Game.Navigation
 
 		public List<ShipMoveCommand> FindPath(TurnState turnState, int ftargetPos)
 		{
-			var ship = turnState.myShipsById[shipId];
+			var ship = turnState.FindMyShip(shipId);
 
 			if (ship.fposition == ftargetPos)
 				return new List<ShipMoveCommand>();

@@ -42,7 +42,7 @@ namespace Game.FireTeam
 		{
 			if (!doMine)
 				return false;
-			var ship = turnState.myShipsById[shipId];
+			var ship = turnState.FindMyShip(shipId);
 			ship.Mine();
 			cooldown = Constants.MINING_COOLDOWN;
 			return true;

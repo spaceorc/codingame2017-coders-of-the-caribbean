@@ -28,7 +28,7 @@ namespace Game.Strategy.Old
 
 		public int? Decide(TurnState turnState)
 		{
-			var ship = turnState.myShipsById[shipId];
+			var ship = turnState.FindMyShip(shipId);
 			if (FastShipPosition.DistanceTo(ship.fposition, ftargets[currentTarget]) < Settings.FREE_WALK_TARGET_REACH_DIST)
 			{
 				currentTarget = (currentTarget + 1) % ftargets.Length;

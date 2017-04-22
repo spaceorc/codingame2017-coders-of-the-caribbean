@@ -9,7 +9,6 @@ using Game.Navigation;
 using Game.Prediction;
 using Game.Statistics;
 using Game.Strategy;
-using Game.Strategy.Old;
 
 namespace Game.State
 {
@@ -33,7 +32,7 @@ namespace Game.State
 			forecaster = new Forecaster(this);
 			admiral = new Admiral(this);
 			debugAdmiral = new DebugAdmiral(this);
-			strateg = new OldStrateg(this);
+			strateg = new Strateg(this);
 		}
 
 		public Cannoneer GetCannoneer(Ship ship)
@@ -115,18 +114,6 @@ namespace Game.State
 				DumpStats();
 		}
 
-		private void NotifyStartTurn(TurnState turnState)
-		{
-			foreach (var teamMember in GetTeam(turnState))
-				teamMember.StartTurn(turnState);
-		}
-
-		private void NotifyEndTurn(TurnState turnState)
-		{
-			foreach (var teamMember in GetTeam(turnState))
-				teamMember.EndTurn(turnState);
-		}
-
 		public void Dump()
 		{
 			Console.Error.WriteLine($"var gameState = new GameState {{ {nameof(currentTurn)} = {currentTurn} }};");
@@ -148,6 +135,18 @@ namespace Game.State
 			Console.Error.WriteLine($"Time_95: {stats.Percentile(t => t.time, 95)}");
 			Console.Error.WriteLine($"Time_50: {stats.Percentile(t => t.time, 50)}");
 			Console.Error.WriteLine("---");
+		}
+
+		private void NotifyStartTurn(TurnState turnState)
+		{
+			foreach (var teamMember in GetTeam(turnState))
+				teamMember.StartTurn(turnState);
+		}
+
+		private void NotifyEndTurn(TurnState turnState)
+		{
+			foreach (var teamMember in GetTeam(turnState))
+				teamMember.EndTurn(turnState);
 		}
 	}
 }

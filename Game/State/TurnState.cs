@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Game.Entities;
 
 namespace Game.State
@@ -16,14 +17,26 @@ namespace Game.State
 		public readonly List<Cannonball> cannonballs = new List<Cannonball>();
 
 		public readonly Dictionary<int, Barrel> barrelsById = new Dictionary<int, Barrel>();
-		public readonly List<Ship> myShipsById = new List<Ship>();
-		public readonly List<Ship> enemyShipsById = new List<Ship>();
+		private readonly List<Ship> myShipsById = new List<Ship>();
+		private readonly List<Ship> enemyShipsById = new List<Ship>();
 		public readonly Dictionary<int, Mine> minesById = new Dictionary<int, Mine>();
 		public readonly Dictionary<int, Cannonball> cannonballsById = new Dictionary<int, Cannonball>();
 
 		public readonly Stopwatch stopwatch = Stopwatch.StartNew();
 
 		public readonly List<string> lines = new List<string>();
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public Ship FindMyShip(int shipId)
+		{
+			return shipId >= myShipsById.Count ? null : myShipsById[shipId];
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public Ship FindEnemyShip(int shipId)
+		{
+			return shipId >= enemyShipsById.Count ? null : enemyShipsById[shipId];
+		}
 
 		private TurnState(TextReader input)
 		{
