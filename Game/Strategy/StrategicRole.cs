@@ -4,6 +4,8 @@ namespace Game.Strategy
 	{
 		Unknown,
 		Collector,
-		Free
+		Free,
+		RunAway,
+		Fire
 	}
 }

@@ -15,6 +15,7 @@ namespace Game
 		public const int NEAR_ENEMYSHIP_VIRTUAL_DAMAGE = 0; // 0 to disable
 
 		public const int FREE_WALK_TARGET_REACH_DIST = 5;
+		public const int RUN_AWAY_TARGET_REACH_DIST = 5;
 		
 		public const int CANNONBALLS_FORECAST_TRAVEL_TIME_LIMIT = 1; // 0 to disable
 

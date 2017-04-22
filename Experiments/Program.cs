@@ -251,53 +251,29 @@ namespace Experiments
 		{
 			var state = @"
 1
-6
-0 SHIP 8 10 2 2 86 1
-1 SHIP 15 8 5 2 84 0
-3 MINE 6 11 0 0 0 0
-2 MINE 6 9 0 0 0 0
-30 CANNONBALL 17 10 0 4 0 0
-19 BARREL 17 10 11 0 0 0
+7
+2 SHIP 6 14 2 1 42 1
+1 SHIP 3 9 5 1 75 0
+3 SHIP 2 16 0 1 91 0
+5 MINE 4 12 0 0 0 0
+56 CANNONBALL 6 15 3 1 0 0
+57 CANNONBALL 6 15 1 2 0 0
+58 CANNONBALL 6 15 3 3 0 0
 ".Trim();
 
 			//===
-			var gameState = new GameState { currentTurn = 54 };
-			gameState.cannoneers[0] = new Cannoneer(0, gameState) { cooldown = true };
+			var gameState = new GameState { currentTurn = 84 };
+			gameState.cannoneers[0] = new Cannoneer(0, gameState) { cooldown = false };
+			gameState.cannoneers[2] = new Cannoneer(2, gameState) { cooldown = false };
 			gameState.miners[0] = new Miner(0, gameState) { cooldown = 0 };
+			gameState.miners[2] = new Miner(2, gameState) { cooldown = 0 };
 			gameState.navigators[0] = new Navigator(0, gameState);
-			((Strateg)gameState.strateg).decisions[0] = new StrategicDecision { role = StrategicRole.Free, targetBarrelId = null, fireToCoord = 370, targetCoord = 198 };
+			gameState.navigators[2] = new Navigator(2, gameState);
+			((Strateg)gameState.strateg).decisions[2] = new StrategicDecision { role = StrategicRole.Collector, targetBarrelId = 55, fireToCoord = null, targetCoord = 454 };
 
 			//===
 
 			gameState.Iteration(new StringReader(state));
 		}
-		/*
-		private static void Main2(string[] args)
-		{
-			var ship = new Ship(1, new Coord(6, 15), owner: 1, rum: 100, orientation: 0, speed: 2);
-			enemyShips = new List<Ship>
-			{
-				new Ship(666, new Coord(6, 20), owner: 0, rum: 100, orientation: 0, speed: 2)
-			};
-			myShips = new List<Ship> { ship };
-			var fireTarget = SelectFireTarget(ship);
-			Console.Out.WriteLine(fireTarget);
-		}
-
-		private static void Main3(string[] args)
-		{
-			var ship = new Ship(1, new Coord(6, 19), owner: 1, rum: 100, orientation: 0, speed: 0);
-			shipsFired.Add(ship.id, true);
-			mines = new List<Mine>();
-			cannonballs = new List<Cannonball>();
-			myShips = new List<Ship>
-			{
-				ship,
-				new Ship(2, new Coord(8, 19), owner: 1, rum: 100, orientation: 4, speed: 0)
-			};
-			enemyShips = new List<Ship>();
-			Preprocess();
-			//ManualMove(ship, new Coord(2, 2));
-		}*/
 	}
 }
