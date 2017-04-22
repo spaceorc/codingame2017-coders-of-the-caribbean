@@ -50,10 +50,10 @@ namespace Game.Strategy
 
 			if (turnState.myShips.Count == 1 && turnState.enemyShips.Count == 1)
 				Make1vs1StrategicDecisions(turnState);
-			else if (turnState.myShips.Count <= 2 || turnState.enemyShips.Count <= 2)
+			else if (turnState.myShips.Count <= 2 && turnState.enemyShips.Count <= 2)
 				Make2vs2StrategicDecisions(turnState);
-			else 
-				MakeStandardStrategicDecisions(turnState);
+			else
+				Make3vs3StrategicDecisions(turnState);
 
 			return turnState.myShips.Select(
 				ship =>
@@ -65,6 +65,81 @@ namespace Game.Strategy
 						Console.Error.WriteLine($"New decision for {ship.id}: {nextDecision}");
 					return nextDecision;
 				}).ToList();
+		}
+
+		private void Make3vs3StrategicDecisions(TurnState turnState)
+		{
+			if (turnState.barrels.Any())
+			{
+				MakeStandardStrategicDecisions(turnState);
+				return;
+			}
+
+			if (turnState.myShips.Max(s => s.rum) > turnState.enemyShips.Max(s => s.rum) || turnState.myShips.Min(s => s.rum) > 50)
+			{
+				foreach (var ship in turnState.myShips)
+				{
+					StrategicDecision prevDecision;
+					decisions.TryGetValue(ship.id, out prevDecision);
+					decisions[ship.id] = RunAway(turnState, ship, prevDecision);
+				}
+				return;
+			}
+
+			if (turnState.myShips.Count == 1)
+			{
+				var ship = turnState.myShips[0];
+				StrategicDecision prevDecision;
+				decisions.TryGetValue(ship.id, out prevDecision);
+				decisions[ship.id] = RunAway(turnState, ship, prevDecision);
+				return;
+			}
+
+			var maxRum = turnState.myShips.Max(s => s.rum);
+			var minRum = turnState.myShips.Min(s => s.rum);
+			var ship1 = turnState.myShips.First(s => s.rum == minRum);
+			var ship2 = turnState.myShips.Last(s => s.rum == maxRum);
+			var last = turnState.myShips.FirstOrDefault(s => s != ship1 && s != ship2);
+			if (last != null)
+			{
+				StrategicDecision prevDecision;
+				decisions.TryGetValue(last.id, out prevDecision);
+				decisions[last.id] = RunAway(turnState, last, prevDecision);
+			}
+
+			if (FastCoord.Distance(ship1.fbow, ship2.fbow) <= 4)
+			{
+				StrategicDecision prevDecision;
+				decisions.TryGetValue(ship1.id, out prevDecision);
+				if (prevDecision?.role == StrategicRole.Fire || prevDecision?.role == StrategicRole.Explicit)
+				{
+					decisions[ship1.id] = new StrategicDecision { role = StrategicRole.Explicit, explicitCommand = ShipMoveCommand.Slower };
+					decisions[ship2.id] = new StrategicDecision { role = StrategicRole.Approach, targetCoord = prevDecision.fireToCoord };
+				}
+				else
+				{
+					var nextShip1Position = FastShipPosition.GetFinalPosition(FastShipPosition.Move(ship1.fposition, ShipMoveCommand.Wait));
+					nextShip1Position = FastShipPosition.GetFinalPosition(FastShipPosition.Move(nextShip1Position, ShipMoveCommand.Slower));
+					decisions[ship1.id] = new StrategicDecision { role = StrategicRole.Fire, fireToCoord = FastShipPosition.Coord(nextShip1Position) };
+					decisions[ship2.id] = new StrategicDecision { role = StrategicRole.Approach, targetCoord = FastShipPosition.Coord(nextShip1Position) };
+				}
+			}
+			else
+			{
+				var x = (FastCoord.GetX(ship1.fcoord) + FastCoord.GetX(ship2.fcoord)) / 2;
+				var y = (FastCoord.GetY(ship1.fcoord) + FastCoord.GetY(ship2.fcoord)) / 2;
+				if (x < 5)
+					x = 5;
+				if (x > Constants.MAP_WIDTH - 6)
+					x = Constants.MAP_WIDTH - 6;
+				if (y < 5)
+					y = 5;
+				if (y > Constants.MAP_HEIGHT - 6)
+					x = Constants.MAP_HEIGHT - 6;
+
+				decisions[ship1.id] = new StrategicDecision { role = StrategicRole.Approach, targetCoord = FastCoord.Create(x, y) };
+				decisions[ship2.id] = new StrategicDecision { role = StrategicRole.Approach, targetCoord = FastCoord.Create(x, y) };
+			}
 		}
 
 		private void Make2vs2StrategicDecisions(TurnState turnState)
