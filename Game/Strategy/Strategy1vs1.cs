@@ -31,7 +31,7 @@ namespace Game.Strategy
 			{
 				if (myBarrel != null)
 					return strateg.Collect(myBarrel.barrel);
-				return strateg.WalkFree(turnState, ship, prevDecision);
+				return strateg.RunAway(turnState, ship, prevDecision);
 			}
 
 			var enemyBarrel2 = strateg.FindNearestBarrelToCollect(turnState, enemyBarrel1.barrel.fcoord, new HashSet<int> { enemyBarrel1.barrel.id });
