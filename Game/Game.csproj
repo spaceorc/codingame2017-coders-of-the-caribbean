@@ -46,11 +46,14 @@
     <Compile Include="Geometry\CollisionChecker.cs" />
     <Compile Include="Geometry\CollisionType.cs" />
     <Compile Include="Geometry\ShipMoveCommands.cs" />
+    <Compile Include="Navigation\NavigationMethod.cs" />
+    <Compile Include="Navigation\PathItem.cs" />
     <Compile Include="State\ITeamMember.cs" />
     <Compile Include="Geometry\FastCoord.cs" />
     <Compile Include="Geometry\FastShipPosition.cs" />
     <Compile Include="Geometry\ShipPosition.cs" />
     <Compile Include="Strategy\Admiral.cs" />
+    <Compile Include="Strategy\CollectableBarrel.cs" />
     <Compile Include="Strategy\IStrateg.cs" />
     <Compile Include="FireTeam\Miner.cs" />
     <Compile Include="Entities\Barrel.cs" />

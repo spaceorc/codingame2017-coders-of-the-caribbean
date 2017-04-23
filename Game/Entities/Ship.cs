@@ -5,13 +5,13 @@ namespace Game.Entities
 {
 	public class Ship : Entity
 	{
-		public readonly Coord _bow;
+		public readonly Coord bow;
 		public readonly int fbow;
-		public readonly int _orientation;
+		public readonly int orientation;
 		public readonly int owner;
 		public readonly int rum;
-		public readonly int _speed;
-		public readonly Coord _stern;
+		public readonly int speed;
+		public readonly Coord stern;
 		public readonly int fstern;
 		public readonly int fposition;
 		public readonly int index;
@@ -24,12 +24,12 @@ namespace Game.Entities
 		public Ship(int index, int id, int x, int y, int orientation, int speed, int rum, int owner) : base(id, EntityType.Ship, x, y)
 		{
 			this.index = index;
-			this._orientation = orientation;
-			this._speed = speed;
+			this.orientation = orientation;
+			this.speed = speed;
 			this.rum = rum;
 			this.owner = owner;
-			_bow = _coord.Neighbor(orientation);
-			_stern = _coord.Neighbor((orientation + 3) % 6);
+			bow = coord.Neighbor(orientation);
+			stern = coord.Neighbor((orientation + 3) % 6);
 			fposition = FastShipPosition.Create(x, y, orientation, speed);
 			fbow = FastShipPosition.Bow(fposition);
 			fstern = FastShipPosition.Stern(fposition);
@@ -109,7 +109,7 @@ namespace Game.Entities
 
 		public override string ToString()
 		{
-			return $"{base.ToString()}, {nameof(_orientation)}: {_orientation}, {nameof(_speed)}: {_speed}";
+			return $"{base.ToString()}, {nameof(orientation)}: {orientation}, {nameof(speed)}: {speed}";
 		}
 	}
 }

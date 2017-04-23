@@ -49,6 +49,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CollisionChecker_Test.cs" />
     <Compile Include="FastCoord_Create_Test.cs" />
     <Compile Include="FastCoord_IsInsideMap_Test.cs" />
     <Compile Include="FastCoord_Neighbor_Test.cs" />

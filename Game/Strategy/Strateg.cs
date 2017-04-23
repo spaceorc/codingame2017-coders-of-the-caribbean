@@ -315,15 +315,4 @@ namespace Game.Strategy
 				Console.Error.WriteLine($"(({nameof(Strateg)}){strategRef}).{nameof(decisions)}[{strategy.Key}] = {strategy.Value.Dump()};");
 		}
 	}
-
-	public class CollectableBarrel
-	{
-		public Barrel barrel;
-		public int dist;
-
-		public override string ToString()
-		{
-			return $"{barrel}, {nameof(dist)}: {dist}";
-		}
-	}
 }

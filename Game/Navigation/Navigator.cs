@@ -7,20 +7,6 @@ using Game.State;
 
 namespace Game.Navigation
 {
-	public enum NavigationMethod
-	{
-		Default,
-		Approach,
-		Collect
-	}
-
-	public class PathItem
-	{
-		public int sourcePosition;
-		public int targetPosition;
-		public ShipMoveCommand command;
-	}
-
 	public class Navigator : ITeamMember
 	{
 		public readonly GameState gameState;
@@ -241,7 +227,7 @@ namespace Game.Navigation
 			if (chainItem.depth != bestChainItem.depth)
 				return bestChainItem;
 
-			if (ship._speed == 0)
+			if (ship.speed == 0)
 			{
 				if (chainItem.startCommand != ShipMoveCommand.Wait && bestChainItem.startCommand == ShipMoveCommand.Wait)
 					return chainItem;
@@ -288,7 +274,7 @@ namespace Game.Navigation
 					return bestChainItem;
 			}
 
-			if (ship._speed == 0)
+			if (ship.speed == 0)
 			{
 				if (chainItem.startCommand != ShipMoveCommand.Wait && bestChainItem.startCommand == ShipMoveCommand.Wait)
 					return chainItem;
@@ -329,7 +315,7 @@ namespace Game.Navigation
 				return chainItem;
 			if (chainItem.depth != bestChainItem.depth)
 				return bestChainItem;
-			if (ship._speed == 0)
+			if (ship.speed == 0)
 			{
 				if (chainItem.startCommand != ShipMoveCommand.Wait && bestChainItem.startCommand == ShipMoveCommand.Wait)
 					return chainItem;

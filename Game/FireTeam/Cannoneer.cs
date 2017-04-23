@@ -63,12 +63,6 @@ namespace Game.FireTeam
 			return true;
 		}
 
-
-		public string Dump(string gameStateRef)
-		{
-			return $"new {nameof(Cannoneer)}({shipId}, {gameStateRef}) {{ {nameof(cooldown)} = {cooldown.ToString().ToLower()} }}";
-		}
-
 		private FireTarget SelectFireTarget(TurnState turnState, Ship ship)
 		{
 			FireTarget bestFireTarget = null;
@@ -116,6 +110,11 @@ namespace Game.FireTeam
 				}
 			}
 			return result;
+		}
+
+		public string Dump(string gameStateRef)
+		{
+			return $"new {nameof(Cannoneer)}({shipId}, {gameStateRef}) {{ {nameof(cooldown)} = {cooldown.ToString().ToLower()} }}";
 		}
 	}
 }

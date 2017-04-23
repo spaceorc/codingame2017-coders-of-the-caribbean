@@ -120,15 +120,15 @@ namespace Game.State
 				output.WriteLine(myShips.Count);
 				output.WriteLine(myShips.Count + enemyShips.Count + barrels.Count + mines.Count + cannonballs.Count);
 				foreach (var entity in myShips)
-					output.WriteLine($"{entity.id} {entity.type.ToString().ToUpper()} {entity._coord.x} {entity._coord.y} {entity._orientation} {entity._speed} {entity.rum} {entity.owner}");
+					output.WriteLine($"{entity.id} {entity.type.ToString().ToUpper()} {entity.coord.x} {entity.coord.y} {entity.orientation} {entity.speed} {entity.rum} {entity.owner}");
 				foreach (var entity in enemyShips)
-					output.WriteLine($"{entity.id} {entity.type.ToString().ToUpper()} {entity._coord.x} {entity._coord.y} {entity._orientation} {entity._speed} {entity.rum} {entity.owner}");
+					output.WriteLine($"{entity.id} {entity.type.ToString().ToUpper()} {entity.coord.x} {entity.coord.y} {entity.orientation} {entity.speed} {entity.rum} {entity.owner}");
 				foreach (var entity in barrels)
-					output.WriteLine($"{entity.id} {entity.type.ToString().ToUpper()} {entity._coord.x} {entity._coord.y} {entity.rum} 0 0 0");
+					output.WriteLine($"{entity.id} {entity.type.ToString().ToUpper()} {entity.coord.x} {entity.coord.y} {entity.rum} 0 0 0");
 				foreach (var entity in mines)
-					output.WriteLine($"{entity.id} {entity.type.ToString().ToUpper()} {entity._coord.x} {entity._coord.y} 0 0 0 0");
+					output.WriteLine($"{entity.id} {entity.type.ToString().ToUpper()} {entity.coord.x} {entity.coord.y} 0 0 0 0");
 				foreach (var entity in cannonballs)
-					output.WriteLine($"{entity.id} {entity.type.ToString().ToUpper()} {entity._coord.x} {entity._coord.y} {entity.firedBy} {entity.turns} 0 0");
+					output.WriteLine($"{entity.id} {entity.type.ToString().ToUpper()} {entity.coord.x} {entity.coord.y} {entity.firedBy} {entity.turns} 0 0");
 			}
 		}
 	}
