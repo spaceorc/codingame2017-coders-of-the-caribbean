@@ -250,38 +250,30 @@ namespace Experiments
 		private static void Main(string[] args)
 		{
 			var state = @"
-3
-13
-1 SHIP 16 11 2 2 76 1
-3 SHIP 15 15 1 2 68 1
-5 SHIP 7 19 3 2 70 1
-0 SHIP 19 11 5 2 47 0
-2 SHIP 13 2 5 1 89 0
-4 SHIP 7 6 3 2 83 0
-7 MINE 9 17 0 0 0 0
-9 MINE 6 16 0 0 0 0
-10 MINE 12 10 0 0 0 0
-13 MINE 15 18 0 0 0 0
-15 MINE 5 14 0 0 0 0
-68 CANNONBALL 16 14 3 1 0 0
-69 CANNONBALL 16 10 0 2 0 0
-
+1
+11
+2 SHIP 19 7 1 1 69 1
+1 SHIP 9 10 5 2 41 0
+3 SHIP 16 9 2 1 45 0
+6 MINE 17 4 0 0 0 0
+59 MINE 18 6 0 0 0 0
+76 MINE 17 2 0 0 0 0
+82 MINE 16 7 0 0 0 0
+86 MINE 15 9 0 0 0 0
+94 CANNONBALL 18 10 1 0 0 0
+95 CANNONBALL 17 8 2 1 0 0
+97 CANNONBALL 19 7 3 2 0 0
 ".Trim();
 
 			//===
-			var gameState = new GameState { currentTurn = 74 };
-			gameState.cannoneers[1] = new Cannoneer(1, gameState) { cooldown = false };
-			gameState.cannoneers[3] = new Cannoneer(3, gameState) { cooldown = false };
-			gameState.cannoneers[5] = new Cannoneer(5, gameState) { cooldown = false };
-			gameState.miners[1] = new Miner(1, gameState) { cooldown = 0 };
-			gameState.miners[3] = new Miner(3, gameState) { cooldown = 0 };
-			gameState.miners[5] = new Miner(5, gameState) { cooldown = 0 };
-			gameState.navigators[1] = new Navigator(1, gameState);
-			gameState.navigators[3] = new Navigator(3, gameState);
-			gameState.navigators[5] = new Navigator(5, gameState);
-			((Strateg)gameState.strateg).decisions[5] = new StrategicDecision { role = StrategicRole.RunAway, targetBarrelId = null, fireToCoord = null, explicitCommand = null, targetCoord = 550 };
-			((Strateg)gameState.strateg).decisions[3] = new StrategicDecision { role = StrategicRole.RunAway, targetBarrelId = null, fireToCoord = null, explicitCommand = null, targetCoord = 364 };
-			((Strateg)gameState.strateg).decisions[1] = new StrategicDecision { role = StrategicRole.RunAway, targetBarrelId = null, fireToCoord = null, explicitCommand = null, targetCoord = 198 };
+			var gameState = new GameState { currentTurn = 174 };
+			gameState.cannoneers[0] = new Cannoneer(0, gameState) { cooldown = false };
+			gameState.cannoneers[2] = new Cannoneer(2, gameState) { cooldown = true };
+			gameState.miners[0] = new Miner(0, gameState) { cooldown = 0 };
+			gameState.miners[2] = new Miner(2, gameState) { cooldown = 0 };
+			gameState.navigators[0] = new Navigator(0, gameState);
+			gameState.navigators[2] = new Navigator(2, gameState);
+			((Strateg)gameState.strateg).decisions[2] = new StrategicDecision { role = StrategicRole.Free, targetBarrelId = null, fireToCoord = null, explicitCommand = null, targetCoord = 198 };
 			//===
 
 			gameState.Iteration(new StringReader(state));

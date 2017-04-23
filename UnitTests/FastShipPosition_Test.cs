@@ -42,6 +42,52 @@ namespace UnitTests
 		}
 
 		[Test]
+		public void Move_SlowerFromSpeed1_ReturnsValidPosition()
+		{
+			var shipPosition = new ShipPosition(new Coord(10, 8), 2, 1);
+			shipPosition.Apply(ShipMoveCommand.Slower)[1].Should().Be(new ShipPosition(new Coord(10, 8), 2, 0));
+		}
+
+		[Test]
+		public void Move_ReturnsValidPosition_Valid()
+		{
+			int i=0;
+			for (int x = 0; x < Constants.MAP_WIDTH; x++)
+			for (int y = 0; y < Constants.MAP_HEIGHT; y++)
+			for (int speed = 0; speed <= Constants.MAX_SHIP_SPEED; speed++)
+			for (int orientation = 0; orientation < 6; orientation++)
+			{
+				foreach (var moveCommand in ShipMoveCommands.all)
+				{
+					var shipPosition = new ShipPosition(new Coord(x, y), orientation, speed);
+					var nextPositions = shipPosition.Apply(moveCommand);
+					nextPositions.Count.Should().Be(2);
+					var fastShipPosition = FastShipPosition.Create(shipPosition);
+
+					for (int phase = 0; phase < nextPositions.Count; phase++)
+					{
+						if ((i++)%99 == 0)
+							Console.Out.WriteLine($"shipPosition: {shipPosition}; moveCommand: {moveCommand}; phase: {phase}; nextPosition: {nextPositions[phase]}");
+						var actual = FastShipPosition.ToShipPosition(FastShipPosition.GetPositionAtPhase(FastShipPosition.Move(fastShipPosition, moveCommand), phase));
+						actual.Should().Be(nextPositions[phase], $"shipPosition: {shipPosition}; moveCommand: {moveCommand}; phase: {phase}; nextPosition: {nextPositions[phase]}");
+					}
+
+					var otherPosition = FastShipPosition.Create((x + Constants.MAP_WIDTH / 2) % Constants.MAP_WIDTH, y, 0, 0);
+					uint myMovement;
+					uint otherMovement;
+					CollisionChecker.Move(fastShipPosition, moveCommand, otherPosition, ShipMoveCommand.Wait, out myMovement, out otherMovement);
+					for (int phase = 0; phase < nextPositions.Count; phase++)
+					{
+						if ((i++) % 99 == 0)
+							Console.Out.WriteLine($"shipPosition: {shipPosition}; moveCommand: {moveCommand}; phase: {phase}; nextPosition: {nextPositions[phase]}");
+						var actual = FastShipPosition.ToShipPosition(FastShipPosition.GetPositionAtPhase(myMovement, phase));
+						actual.Should().Be(nextPositions[phase], $"shipPosition: {shipPosition}; moveCommand: {moveCommand}; phase: {phase}; nextPosition: {nextPositions[phase]}");
+					}
+				}
+			}
+		}
+
+		[Test]
 		public void Move_ReturnsValidPosition()
 		{
 			int i=0;

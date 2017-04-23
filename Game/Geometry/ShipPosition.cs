@@ -66,7 +66,7 @@ namespace Game.Geometry
 				newSpeed = Constants.MAX_SHIP_SPEED;
 			if (newSpeed < 0)
 				newSpeed = 0;
-			var movedShip = this;
+			var movedShip = new ShipPosition(coord, orientation, newSpeed);
 			for (var sp = 1; sp <= newSpeed; sp++)
 			{
 				var newShip = new ShipPosition(movedShip.coord.Neighbor(orientation), orientation, newSpeed);
