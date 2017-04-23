@@ -227,6 +227,7 @@ namespace Game.Strategy
 			var myBarrel = FindNearestBarrelToCollect(turnState, ship);
 			var enemyBarrel1 = FindNearestBarrelToCollect(turnState, enemyShip);
 			var enemyBarrel2 = enemyBarrel1 == null ? null : FindNearestBarrelToCollect(turnState, enemyShip, new HashSet<int> { enemyBarrel1.barrel.id });
+			var enemyBarrel3 = enemyBarrel2 == null ? null : FindNearestBarrelToCollect(turnState, enemyShip, new HashSet<int> { enemyBarrel1.barrel.id, enemyBarrel2.barrel.id });
 
 			if (enemyBarrel1 == null)
 			{
@@ -239,16 +240,38 @@ namespace Game.Strategy
 			{
 				if (myBarrel != null && myBarrel.barrel == enemyBarrel1.barrel && enemyBarrel1.dist - myBarrel.dist > 3)
 					return Collect(myBarrel.barrel);
-				return FireBarrowIfNotYet(WalkFree(turnState, ship, prevDecision), turnState, enemyBarrel1.barrel);
+				if (myBarrel != null)
+					return Collect(myBarrel.barrel).FireTo(GetBarrowIfNotFired(turnState, enemyBarrel1.barrel)?.fcoord);
+				return NavigateToShip(turnState, enemyShip, prevDecision).FireTo(GetBarrowIfNotFired(turnState, enemyBarrel1.barrel)?.fcoord);
 			}
 
-			if (myBarrel != null && myBarrel.barrel == enemyBarrel1.barrel && enemyBarrel1.dist - myBarrel.dist > 3 && myBarrel.dist <= 3)
-				return FireBarrowIfNotYet(Collect(enemyBarrel1.barrel), turnState, enemyBarrel2.barrel);
+			if (enemyBarrel3 == null)
+			{
+				if (myBarrel != null && myBarrel.barrel == enemyBarrel1.barrel && enemyBarrel1.dist - myBarrel.dist > 3)
+					return Collect(myBarrel.barrel).FireTo(GetBarrowIfNotFired(turnState, enemyBarrel2.barrel)?.fcoord);
 
-			if (myBarrel != null && myBarrel.barrel != enemyBarrel1.barrel && myBarrel.dist <= 3)
-				return FireBarrowIfNotYet(Collect(myBarrel.barrel), turnState, enemyBarrel1.barrel);
+				if (myBarrel != null && myBarrel.barrel == enemyBarrel2.barrel && enemyBarrel2.dist - myBarrel.dist > 3)
+					return Collect(myBarrel.barrel).FireTo(GetBarrowIfNotFired(turnState, enemyBarrel1.barrel)?.fcoord);
 
-			return FireBarrowIfNotYet(Collect(enemyBarrel2.barrel), turnState, enemyBarrel1.barrel);
+				if (myBarrel != null && myBarrel.dist < 3)
+					return Collect(myBarrel.barrel).FireTo((GetBarrowIfNotFired(turnState, enemyBarrel1.barrel) ?? GetBarrowIfNotFired(turnState, enemyBarrel2.barrel))?.fcoord);
+
+				return NavigateToShip(turnState, enemyShip, prevDecision).FireTo((GetBarrowIfNotFired(turnState, enemyBarrel1.barrel) ?? GetBarrowIfNotFired(turnState, enemyBarrel2.barrel))?.fcoord);
+			}
+
+			if (myBarrel != null && myBarrel.barrel == enemyBarrel1.barrel && enemyBarrel1.dist - myBarrel.dist > 3)
+				return Collect(myBarrel.barrel).FireTo((GetBarrowIfNotFired(turnState, enemyBarrel2.barrel) ?? GetBarrowIfNotFired(turnState, enemyBarrel3.barrel))?.fcoord);
+
+			if (myBarrel != null && myBarrel.barrel == enemyBarrel2.barrel && enemyBarrel2.dist - myBarrel.dist > 3)
+				return Collect(myBarrel.barrel).FireTo((GetBarrowIfNotFired(turnState, enemyBarrel1.barrel) ?? GetBarrowIfNotFired(turnState, enemyBarrel3.barrel))?.fcoord);
+
+			if (myBarrel != null && myBarrel.barrel == enemyBarrel3.barrel && enemyBarrel2.dist - myBarrel.dist > 3)
+				return Collect(myBarrel.barrel).FireTo((GetBarrowIfNotFired(turnState, enemyBarrel1.barrel) ?? GetBarrowIfNotFired(turnState, enemyBarrel2.barrel))?.fcoord);
+
+			if (myBarrel != null && myBarrel.dist < 3)
+				return Collect(myBarrel.barrel).FireTo((GetBarrowIfNotFired(turnState, enemyBarrel1.barrel) ?? GetBarrowIfNotFired(turnState, enemyBarrel2.barrel) ?? GetBarrowIfNotFired(turnState, enemyBarrel3.barrel))?.fcoord);
+
+			return NavigateToShip(turnState, enemyShip, prevDecision).FireTo((GetBarrowIfNotFired(turnState, enemyBarrel1.barrel) ?? GetBarrowIfNotFired(turnState, enemyBarrel2.barrel) ?? GetBarrowIfNotFired(turnState, enemyBarrel3.barrel))?.fcoord);
 		}
 		
 		private static StrategicDecision Collect(Barrel barrel)
@@ -256,11 +279,19 @@ namespace Game.Strategy
 			return new StrategicDecision { role = StrategicRole.Collector, targetCoord = barrel.fcoord, targetBarrelId = barrel.id };
 		}
 
-		private StrategicDecision FireBarrowIfNotYet(StrategicDecision prevDecision, TurnState turnState, Barrel barrel)
+		private Barrel GetBarrowIfNotFired(TurnState turnState, Barrel barrel)
 		{
+			if (barrel == null)
+				return null;
 			if (turnState.cannonballs.Any(x => x.fcoord == barrel.fcoord))
-				return prevDecision;
-			return prevDecision.FireTo(barrel.fcoord);
+				return null;
+			return barrel;
+		}
+
+		private static StrategicDecision NavigateToShip(TurnState turnState, Ship ship, StrategicDecision prevDecision)
+		{
+			var nextShipPosition = FastShipPosition.GetFinalPosition(FastShipPosition.Move(ship.fposition, ShipMoveCommand.Faster));
+			return new StrategicDecision { role = StrategicRole.Unknown, targetCoord = FastShipPosition.Coord(nextShipPosition) };
 		}
 
 		private static StrategicDecision WalkFree(TurnState turnState, Ship ship, StrategicDecision prevDecision)

@@ -64,7 +64,7 @@ namespace Game.Strategy
 					var navigator = gameState.GetNavigator(ship);
 					if (decision.targetCoord.HasValue)
 					{
-						var path = navigator.FindPath(turnState, decision.targetCoord.Value, decision.role == StrategicRole.Approach ? NavigationMethod.Approach : NavigationMethod.Default);
+						var path = navigator.FindPath(turnState, decision.targetCoord.Value, GetNavigationMethod(decision));
 						moves.Add(path.FirstOrDefault());
 						gameState.forecaster.ApplyPath(ship, path);
 					}
@@ -73,6 +73,19 @@ namespace Game.Strategy
 				}
 			}
 			return moves;
+		}
+
+		private static NavigationMethod GetNavigationMethod(StrategicDecision decision)
+		{
+			switch (decision.role)
+			{
+				case StrategicRole.Approach:
+					return NavigationMethod.Approach;
+				case StrategicRole.Collector:
+					return NavigationMethod.Collect;
+				default:
+					return NavigationMethod.Default;
+			}
 		}
 	}
 }

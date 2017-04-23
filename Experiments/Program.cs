@@ -250,29 +250,31 @@ namespace Experiments
 		private static void Main(string[] args)
 		{
 			var state = @"
-2
-9
-0 SHIP 10 6 0 2 14 1
-2 SHIP 6 9 1 2 23 1
-1 SHIP 1 11 1 0 75 0
-3 SHIP 5 16 0 2 91 0
-5 MINE 4 12 0 0 0 0
-4 MINE 4 8 0 0 0 0
-8 MINE 13 7 0 0 0 0
-54 CANNONBALL 3 0 1 2 0 0
-55 CANNONBALL 3 3 1 3 0 0
+1
+15
+1 SHIP 0 8 2 2 97 1
+0 SHIP 3 6 0 1 98 0
+23 CANNONBALL 1 9 1 0 0 0
+9 BARREL 16 13 18 0 0 0
+8 BARREL 16 7 18 0 0 0
+11 BARREL 11 19 20 0 0 0
+10 BARREL 11 1 20 0 0 0
+13 BARREL 17 18 14 0 0 0
+12 BARREL 17 2 14 0 0 0
+15 BARREL 9 15 15 0 0 0
+14 BARREL 9 5 15 0 0 0
+19 BARREL 13 18 18 0 0 0
+18 BARREL 13 2 18 0 0 0
+22 BARREL 14 14 10 0 0 0
+21 BARREL 14 6 10 0 0 0
 ".Trim();
 
 			//===
-			var gameState = new GameState { currentTurn = 84 };
-			gameState.cannoneers[0] = new Cannoneer(0, gameState) { cooldown = false };
-			gameState.cannoneers[2] = new Cannoneer(2, gameState) { cooldown = false };
-			gameState.miners[0] = new Miner(0, gameState) { cooldown = 0 };
-			gameState.miners[2] = new Miner(2, gameState) { cooldown = 0 };
-			gameState.navigators[0] = new Navigator(0, gameState);
-			gameState.navigators[2] = new Navigator(2, gameState);
-			((Strateg)gameState.strateg).decisions[0] = new StrategicDecision { role = StrategicRole.RunAway, targetBarrelId = null, fireToCoord = null, targetCoord = 563 };
-			((Strateg)gameState.strateg).decisions[2] = new StrategicDecision { role = StrategicRole.Unknown, targetBarrelId = null, fireToCoord = null, targetCoord = 235 };
+			var gameState = new GameState { currentTurn = 16 };
+			gameState.cannoneers[1] = new Cannoneer(1, gameState) { cooldown = false };
+			gameState.miners[1] = new Miner(1, gameState) { cooldown = 0 };
+			gameState.navigators[1] = new Navigator(1, gameState);
+			((Strateg)gameState.strateg).decisions[1] = new StrategicDecision { role = StrategicRole.Unknown, targetBarrelId = null, fireToCoord = 202, explicitCommand = null, targetCoord = 196 };
 			//===
 
 			gameState.Iteration(new StringReader(state));

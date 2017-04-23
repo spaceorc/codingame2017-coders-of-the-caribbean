@@ -10,7 +10,8 @@ namespace Game.Navigation
 	public enum NavigationMethod
 	{
 		Default,
-		Approach
+		Approach,
+		Collect
 	}
 
 	public class Navigator : ITeamMember
@@ -170,6 +171,9 @@ namespace Game.Navigation
 							case NavigationMethod.Approach:
 								bestChainItem = SelectBestPath_Approach(chainItem, bestChainItem, ship);
 								break;
+							case NavigationMethod.Collect:
+								bestChainItem = SelectBestPath_Collect(chainItem, bestChainItem, ship);
+								break;
 							default:
 								bestChainItem = SelectBestPath(chainItem, bestChainItem, ship);
 								break;
@@ -205,29 +209,26 @@ namespace Game.Navigation
 		private static ShipPathChainItem SelectBestPath(ShipPathChainItem chainItem, ShipPathChainItem bestChainItem, Ship ship)
 		{
 			if (chainItem.damage < bestChainItem.damage)
-				bestChainItem = chainItem;
-			else if (chainItem.damage == bestChainItem.damage)
+				return chainItem;
+			if (chainItem.damage != bestChainItem.damage)
+				return bestChainItem;
+			if (chainItem.dist < bestChainItem.dist)
+				return chainItem;
+			if (chainItem.dist != bestChainItem.dist)
+				return bestChainItem;
+			if (chainItem.depth < bestChainItem.depth)
+				return chainItem;
+			if (chainItem.depth != bestChainItem.depth)
+				return bestChainItem;
+
+			if (ship._speed == 0)
 			{
-				if (chainItem.dist < bestChainItem.dist)
-					bestChainItem = chainItem;
-				else if (chainItem.dist == bestChainItem.dist)
-				{
-					if (chainItem.depth < bestChainItem.depth)
-						bestChainItem = chainItem;
-					else if (chainItem.depth == bestChainItem.depth)
-					{
-						if (ship._speed == 0)
-						{
-							if (chainItem.startCommand != ShipMoveCommand.Wait && bestChainItem.startCommand == ShipMoveCommand.Wait)
-								bestChainItem = chainItem;
-						}
-						else if (chainItem.startCommand == ShipMoveCommand.Wait)
-						{
-							bestChainItem = chainItem;
-						}
-					}
-				}
+				if (chainItem.startCommand != ShipMoveCommand.Wait && bestChainItem.startCommand == ShipMoveCommand.Wait)
+					return chainItem;
+				return bestChainItem;
 			}
+			if (chainItem.startCommand == ShipMoveCommand.Wait)
+				return chainItem;
 			return bestChainItem;
 		}
 
@@ -267,6 +268,47 @@ namespace Game.Navigation
 					return bestChainItem;
 			}
 
+			if (ship._speed == 0)
+			{
+				if (chainItem.startCommand != ShipMoveCommand.Wait && bestChainItem.startCommand == ShipMoveCommand.Wait)
+					return chainItem;
+				return bestChainItem;
+			}
+			if (chainItem.startCommand == ShipMoveCommand.Wait)
+				return chainItem;
+			return bestChainItem;
+		}
+
+		private static ShipPathChainItem SelectBestPath_Collect(ShipPathChainItem chainItem, ShipPathChainItem bestChainItem, Ship ship)
+		{
+			if (chainItem.damage < bestChainItem.damage)
+				return chainItem;
+			if (chainItem.damage != bestChainItem.damage)
+				return bestChainItem;
+			if (chainItem.dist < bestChainItem.dist)
+				return chainItem;
+			if (chainItem.dist != bestChainItem.dist)
+				return bestChainItem;
+
+			var speed = FastShipPosition.Speed(chainItem.fposition);
+			var bestSpeed = FastShipPosition.Speed(bestChainItem.fposition);
+			if (bestChainItem.dist == 0)
+			{
+				if (chainItem.depth < bestChainItem.depth - 1)
+					return chainItem;
+				if (bestChainItem.depth < chainItem.depth - 1)
+					return bestChainItem;
+
+				if (speed < bestSpeed)
+					return chainItem;
+				if (speed != bestSpeed)
+					return bestChainItem;
+			}
+
+			if (chainItem.depth < bestChainItem.depth)
+				return chainItem;
+			if (chainItem.depth != bestChainItem.depth)
+				return bestChainItem;
 			if (ship._speed == 0)
 			{
 				if (chainItem.startCommand != ShipMoveCommand.Wait && bestChainItem.startCommand == ShipMoveCommand.Wait)
