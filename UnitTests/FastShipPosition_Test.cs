@@ -101,6 +101,13 @@ namespace UnitTests
 		}
 
 		[Test]
+		public void Move_SideCase_ReturnsValidPosition()
+		{
+			var shipPosition = new ShipPosition(new Coord(0, 8), 2, 2);
+			shipPosition.Apply(ShipMoveCommand.Wait)[1].Should().Be(new ShipPosition(new Coord(0, 8), 2, 0));
+		}
+
+		[Test]
 		public void Move_ReturnsValidPosition()
 		{
 			int i=0;

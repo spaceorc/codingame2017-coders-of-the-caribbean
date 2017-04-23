@@ -69,13 +69,14 @@ namespace Game.Geometry
 			var movedShip = this;
 			for (var sp = 1; sp <= newSpeed; sp++)
 			{
-				var newShip = new ShipPosition(movedShip.coord.Neighbor(orientation), orientation, sp);
+				var newShip = new ShipPosition(movedShip.coord.Neighbor(orientation), orientation, newSpeed);
 				if (!newShip.IsInsideMap())
+				{
+					movedShip = new ShipPosition(movedShip.coord, orientation, 0);
 					break;
+				}
 				movedShip = newShip;
 			}
-			if (movedShip.speed != newSpeed)
-				movedShip = new ShipPosition(movedShip.coord, orientation, 0);
 			result.Add(movedShip);
 			switch (moveCommand)
 			{
