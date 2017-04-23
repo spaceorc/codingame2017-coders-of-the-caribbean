@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using Game.Entities;
 using Game.Geometry;
+using Game.Navigation;
 using Game.State;
 
 namespace Game.Prediction
@@ -165,6 +166,9 @@ namespace Game.Prediction
 				prevPositions[i] = turnState.myShips[i].fposition;
 			for (int depth = 0; depth < Settings.NAVIGATION_PATH_DEPTH; depth++)
 			{
+				turnForecasts[depth].myShipsSourcePositions = prevPositions;
+				var commands = new ShipMoveCommand[prevPositions.Length];
+				turnForecasts[depth].myShipsMoveCommands = commands;
 				var nextPositions = new int[prevPositions.Length];
 				for (var i = 0; i < prevPositions.Length; i++)
 				{
@@ -198,15 +202,17 @@ namespace Game.Prediction
 			}
 		}
 
-		public void ApplyPath(Ship ship, List<ShipMoveCommand> path)
+		public void ApplyPath(Ship ship, List<PathItem> path)
 		{
 			var index = ship.index;
 			var movedShip = ship.fposition;
 			for (var i = 0; i < path.Count; i++)
 			{
-				var moveCommand = path[i];
-				movedShip = FastShipPosition.GetFinalPosition(FastShipPosition.Move(movedShip, moveCommand));
-				GetTurnForecast(i).myShipsPositions[index] = movedShip;
+				var pathItem = path[i];
+				GetTurnForecast(i).myShipsSourcePositions[index] = pathItem.sourcePosition;
+				GetTurnForecast(i).myShipsPositions[index] = pathItem.targetPosition;
+				GetTurnForecast(i).myShipsMoveCommands[index] = pathItem.command;
+				movedShip = pathItem.targetPosition;
 			}
 			for (var i = path.Count; i < Settings.NAVIGATION_PATH_DEPTH; i++)
 			{
@@ -220,6 +226,8 @@ namespace Game.Prediction
 			public int[] enemyShipsMovedPositions;
 			public int[] enemyShipsFinalPositions;
 			public int[] myShipsPositions;
+			public int[] myShipsSourcePositions;
+			public ShipMoveCommand[] myShipsMoveCommands;
 			public bool[] cannonballCoordsMap = new bool[FastCoord.count];
 			public int[] mineDamageCoordMap = new int[FastCoord.count];
 			public int[] nearMineDamageCoordMap = new int[FastCoord.count];

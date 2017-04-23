@@ -73,7 +73,7 @@ namespace Game.State
 			currentTurn += 2;
 			var turnState = TurnState.ReadFrom(input);
 			Console.Error.WriteLine("Current turn: " + currentTurn);
-			if (currentTurn == Settings.DUMP_TURN)
+			if (currentTurn == Settings.DUMP_TURN || Settings.DUMP_ALL)
 			{
 				turnState.WriteTo(Console.Error);
 				Console.Error.WriteLine("===");

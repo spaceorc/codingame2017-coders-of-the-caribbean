@@ -65,7 +65,7 @@ namespace Game.Strategy
 					if (decision.targetCoord.HasValue)
 					{
 						var path = navigator.FindPath(turnState, decision.targetCoord.Value, GetNavigationMethod(decision));
-						moves.Add(path.FirstOrDefault());
+						moves.Add(path.FirstOrDefault()?.command ?? ShipMoveCommand.Wait);
 						gameState.forecaster.ApplyPath(ship, path);
 					}
 					else

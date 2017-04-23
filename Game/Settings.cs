@@ -21,6 +21,7 @@ namespace Game
 
 		public const int CANNONS_TRAVEL_TIME_LIMIT = 2;
 
+		public const bool DUMP_ALL = false;
 		public const int DUMP_TURN = -1;
 		public const int DUMP_STAT_TURN = -1;
 		public const bool DUMP_BEST_PATH = false;

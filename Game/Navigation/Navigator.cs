@@ -14,6 +14,13 @@ namespace Game.Navigation
 		Collect
 	}
 
+	public class PathItem
+	{
+		public int sourcePosition;
+		public int targetPosition;
+		public ShipMoveCommand command;
+	}
+
 	public class Navigator : ITeamMember
 	{
 		public readonly GameState gameState;
@@ -33,12 +40,12 @@ namespace Game.Navigation
 		{
 		}
 
-		public List<ShipMoveCommand> FindPath(TurnState turnState, int ftarget, NavigationMethod navigationMethod)
+		public List<PathItem> FindPath(TurnState turnState, int ftarget, NavigationMethod navigationMethod)
 		{
 			var ship = turnState.FindMyShip(shipId);
 
 			if (FastShipPosition.Collides(ship.fposition, ftarget))
-				return new List<ShipMoveCommand>();
+				return new List<PathItem>();
 
 			var queue = new Queue<ShipPathChainItem>();
 			queue.Enqueue(ShipPathChainItem.Start(ship.fposition, ftarget));
@@ -59,15 +66,28 @@ namespace Game.Navigation
 						var newMovementState = new ShipMovementState(newPos, current.depth + 1);
 						if (!used.ContainsKey(newMovementState))
 						{
-							var onMyShip = current.depth == 0 && turnState.myShips.Where(m => m.id != shipId).Any(m => FastShipPosition.CollidesShip(newPos, m.fposition) || FastShipPosition.CollidesShip(newMovedPos, m.fposition))
-											|| turnForecast.myShipsPositions
-												.Where((_, i) => i != ship.index)
-												.Any(m => FastShipPosition.CollidesShip(newPos, m) || FastShipPosition.CollidesShip(newMovedPos, m));
-							if (onMyShip)
+							var onMyShip = false;
+							foreach (var otherShip in turnState.myShips)
 							{
-								used.Add(newMovementState, null);
-								continue;
+								if (otherShip == ship)
+									continue;
+								var otherPosition = turnForecast.myShipsSourcePositions[otherShip.index];
+								uint myMovement;
+								uint otherMovement;
+								var collisionType = CollisionChecker.Move(current.fposition, moveCommand, otherPosition, turnForecast.myShipsMoveCommands[otherShip.index], out myMovement, out otherMovement);
+								if ((collisionType & (CollisionType.MyMove | CollisionType.MyRotation)) != CollisionType.None)
+								{
+									newShipMovement = myMovement;
+									newMovedPos = FastShipPosition.GetMovedPosition(newShipMovement);
+									newPos = FastShipPosition.GetFinalPosition(newShipMovement);
+									newMovementState = new ShipMovementState(newPos, current.depth + 1);
+									onMyShip = used.ContainsKey(newMovementState);
+									break;
+								}
 							}
+
+							if (onMyShip)
+								continue;
 
 							var onEnemyShip = false;
 							if (current.depth == 0)
@@ -183,13 +203,13 @@ namespace Game.Navigation
 			}
 
 			if (bestChainItem == null)
-				return new List<ShipMoveCommand>();
+				return new List<PathItem>();
 
 			var chainDump = new List<ShipPathChainItem>();
-			var chain = new List<ShipMoveCommand>();
+			var chain = new List<PathItem>();
 			while (bestChainItem.prev != null)
 			{
-				chain.Add(bestChainItem.command);
+				chain.Add(new PathItem{command = bestChainItem.command , targetPosition = bestChainItem.fposition, sourcePosition = bestChainItem.prev.fposition});
 				chainDump.Add(bestChainItem);
 				bestChainItem = bestChainItem.prev;
 			}

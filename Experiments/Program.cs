@@ -250,35 +250,38 @@ namespace Experiments
 		private static void Main(string[] args)
 		{
 			var state = @"
-1
-19
-1 SHIP 7 15 5 1 99 1
-0 SHIP 8 7 4 1 97 0
-7 MINE 5 16 0 0 0 0
-9 MINE 8 11 0 0 0 0
-11 MINE 7 13 0 0 0 0
-28 CANNONBALL 7 14 0 3 0 0
-13 BARREL 10 18 10 0 0 0
-15 BARREL 21 13 17 0 0 0
-14 BARREL 21 7 17 0 0 0
-19 BARREL 20 14 13 0 0 0
-18 BARREL 20 6 13 0 0 0
-21 BARREL 21 11 15 0 0 0
-20 BARREL 21 9 15 0 0 0
-23 BARREL 17 17 17 0 0 0
-22 BARREL 17 3 17 0 0 0
-25 BARREL 16 13 19 0 0 0
-24 BARREL 16 7 19 0 0 0
-27 BARREL 7 12 15 0 0 0
-26 BARREL 7 8 15 0 0 0
+3
+13
+1 SHIP 16 11 2 2 76 1
+3 SHIP 15 15 1 2 68 1
+5 SHIP 7 19 3 2 70 1
+0 SHIP 19 11 5 2 47 0
+2 SHIP 13 2 5 1 89 0
+4 SHIP 7 6 3 2 83 0
+7 MINE 9 17 0 0 0 0
+9 MINE 6 16 0 0 0 0
+10 MINE 12 10 0 0 0 0
+13 MINE 15 18 0 0 0 0
+15 MINE 5 14 0 0 0 0
+68 CANNONBALL 16 14 3 1 0 0
+69 CANNONBALL 16 10 0 2 0 0
+
 ".Trim();
 
 			//===
-			var gameState = new GameState { currentTurn = 20 };
+			var gameState = new GameState { currentTurn = 74 };
 			gameState.cannoneers[1] = new Cannoneer(1, gameState) { cooldown = false };
+			gameState.cannoneers[3] = new Cannoneer(3, gameState) { cooldown = false };
+			gameState.cannoneers[5] = new Cannoneer(5, gameState) { cooldown = false };
 			gameState.miners[1] = new Miner(1, gameState) { cooldown = 0 };
+			gameState.miners[3] = new Miner(3, gameState) { cooldown = 0 };
+			gameState.miners[5] = new Miner(5, gameState) { cooldown = 0 };
 			gameState.navigators[1] = new Navigator(1, gameState);
-			((Strateg)gameState.strateg).decisions[1] = new StrategicDecision { role = StrategicRole.Collector, targetBarrelId = 13, fireToCoord = 424, explicitCommand = null, targetCoord = 619 };
+			gameState.navigators[3] = new Navigator(3, gameState);
+			gameState.navigators[5] = new Navigator(5, gameState);
+			((Strateg)gameState.strateg).decisions[5] = new StrategicDecision { role = StrategicRole.RunAway, targetBarrelId = null, fireToCoord = null, explicitCommand = null, targetCoord = 550 };
+			((Strateg)gameState.strateg).decisions[3] = new StrategicDecision { role = StrategicRole.RunAway, targetBarrelId = null, fireToCoord = null, explicitCommand = null, targetCoord = 364 };
+			((Strateg)gameState.strateg).decisions[1] = new StrategicDecision { role = StrategicRole.RunAway, targetBarrelId = null, fireToCoord = null, explicitCommand = null, targetCoord = 198 };
 			//===
 
 			gameState.Iteration(new StringReader(state));
