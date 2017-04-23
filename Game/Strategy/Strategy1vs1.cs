@@ -19,11 +19,11 @@ namespace Game.Strategy
 			var enemyShip = turnState.enemyShips[0];
 			StrategicDecision decision;
 			strateg.decisions.TryGetValue(ship.id, out decision);
-			var newDecision = Make1vs1StrategicDecision(turnState, decision, ship, enemyShip);
+			var newDecision = MakeStrategicDecision(turnState, decision, ship, enemyShip);
 			strateg.decisions[ship.id] = newDecision;
 		}
 
-		private StrategicDecision Make1vs1StrategicDecision(TurnState turnState, StrategicDecision prevDecision, Ship ship, Ship enemyShip)
+		public StrategicDecision MakeStrategicDecision(TurnState turnState, StrategicDecision prevDecision, Ship ship, Ship enemyShip)
 		{
 			var myBarrel = strateg.FindNearestBarrelToCollect(turnState, ship);
 			var enemyBarrel1 = strateg.FindNearestBarrelToCollect(turnState, enemyShip);

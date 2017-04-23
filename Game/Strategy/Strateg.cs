@@ -121,6 +121,8 @@ namespace Game.Strategy
 
 		public StrategicDecision RunAway(TurnState turnState, Ship ship, StrategicDecision prevDecision)
 		{
+			return WalkFree(turnState, ship, prevDecision);
+
 			var used = new HashSet<int>();
 			foreach (var myShip in turnState.myShips)
 			{
@@ -211,8 +213,17 @@ namespace Game.Strategy
 			foreach (var myShip in turnState.myShips)
 			{
 				StrategicDecision otherDecision;
-				if (myShip.id != ship.id && decisions.TryGetValue(myShip.id, out otherDecision) && otherDecision.role == StrategicRole.Collector)
-					used.Add(otherDecision.targetBarrelId.Value);
+				if (myShip.id != ship.id && decisions.TryGetValue(myShip.id, out otherDecision))
+				{
+					if (otherDecision.role == StrategicRole.Collector)
+						used.Add(otherDecision.targetBarrelId.Value);
+					if (otherDecision.fireToCoord.HasValue)
+					{
+						foreach (var barrel in turnState.barrels)
+							if (barrel.fcoord == otherDecision.fireToCoord.Value)
+								used.Add(barrel.id);
+					}
+				}
 			}
 			return FindNearestBarrelToCollect(turnState, ship, used);
 		}

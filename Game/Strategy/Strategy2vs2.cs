@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using System.Linq;
+using Game.Entities;
 using Game.Geometry;
 using Game.State;
 
@@ -16,10 +18,68 @@ namespace Game.Strategy
 		public void MakeStrategicDecisions(TurnState turnState)
 		{
 			if (turnState.barrels.Any())
+				CollectBarrels(turnState);
+			else 
+				RunOrSuicide(turnState);
+		}
+
+		private void CollectBarrels(TurnState turnState)
+		{
+			for (int i = 0; i < turnState.myShips.Count; i++)
 			{
-				strateg.MakeStandardStrategicDecisions(turnState);
-				return;
+				if (turnState.enemyShips.Count > i)
+					strateg.decisions[turnState.myShips[i].id] = Play1vs1(turnState, turnState.myShips[i], turnState.enemyShips[i]);
+				else
+					strateg.decisions[turnState.myShips[i].id] = CollectFreeBarrels(turnState, turnState.myShips[i]);
 			}
+		}
+
+		public StrategicDecision CollectFreeBarrels(TurnState turnState, Ship ship)
+		{
+			StrategicDecision prevDecision;
+			strateg.decisions.TryGetValue(ship.id, out prevDecision);
+			var barrel = strateg.FindBestBarrelToCollect(turnState, ship);
+			if (barrel != null)
+				return strateg.Collect(barrel.barrel);
+			return strateg.WalkFree(turnState, ship, prevDecision);
+		}
+
+		public StrategicDecision Play1vs1(TurnState turnState, Ship ship, Ship enemyShip)
+		{
+			StrategicDecision prevDecision;
+			strateg.decisions.TryGetValue(ship.id, out prevDecision);
+			var myBarrel = strateg.FindNearestBarrelToCollect(turnState, ship);
+			var enemyBarrel1 = strateg.FindNearestBarrelToCollect(turnState, enemyShip);
+			if (enemyBarrel1 == null)
+			{
+				if (myBarrel != null)
+					return strateg.Collect(myBarrel.barrel);
+				return strateg.WalkFree(turnState, ship, prevDecision);
+			}
+
+			var enemyBarrel2 = strateg.FindNearestBarrelToCollect(turnState, enemyBarrel1.barrel.fcoord, new HashSet<int> { enemyBarrel1.barrel.id });
+			if (enemyBarrel2 == null)
+			{
+				if (myBarrel != null)
+				{
+					if (myBarrel.barrel != enemyBarrel1.barrel)
+						return strateg.Collect(myBarrel.barrel).FireTo(strateg.SelectEnemyBarrelToFire(turnState, ship, enemyBarrel1)?.fcoord);
+					if (myBarrel.dist < enemyBarrel1.dist)
+						return strateg.Collect(myBarrel.barrel);
+				}
+				return strateg.WalkFree(turnState, ship, prevDecision).FireTo(strateg.SelectEnemyBarrelToFire(turnState, ship, enemyBarrel1)?.fcoord);
+			}
+
+			var enemyBarrel3 = strateg.FindNearestBarrelToCollect(turnState, enemyBarrel2.barrel.fcoord, new HashSet<int> { enemyBarrel1.barrel.id, enemyBarrel2.barrel.id });
+			if (enemyBarrel3 == null)
+				return strateg.Collect(enemyBarrel2.barrel).FireTo(strateg.SelectEnemyBarrelToFire(turnState, ship, enemyBarrel1)?.fcoord);
+
+			return strateg.Collect(enemyBarrel3.barrel).FireTo(strateg.SelectEnemyBarrelToFire(turnState, ship, enemyBarrel1, enemyBarrel2)?.fcoord);
+		}
+
+
+		private void RunOrSuicide(TurnState turnState)
+		{
 			if (turnState.myShips.Max(s => s.rum) > turnState.enemyShips.Max(s => s.rum) || turnState.myShips.Min(s => s.rum) > 50)
 			{
 				foreach (var ship in turnState.myShips)
