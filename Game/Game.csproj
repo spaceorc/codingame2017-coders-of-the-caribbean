@@ -83,6 +83,7 @@
     <Compile Include="Strategy\Strategy1vs1.cs" />
     <Compile Include="Strategy\Strategy2vs2.cs" />
     <Compile Include="Strategy\Strategy3vs3.cs" />
+    <Compile Include="Strategy\WayEvaluator.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

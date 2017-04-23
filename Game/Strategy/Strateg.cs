@@ -27,7 +27,6 @@ namespace Game.Strategy
 		{
 			new Coord(5, 5).ToFastCoord(),
 			new Coord(5, Constants.MAP_HEIGHT - 5).ToFastCoord(),
-			new Coord(Constants.MAP_WIDTH / 2, Constants.MAP_HEIGHT / 2).ToFastCoord(),
 			new Coord(Constants.MAP_WIDTH - 5, Constants.MAP_HEIGHT - 5).ToFastCoord(),
 			new Coord(Constants.MAP_WIDTH - 5, 5).ToFastCoord()
 		};
@@ -119,53 +118,63 @@ namespace Game.Strategy
 			return prevDecision;
 		}
 
+		public StrategicDecision RunAway_FreeWay(TurnState turnState, Ship ship, StrategicDecision prevDecision)
+		{
+			var finalCoords = new List<int>();
+			foreach (var enemyShip in turnState.enemyShips)
+			{
+				var move = FastShipPosition.Move(enemyShip.fposition, ShipMoveCommand.Faster);
+				move = FastShipPosition.Move(FastShipPosition.GetFinalPosition(move), ShipMoveCommand.Faster);
+				move = FastShipPosition.Move(FastShipPosition.GetFinalPosition(move), ShipMoveCommand.Faster);
+				var finalCoord = FastShipPosition.Coord(FastShipPosition.GetFinalPosition(move));
+				finalCoords.Add(finalCoord);
+			}
+
+			var candidates = runTargets.OrderByDescending(t => (int)finalCoords.Average(fc => FastCoord.Distance(t, fc) * FastCoord.Distance(t, fc))).Take(3).ToArray();
+
+			 var runTarget = candidates.OrderBy(
+				t =>
+				{
+					var cost = 0;
+					foreach (var enemyShip in turnState.enemyShips)
+						cost += WayEvaluator.CalcCost(ship.fcoord, t, enemyShip.fcoord);
+					return cost;
+				}).First();
+
+			return new StrategicDecision { role = StrategicRole.RunAway, targetCoord = runTarget };
+		}
+
 		public StrategicDecision RunAway(TurnState turnState, Ship ship, StrategicDecision prevDecision)
 		{
-			return WalkFree(turnState, ship, prevDecision);
+			return RunAway_FreeWay(turnState, ship, prevDecision);
+			//return WalkFree(turnState, ship, prevDecision);
+		}
 
-			var used = new HashSet<int>();
-			foreach (var myShip in turnState.myShips)
+		public StrategicDecision RunAway_FreeTarget(TurnState turnState, Ship ship, StrategicDecision prevDecision)
+		{
+			var finalCoords = new List<int>();
+			foreach (var enemyShip in turnState.enemyShips)
 			{
-				StrategicDecision otherDecision;
-				if (myShip.id != ship.id && decisions.TryGetValue(myShip.id, out otherDecision) && otherDecision.role == StrategicRole.RunAway)
-					used.Add(otherDecision.targetCoord.Value);
+				var move = FastShipPosition.Move(enemyShip.fposition, ShipMoveCommand.Faster);
+				move = FastShipPosition.Move(FastShipPosition.GetFinalPosition(move), ShipMoveCommand.Faster);
+				move = FastShipPosition.Move(FastShipPosition.GetFinalPosition(move), ShipMoveCommand.Faster);
+				var finalCoord = FastShipPosition.Coord(FastShipPosition.GetFinalPosition(move));
+				finalCoords.Add(finalCoord);
 			}
-			switch (prevDecision?.role)
+
+			var bestDist = -1;
+			var bestTarget = -1;
+			foreach (var runTarget in runTargets)
 			{
-				case StrategicRole.RunAway:
-					break;
-				default:
-					for (var i = 0; i < freeTargets.Length; i++)
-					{
-						if (!used.Contains(freeTargets[i]))
-						{
-							prevDecision = new StrategicDecision { role = StrategicRole.RunAway, targetCoord = runTargets[i] };
-							break;
-						}
-					}
-					break;
-			}
-			if (FastShipPosition.DistanceTo(ship.fposition, prevDecision.targetCoord.Value) < Settings.RUN_AWAY_TARGET_REACH_DIST)
-			{
-				var freeIndex = Array.IndexOf(runTargets, prevDecision.targetCoord.Value);
-				var maxEnemyDist = -1;
-				var newIndex = -1;
-				for (var i = 0; i < freeTargets.Length; i++)
+				var dist = (int)finalCoords.Average(fc => FastCoord.Distance(runTarget, fc) * FastCoord.Distance(runTarget, fc));
+				if (dist > bestDist)
 				{
-					if (i != freeIndex && !used.Contains(freeTargets[i]))
-					{
-						var dist = turnState.enemyShips.Min(s => CalcShipMovingDistTo(s, freeTargets[i]));
-						if (dist > maxEnemyDist)
-						{
-							maxEnemyDist = dist;
-							newIndex = i;
-						}
-					}
+					bestDist = dist;
+					bestTarget = runTarget;
 				}
-				
-				return new StrategicDecision { role = StrategicRole.RunAway, targetCoord = runTargets[newIndex] };
 			}
-			return prevDecision;
+
+			return new StrategicDecision { role = StrategicRole.RunAway, targetCoord = bestTarget };
 		}
 
 		private static int CalcShipMovingDistTo(Ship ship, int ftarget)

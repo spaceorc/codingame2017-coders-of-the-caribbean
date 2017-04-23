@@ -250,30 +250,35 @@ namespace Experiments
 		private static void Main(string[] args)
 		{
 			var state = @"
-1
+2
 11
-2 SHIP 19 7 1 1 69 1
-1 SHIP 9 10 5 2 41 0
-3 SHIP 16 9 2 1 45 0
-6 MINE 17 4 0 0 0 0
-59 MINE 18 6 0 0 0 0
-76 MINE 17 2 0 0 0 0
-82 MINE 16 7 0 0 0 0
-86 MINE 15 9 0 0 0 0
-94 CANNONBALL 18 10 1 0 0 0
-95 CANNONBALL 17 8 2 1 0 0
-97 CANNONBALL 19 7 3 2 0 0
+2 SHIP 13 13 4 0 74 1
+4 SHIP 15 10 0 2 27 1
+1 SHIP 11 13 4 1 30 0
+3 SHIP 7 14 1 1 61 0
+5 SHIP 15 16 0 1 59 0
+8 MINE 14 7 0 0 0 0
+32 MINE 12 9 0 0 0 0
+63 MINE 17 8 0 0 0 0
+67 MINE 17 5 0 0 0 0
+74 CANNONBALL 14 14 3 1 0 0
+75 CANNONBALL 14 14 5 0 0 0
 ".Trim();
 
 			//===
-			var gameState = new GameState { currentTurn = 174 };
+			var gameState = new GameState { currentTurn = 108 };
 			gameState.cannoneers[0] = new Cannoneer(0, gameState) { cooldown = false };
-			gameState.cannoneers[2] = new Cannoneer(2, gameState) { cooldown = true };
+			gameState.cannoneers[2] = new Cannoneer(2, gameState) { cooldown = false };
+			gameState.cannoneers[4] = new Cannoneer(4, gameState) { cooldown = false };
 			gameState.miners[0] = new Miner(0, gameState) { cooldown = 0 };
 			gameState.miners[2] = new Miner(2, gameState) { cooldown = 0 };
+			gameState.miners[4] = new Miner(4, gameState) { cooldown = 0 };
 			gameState.navigators[0] = new Navigator(0, gameState);
 			gameState.navigators[2] = new Navigator(2, gameState);
-			((Strateg)gameState.strateg).decisions[2] = new StrategicDecision { role = StrategicRole.Free, targetBarrelId = null, fireToCoord = null, explicitCommand = null, targetCoord = 198 };
+			gameState.navigators[4] = new Navigator(4, gameState);
+			((Strateg)gameState.strateg).decisions[2] = new StrategicDecision { role = StrategicRole.RunAway, targetBarrelId = null, fireToCoord = null, explicitCommand = null, targetCoord = 198 };
+			((Strateg)gameState.strateg).decisions[4] = new StrategicDecision { role = StrategicRole.RunAway, targetBarrelId = null, fireToCoord = null, explicitCommand = null, targetCoord = 211 };
+
 			//===
 
 			gameState.Iteration(new StringReader(state));
