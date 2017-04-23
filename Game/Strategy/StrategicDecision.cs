@@ -63,10 +63,10 @@ namespace Game.Strategy
 
 		public override string ToString()
 		{
-			var targetCoordString = targetCoord.HasValue ? $", {nameof(targetCoord)}: {FastCoord.ToCoord(targetCoord.Value)}" : "";
-			var targetBarrelIdString = targetBarrelId.HasValue ? $", {nameof(targetBarrelId)}: {targetBarrelId.Value}" : "";
-			var fireToCoordString = fireToCoord.HasValue ? $", {nameof(fireToCoord)}: {FastCoord.ToCoord(fireToCoord.Value)}" : "";
-			var explicitCommandString = explicitCommand.HasValue ? $", {nameof(explicitCommand)}: {explicitCommand.Value}" : "";
+			var targetCoordString = targetCoord.HasValue ? $", goto: {FastCoord.ToCoord(targetCoord.Value)}" : "";
+			var targetBarrelIdString = targetBarrelId.HasValue ? $", barrel: {targetBarrelId.Value}" : "";
+			var fireToCoordString = fireToCoord.HasValue ? $", fireTo: {FastCoord.ToCoord(fireToCoord.Value)}" : "";
+			var explicitCommandString = explicitCommand.HasValue ? $", explicit: {explicitCommand.Value}" : "";
 			return $"{role}{targetCoordString}{targetBarrelIdString}{fireToCoordString}{explicitCommandString}";
 		}
 
