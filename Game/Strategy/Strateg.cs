@@ -224,11 +224,10 @@ namespace Game.Strategy
 
 		private StrategicDecision Make1vs1StrategicDecision(TurnState turnState, StrategicDecision prevDecision, Ship ship, Ship enemyShip)
 		{
-			//var myBarrel = FindNearestBarrelToCollect(turnState, ship);
+			var myBarrel = FindNearestBarrelToCollect(turnState, ship);
 			var enemyBarrel1 = FindNearestBarrelToCollect(turnState, enemyShip);
 			if (enemyBarrel1 == null)
 			{
-				var myBarrel = FindNearestBarrelToCollect(turnState, ship);
 				if (myBarrel != null)
 					return Collect(myBarrel.barrel);
 				return WalkFree(turnState, ship, prevDecision);
@@ -236,13 +235,22 @@ namespace Game.Strategy
 
 			var enemyBarrel2 = FindNearestBarrelToCollect(turnState, enemyBarrel1.barrel.fcoord, new HashSet<int> { enemyBarrel1.barrel.id });
 			if (enemyBarrel2 == null)
-				return Collect(enemyBarrel1.barrel);
+			{
+				if (myBarrel != null)
+				{
+					if (myBarrel.barrel != enemyBarrel1.barrel)
+						return Collect(myBarrel.barrel).FireTo(SelectEnemyBarrelToFire(turnState, ship, enemyBarrel1)?.fcoord);
+					if (myBarrel.dist < enemyBarrel1.dist)
+						return Collect(myBarrel.barrel);
+				}
+				return WalkFree(turnState, ship, prevDecision).FireTo(SelectEnemyBarrelToFire(turnState, ship, enemyBarrel1)?.fcoord);
+			}
 
 			var enemyBarrel3 = FindNearestBarrelToCollect(turnState, enemyBarrel2.barrel.fcoord, new HashSet<int> { enemyBarrel1.barrel.id, enemyBarrel2.barrel.id });
 			if (enemyBarrel3 == null)
-				return Collect(enemyBarrel2.barrel).FireTo(GetBarrowIfNotFired(turnState, enemyBarrel1.barrel)?.fcoord);
+				return Collect(enemyBarrel2.barrel).FireTo(SelectEnemyBarrelToFire(turnState, ship, enemyBarrel1)?.fcoord);
 
-			return Collect(enemyBarrel3.barrel).FireTo((GetBarrowIfNotFired(turnState, enemyBarrel2.barrel) ?? GetBarrowIfNotFired(turnState, enemyBarrel1.barrel))?.fcoord);
+			return Collect(enemyBarrel3.barrel).FireTo(SelectEnemyBarrelToFire(turnState, ship, enemyBarrel1, enemyBarrel2)?.fcoord);
 
 			//if (enemyBarrel1 == null)
 			//{
@@ -301,6 +309,23 @@ namespace Game.Strategy
 			if (turnState.cannonballs.Any(x => x.fcoord == barrel.fcoord))
 				return null;
 			return barrel;
+		}
+
+		private Barrel SelectEnemyBarrelToFire(TurnState turnState, Ship myShip, params CollectableBarrel[] barrels)
+		{
+			barrels = barrels.Where(b => turnState.cannonballs.All(x => x.fcoord != b.barrel.fcoord)).ToArray();
+			foreach (var barrel in barrels)
+			{
+				var distance = FastCoord.Distance(myShip.fbow, barrel.barrel.fcoord);
+				if (distance <= 10)
+				{
+					var travelTime = (int)(1 + Math.Round(distance / 3.0));
+					var enemyTravelTime = barrel.dist / 2 + 1;
+					if (travelTime < enemyTravelTime)
+						return barrel.barrel;
+				}
+			}
+			return null;
 		}
 
 		private static StrategicDecision NavigateToShip(TurnState turnState, Ship ship, StrategicDecision prevDecision)
