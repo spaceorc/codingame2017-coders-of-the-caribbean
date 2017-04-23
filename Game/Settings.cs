@@ -9,7 +9,7 @@ namespace Game
 
 		public const bool USE_DOUBLE_PATHFINDING = true;
 		public const int DOUBLE_PATHFINDING_TIMELIMIT = 18;
-		public const int NAVIGATION_PATH_DEPTH = 5;
+		public const int NAVIGATION_PATH_DEPTH = 6;
 
 		public const int NEAR_ENEMY_SHIP_MIN_DIST = 4;
 		public const int NEAR_ENEMYSHIP_VIRTUAL_DAMAGE = 0; // 0 to disable
