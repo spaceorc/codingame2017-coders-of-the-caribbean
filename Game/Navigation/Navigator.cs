@@ -30,8 +30,8 @@ namespace Game.Navigation
 		{
 			var ship = turnState.FindMyShip(shipId);
 
-			if (FastShipPosition.Collides(ship.fposition, ftarget))
-				return new List<PathItem>();
+			//if (FastShipPosition.Collides(ship.fposition, ftarget))
+			//	return new List<PathItem>();
 
 			var queue = new Queue<ShipPathChainItem>();
 			queue.Enqueue(ShipPathChainItem.Start(ship.fposition, ftarget));
