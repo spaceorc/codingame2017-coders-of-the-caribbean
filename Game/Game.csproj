@@ -77,6 +77,9 @@
     <Compile Include="Strategy\Strateg.cs" />
     <Compile Include="Strategy\StrategicDecision.cs" />
     <Compile Include="Strategy\StrategicRole.cs" />
+    <Compile Include="Strategy\Strategy1vs1.cs" />
+    <Compile Include="Strategy\Strategy2vs2.cs" />
+    <Compile Include="Strategy\Strategy3vs3.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

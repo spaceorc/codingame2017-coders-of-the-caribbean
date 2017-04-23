@@ -11,6 +11,9 @@ namespace Game.Strategy
 	{
 		public readonly GameState gameState;
 		public readonly Dictionary<int, StrategicDecision> decisions = new Dictionary<int, StrategicDecision>();
+		public readonly Strategy1vs1 strategy1vs1;
+		public readonly Strategy2vs2 strategy2vs2;
+		public readonly Strategy3vs3 strategy3vs3;
 
 		private static readonly int[] freeTargets =
 		{
@@ -28,10 +31,13 @@ namespace Game.Strategy
 			new Coord(Constants.MAP_WIDTH - 5, Constants.MAP_HEIGHT - 5).ToFastCoord(),
 			new Coord(Constants.MAP_WIDTH - 5, 5).ToFastCoord()
 		};
-
+		
 		public Strateg(GameState gameState)
 		{
 			this.gameState = gameState;
+			strategy1vs1 = new Strategy1vs1(this);
+			strategy2vs2 = new Strategy2vs2(this);
+			strategy3vs3 = new Strategy3vs3(this);
 		}
 
 		public void StartTurn(TurnState turnState)
@@ -49,11 +55,11 @@ namespace Game.Strategy
 			var prevDecisions = decisions.ToDictionary(d => d.Key, d => d.Value);
 
 			if (turnState.myShips.Count == 1 && turnState.enemyShips.Count == 1)
-				Make1vs1StrategicDecisions(turnState);
+				strategy1vs1.MakeStrategicDecisions(turnState);
 			else if (turnState.myShips.Count <= 2 && turnState.enemyShips.Count <= 2)
-				Make2vs2StrategicDecisions(turnState);
+				strategy2vs2.MakeStrategicDecisions(turnState);
 			else
-				Make3vs3StrategicDecisions(turnState);
+				strategy3vs3.MakeStrategicDecisions(turnState);
 
 			return turnState.myShips.Select(
 				ship =>
@@ -67,251 +73,12 @@ namespace Game.Strategy
 				}).ToList();
 		}
 
-		private void Make3vs3StrategicDecisions(TurnState turnState)
-		{
-			if (turnState.barrels.Any())
-			{
-				MakeStandardStrategicDecisions(turnState);
-				return;
-			}
-
-			if (turnState.myShips.Max(s => s.rum) > turnState.enemyShips.Max(s => s.rum) || turnState.myShips.Min(s => s.rum) > 50)
-			{
-				foreach (var ship in turnState.myShips)
-				{
-					StrategicDecision prevDecision;
-					decisions.TryGetValue(ship.id, out prevDecision);
-					decisions[ship.id] = RunAway(turnState, ship, prevDecision);
-				}
-				return;
-			}
-
-			if (turnState.myShips.Count == 1)
-			{
-				var ship = turnState.myShips[0];
-				StrategicDecision prevDecision;
-				decisions.TryGetValue(ship.id, out prevDecision);
-				decisions[ship.id] = RunAway(turnState, ship, prevDecision);
-				return;
-			}
-
-			var maxRum = turnState.myShips.Max(s => s.rum);
-			var minRum = turnState.myShips.Min(s => s.rum);
-			var ship1 = turnState.myShips.First(s => s.rum == minRum);
-			var ship2 = turnState.myShips.Last(s => s.rum == maxRum);
-			var last = turnState.myShips.FirstOrDefault(s => s != ship1 && s != ship2);
-			if (last != null)
-			{
-				StrategicDecision prevDecision;
-				decisions.TryGetValue(last.id, out prevDecision);
-				decisions[last.id] = RunAway(turnState, last, prevDecision);
-			}
-
-			if (FastCoord.Distance(ship1.fbow, ship2.fbow) <= 4)
-			{
-				StrategicDecision prevDecision;
-				decisions.TryGetValue(ship1.id, out prevDecision);
-				if (prevDecision?.role == StrategicRole.Fire || prevDecision?.role == StrategicRole.Explicit)
-				{
-					decisions[ship1.id] = new StrategicDecision { role = StrategicRole.Explicit, explicitCommand = ShipMoveCommand.Slower };
-					decisions[ship2.id] = new StrategicDecision { role = StrategicRole.Approach, targetCoord = prevDecision.fireToCoord };
-				}
-				else
-				{
-					var nextShip1Position = FastShipPosition.GetFinalPosition(FastShipPosition.Move(ship1.fposition, ShipMoveCommand.Wait));
-					nextShip1Position = FastShipPosition.GetFinalPosition(FastShipPosition.Move(nextShip1Position, ShipMoveCommand.Slower));
-					decisions[ship1.id] = new StrategicDecision { role = StrategicRole.Fire, fireToCoord = FastShipPosition.Coord(nextShip1Position) };
-					decisions[ship2.id] = new StrategicDecision { role = StrategicRole.Approach, targetCoord = FastShipPosition.Coord(nextShip1Position) };
-				}
-			}
-			else
-			{
-				var x = (FastCoord.GetX(ship1.fcoord) + FastCoord.GetX(ship2.fcoord)) / 2;
-				var y = (FastCoord.GetY(ship1.fcoord) + FastCoord.GetY(ship2.fcoord)) / 2;
-				if (x < 5)
-					x = 5;
-				if (x > Constants.MAP_WIDTH - 6)
-					x = Constants.MAP_WIDTH - 6;
-				if (y < 5)
-					y = 5;
-				if (y > Constants.MAP_HEIGHT - 6)
-					x = Constants.MAP_HEIGHT - 6;
-
-				decisions[ship1.id] = new StrategicDecision { role = StrategicRole.Approach, targetCoord = FastCoord.Create(x, y) };
-				decisions[ship2.id] = new StrategicDecision { role = StrategicRole.Approach, targetCoord = FastCoord.Create(x, y) };
-			}
-		}
-
-		private void Make2vs2StrategicDecisions(TurnState turnState)
-		{
-			if (turnState.barrels.Any())
-			{
-				MakeStandardStrategicDecisions(turnState);
-				return;
-			}
-			if (turnState.myShips.Max(s => s.rum) > turnState.enemyShips.Max(s => s.rum) || turnState.myShips.Min(s => s.rum) > 50)
-			{
-				foreach (var ship in turnState.myShips)
-				{
-					StrategicDecision prevDecision;
-					decisions.TryGetValue(ship.id, out prevDecision);
-					decisions[ship.id] = RunAway(turnState, ship, prevDecision);
-				}
-				return;
-			}
-
-			if (turnState.myShips.Count == 1)
-			{
-				var ship = turnState.myShips[0];
-				StrategicDecision prevDecision;
-				decisions.TryGetValue(ship.id, out prevDecision);
-				decisions[ship.id] = RunAway(turnState, ship, prevDecision);
-				return;
-			}
-
-			var ship1 = turnState.myShips[0];
-			var ship2 = turnState.myShips[1];
-			if (ship1.rum > ship2.rum)
-			{
-				var tmp = ship1;
-				ship1 = ship2;
-				ship2 = tmp;
-			}
-			if (FastCoord.Distance(ship1.fbow, ship2.fbow) <= 4)
-			{
-				StrategicDecision prevDecision;
-				decisions.TryGetValue(ship1.id, out prevDecision);
-				if (prevDecision?.role == StrategicRole.Fire || prevDecision?.role == StrategicRole.Explicit)
-				{
-					decisions[ship1.id] = new StrategicDecision { role = StrategicRole.Explicit, explicitCommand = ShipMoveCommand.Slower };
-					decisions[ship2.id] = new StrategicDecision { role = StrategicRole.Approach, targetCoord = prevDecision.fireToCoord };
-				}
-				else
-				{
-					var nextShip1Position = FastShipPosition.GetFinalPosition(FastShipPosition.Move(ship1.fposition, ShipMoveCommand.Wait));
-					nextShip1Position = FastShipPosition.GetFinalPosition(FastShipPosition.Move(nextShip1Position, ShipMoveCommand.Slower));
-					decisions[ship1.id] = new StrategicDecision { role = StrategicRole.Fire, fireToCoord = FastShipPosition.Coord(nextShip1Position) };
-					decisions[ship2.id] = new StrategicDecision { role = StrategicRole.Approach, targetCoord = FastShipPosition.Coord(nextShip1Position) };
-				}
-			}
-			else
-			{
-				var x = (FastCoord.GetX(ship1.fcoord) + FastCoord.GetX(ship2.fcoord)) / 2;
-				var y = (FastCoord.GetY(ship1.fcoord) + FastCoord.GetY(ship2.fcoord)) / 2;
-				if (x < 5)
-					x = 5;
-				if (x > Constants.MAP_WIDTH - 6)
-					x = Constants.MAP_WIDTH - 6;
-				if (y < 5)
-					y = 5;
-				if (y > Constants.MAP_HEIGHT - 6)
-					x = Constants.MAP_HEIGHT - 6;
-
-				decisions[ship1.id] = new StrategicDecision { role = StrategicRole.Approach, targetCoord = FastCoord.Create(x, y) };
-				decisions[ship2.id] = new StrategicDecision { role = StrategicRole.Approach, targetCoord = FastCoord.Create(x, y) };
-			}
-		}
-
-		private void Make1vs1StrategicDecisions(TurnState turnState)
-		{
-			var ship = turnState.myShips[0];
-			var enemyShip = turnState.enemyShips[0];
-			StrategicDecision decision;
-			decisions.TryGetValue(ship.id, out decision);
-			var newDecision = Make1vs1StrategicDecision(turnState, decision, ship, enemyShip);
-			decisions[ship.id] = newDecision;
-		}
-
-		private StrategicDecision Make1vs1StrategicDecision(TurnState turnState, StrategicDecision prevDecision, Ship ship, Ship enemyShip)
-		{
-			var myBarrel = FindNearestBarrelToCollect(turnState, ship);
-			var enemyBarrel1 = FindNearestBarrelToCollect(turnState, enemyShip);
-			if (enemyBarrel1 == null)
-			{
-				if (myBarrel != null)
-					return Collect(myBarrel.barrel);
-				return WalkFree(turnState, ship, prevDecision);
-			}
-
-			var enemyBarrel2 = FindNearestBarrelToCollect(turnState, enemyBarrel1.barrel.fcoord, new HashSet<int> { enemyBarrel1.barrel.id });
-			if (enemyBarrel2 == null)
-			{
-				if (myBarrel != null)
-				{
-					if (myBarrel.barrel != enemyBarrel1.barrel)
-						return Collect(myBarrel.barrel).FireTo(SelectEnemyBarrelToFire(turnState, ship, enemyBarrel1)?.fcoord);
-					if (myBarrel.dist < enemyBarrel1.dist)
-						return Collect(myBarrel.barrel);
-				}
-				return WalkFree(turnState, ship, prevDecision).FireTo(SelectEnemyBarrelToFire(turnState, ship, enemyBarrel1)?.fcoord);
-			}
-
-			var enemyBarrel3 = FindNearestBarrelToCollect(turnState, enemyBarrel2.barrel.fcoord, new HashSet<int> { enemyBarrel1.barrel.id, enemyBarrel2.barrel.id });
-			if (enemyBarrel3 == null)
-				return Collect(enemyBarrel2.barrel).FireTo(SelectEnemyBarrelToFire(turnState, ship, enemyBarrel1)?.fcoord);
-
-			return Collect(enemyBarrel3.barrel).FireTo(SelectEnemyBarrelToFire(turnState, ship, enemyBarrel1, enemyBarrel2)?.fcoord);
-
-			//if (enemyBarrel1 == null)
-			//{
-			//	if (myBarrel != null)
-			//		return Collect(myBarrel.barrel);
-			//	return WalkFree(turnState, ship, prevDecision);
-			//}
-
-			//if (enemyBarrel2 == null)
-			//{
-			//	if (myBarrel != null && myBarrel.barrel == enemyBarrel1.barrel && enemyBarrel1.dist - myBarrel.dist > 3)
-			//		return Collect(myBarrel.barrel);
-			//	if (myBarrel != null)
-			//		return Collect(myBarrel.barrel).FireTo(GetBarrowIfNotFired(turnState, enemyBarrel1.barrel)?.fcoord);
-			//	return NavigateToShip(turnState, enemyShip, prevDecision).FireTo(GetBarrowIfNotFired(turnState, enemyBarrel1.barrel)?.fcoord);
-			//}
-
-			//if (enemyBarrel3 == null)
-			//{
-			//	if (myBarrel != null && myBarrel.barrel == enemyBarrel1.barrel && enemyBarrel1.dist - myBarrel.dist > 3)
-			//		return Collect(myBarrel.barrel).FireTo(GetBarrowIfNotFired(turnState, enemyBarrel2.barrel)?.fcoord);
-
-			//	if (myBarrel != null && myBarrel.barrel == enemyBarrel2.barrel && enemyBarrel2.dist - myBarrel.dist > 3)
-			//		return Collect(myBarrel.barrel).FireTo(GetBarrowIfNotFired(turnState, enemyBarrel1.barrel)?.fcoord);
-
-			//	if (myBarrel != null && myBarrel.dist < 3)
-			//		return Collect(myBarrel.barrel).FireTo((GetBarrowIfNotFired(turnState, enemyBarrel1.barrel) ?? GetBarrowIfNotFired(turnState, enemyBarrel2.barrel))?.fcoord);
-
-			//	return NavigateToShip(turnState, enemyShip, prevDecision).FireTo((GetBarrowIfNotFired(turnState, enemyBarrel1.barrel) ?? GetBarrowIfNotFired(turnState, enemyBarrel2.barrel))?.fcoord);
-			//}
-
-			//if (myBarrel != null && myBarrel.barrel == enemyBarrel1.barrel && enemyBarrel1.dist - myBarrel.dist > 3)
-			//	return Collect(myBarrel.barrel).FireTo((GetBarrowIfNotFired(turnState, enemyBarrel2.barrel) ?? GetBarrowIfNotFired(turnState, enemyBarrel3.barrel))?.fcoord);
-
-			//if (myBarrel != null && myBarrel.barrel == enemyBarrel2.barrel && enemyBarrel2.dist - myBarrel.dist > 3)
-			//	return Collect(myBarrel.barrel).FireTo((GetBarrowIfNotFired(turnState, enemyBarrel1.barrel) ?? GetBarrowIfNotFired(turnState, enemyBarrel3.barrel))?.fcoord);
-
-			//if (myBarrel != null && myBarrel.barrel == enemyBarrel3.barrel && enemyBarrel2.dist - myBarrel.dist > 3)
-			//	return Collect(myBarrel.barrel).FireTo((GetBarrowIfNotFired(turnState, enemyBarrel1.barrel) ?? GetBarrowIfNotFired(turnState, enemyBarrel2.barrel))?.fcoord);
-
-			//if (myBarrel != null && myBarrel.dist < 3)
-			//	return Collect(myBarrel.barrel).FireTo((GetBarrowIfNotFired(turnState, enemyBarrel1.barrel) ?? GetBarrowIfNotFired(turnState, enemyBarrel2.barrel) ?? GetBarrowIfNotFired(turnState, enemyBarrel3.barrel))?.fcoord);
-
-			//return NavigateToShip(turnState, enemyShip, prevDecision).FireTo((GetBarrowIfNotFired(turnState, enemyBarrel1.barrel) ?? GetBarrowIfNotFired(turnState, enemyBarrel2.barrel) ?? GetBarrowIfNotFired(turnState, enemyBarrel3.barrel))?.fcoord);
-		}
-		
-		private static StrategicDecision Collect(Barrel barrel)
+		public StrategicDecision Collect(Barrel barrel)
 		{
 			return new StrategicDecision { role = StrategicRole.Collector, targetCoord = barrel.fcoord, targetBarrelId = barrel.id };
 		}
 
-		private Barrel GetBarrowIfNotFired(TurnState turnState, Barrel barrel)
-		{
-			if (barrel == null)
-				return null;
-			if (turnState.cannonballs.Any(x => x.fcoord == barrel.fcoord))
-				return null;
-			return barrel;
-		}
-
-		private Barrel SelectEnemyBarrelToFire(TurnState turnState, Ship myShip, params CollectableBarrel[] barrels)
+		public Barrel SelectEnemyBarrelToFire(TurnState turnState, Ship myShip, params CollectableBarrel[] barrels)
 		{
 			barrels = barrels.Where(b => turnState.cannonballs.All(x => x.fcoord != b.barrel.fcoord)).ToArray();
 			foreach (var barrel in barrels)
@@ -328,13 +95,13 @@ namespace Game.Strategy
 			return null;
 		}
 
-		private static StrategicDecision NavigateToShip(TurnState turnState, Ship ship, StrategicDecision prevDecision)
+		public StrategicDecision NavigateToShip(TurnState turnState, Ship ship, StrategicDecision prevDecision)
 		{
 			var nextShipPosition = FastShipPosition.GetFinalPosition(FastShipPosition.Move(ship.fposition, ShipMoveCommand.Faster));
 			return new StrategicDecision { role = StrategicRole.Unknown, targetCoord = FastShipPosition.Coord(nextShipPosition) };
 		}
 
-		private static StrategicDecision WalkFree(TurnState turnState, Ship ship, StrategicDecision prevDecision)
+		public StrategicDecision WalkFree(TurnState turnState, Ship ship, StrategicDecision prevDecision)
 		{
 			switch (prevDecision?.role)
 			{
@@ -352,7 +119,7 @@ namespace Game.Strategy
 			return prevDecision;
 		}
 
-		private StrategicDecision RunAway(TurnState turnState, Ship ship, StrategicDecision prevDecision)
+		public StrategicDecision RunAway(TurnState turnState, Ship ship, StrategicDecision prevDecision)
 		{
 			var used = new HashSet<int>();
 			foreach (var myShip in turnState.myShips)
@@ -405,7 +172,7 @@ namespace Game.Strategy
 			return FastShipPosition.DistanceTo(nextShipPosition, ftarget);
 		}
 
-		private void MakeStandardStrategicDecisions(TurnState turnState)
+		public void MakeStandardStrategicDecisions(TurnState turnState)
 		{
 			foreach (var ship in turnState.myShips)
 			{
@@ -438,7 +205,7 @@ namespace Game.Strategy
 			}
 		}
 
-		private CollectableBarrel FindBestBarrelToCollect(TurnState turnState, Ship ship)
+		public CollectableBarrel FindBestBarrelToCollect(TurnState turnState, Ship ship)
 		{
 			var used = new HashSet<int>();
 			foreach (var myShip in turnState.myShips)
@@ -450,7 +217,7 @@ namespace Game.Strategy
 			return FindNearestBarrelToCollect(turnState, ship, used);
 		}
 
-		private CollectableBarrel FindNearestBarrelToCollect(TurnState turnState, Ship ship, HashSet<int> used = null)
+		public CollectableBarrel FindNearestBarrelToCollect(TurnState turnState, Ship ship, HashSet<int> used = null)
 		{
 			var barrelsHitTurns = new Dictionary<int, int>();
 			foreach (var barrel in turnState.barrels)
@@ -495,7 +262,7 @@ namespace Game.Strategy
 			return bestBarrel == null ? null : new CollectableBarrel { barrel = bestBarrel, dist = bestDist };
 		}
 
-		private CollectableBarrel FindNearestBarrelToCollect(TurnState turnState, int fcoord, HashSet<int> used = null)
+		public CollectableBarrel FindNearestBarrelToCollect(TurnState turnState, int fcoord, HashSet<int> used = null)
 		{
 			var barrelsHitTurns = new Dictionary<int, int>();
 			foreach (var barrel in turnState.barrels)
@@ -529,17 +296,6 @@ namespace Game.Strategy
 			return bestBarrel == null ? null : new CollectableBarrel { barrel = bestBarrel, dist = bestDist };
 		}
 
-		private class CollectableBarrel
-		{
-			public Barrel barrel;
-			public int dist;
-
-			public override string ToString()
-			{
-				return $"{barrel}, {nameof(dist)}: {dist}";
-			}
-		}
-
 		private void CleanupObsoleteDecisions(TurnState turnState)
 		{
 			foreach (var kvp in decisions.ToList())
@@ -557,6 +313,17 @@ namespace Game.Strategy
 		{
 			foreach (var strategy in decisions)
 				Console.Error.WriteLine($"(({nameof(Strateg)}){strategRef}).{nameof(decisions)}[{strategy.Key}] = {strategy.Value.Dump()};");
+		}
+	}
+
+	public class CollectableBarrel
+	{
+		public Barrel barrel;
+		public int dist;
+
+		public override string ToString()
+		{
+			return $"{barrel}, {nameof(dist)}: {dist}";
 		}
 	}
 }
