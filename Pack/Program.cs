@@ -52,6 +52,18 @@ namespace Pack
 				}
 
 				result.AppendLine("}");
+
+				var reader = new StringReader(result.ToString());
+
+				result = new StringBuilder();
+
+				string line;
+				while ((line = reader.ReadLine()) != null)
+				{
+					if (!string.IsNullOrWhiteSpace(line))
+						result.AppendLine(line.Trim());
+				}
+
 				Clipboard.SetText(result.ToString());
 				Console.Out.WriteLine("Result was copied to clipboard");
 

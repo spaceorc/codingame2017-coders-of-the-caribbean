@@ -28,17 +28,7 @@ namespace Game.Strategy
 
 		public StrategicDecision MakeStrategicDecision(TurnState turnState, StrategicDecision prevDecision, Ship ship, Ship enemyShip)
 		{
-			var enemyStartBarrel = FindNearestBarrelToCollect(turnState, enemyShip);
-			var currentBarrel = enemyStartBarrel;
-			var barrels = new List<CollectableBarrel>();
-			while (currentBarrel != null)
-			{
-				barrels.Add(currentBarrel);
-				var nextBarrel = FindNearestBarrelToCollect(turnState, currentBarrel.barrel.fcoord, new HashSet<int>(barrels.Select(b => b.barrel.id)));
-				if (nextBarrel != null)
-					nextBarrel.dist += currentBarrel.dist;
-				currentBarrel = nextBarrel;
-			}
+			var barrels = CollectableBarrels(turnState, enemyShip);
 
 			var nextShipPosition1 = FastShipPosition.GetFinalPosition(FastShipPosition.Move(ship.fposition, ShipMoveCommand.Faster));
 			var nextShipPosition2 = FastShipPosition.GetFinalPosition(FastShipPosition.Move(ship.fposition, ShipMoveCommand.Wait));
@@ -53,6 +43,22 @@ namespace Game.Strategy
 			var barrelToFire = barrels.TakeWhile(b => b != target).LastOrDefault();
 
 			return strateg.Collect(target.barrel).FireTo(barrelToFire?.barrel.fcoord);
+		}
+
+		public List<CollectableBarrel> CollectableBarrels(TurnState turnState, Ship enemyShip)
+		{
+			var enemyStartBarrel = FindNearestBarrelToCollect(turnState, enemyShip);
+			var currentBarrel = enemyStartBarrel;
+			var barrels = new List<CollectableBarrel>();
+			while (currentBarrel != null)
+			{
+				barrels.Add(currentBarrel);
+				var nextBarrel = FindNearestBarrelToCollect(turnState, currentBarrel.barrel.fcoord, new HashSet<int>(barrels.Select(b => b.barrel.id)));
+				if (nextBarrel != null)
+					nextBarrel.dist += currentBarrel.dist;
+				currentBarrel = nextBarrel;
+			}
+			return barrels;
 		}
 
 		public CollectableBarrel FindNearestBarrelToCollect(TurnState turnState, Ship ship, HashSet<int> used = null)
