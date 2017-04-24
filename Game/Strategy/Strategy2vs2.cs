@@ -171,38 +171,44 @@ namespace Game.Strategy
 				ship1 = ship2;
 				ship2 = tmp;
 			}
-			if (FastCoord.Distance(ship1.fbow, ship2.fbow) <= 4)
+
+			StrategicDecision prevDecision1;
+			strateg.decisions.TryGetValue(ship1.id, out prevDecision1);
+			int awayTarget;
+			if (prevDecision1?.role == StrategicRole.Suicide)
+				awayTarget = prevDecision1.targetCoord.Value;
+			else if (prevDecision1?.role == StrategicRole.Fire)
+				awayTarget = prevDecision1.targetCoord.Value;
+			else
+				awayTarget = strateg.GetRunAwayTarget(turnState, ship1);
+
+			if (FastCoord.Distance(ship1.fbow, awayTarget) <= 4 && FastCoord.Distance(ship2.fbow, awayTarget) <= 4)
 			{
-				StrategicDecision prevDecision;
-				strateg.decisions.TryGetValue(ship1.id, out prevDecision);
-				if (prevDecision?.role == StrategicRole.Fire || prevDecision?.role == StrategicRole.Explicit)
+				if (prevDecision1?.role == StrategicRole.Fire)
 				{
-					strateg.decisions[ship1.id] = new StrategicDecision { role = StrategicRole.Explicit, explicitCommand = ShipMoveCommand.Slower };
-					strateg.decisions[ship2.id] = new StrategicDecision { role = StrategicRole.Approach, targetCoord = prevDecision.fireToCoord };
+					strateg.decisions[ship1.id] = new StrategicDecision { role = StrategicRole.Fire, explicitCommand = ShipMoveCommand.Slower };
+					StrategicDecision prevDecision;
+					strateg.decisions.TryGetValue(ship2.id, out prevDecision);
+					strateg.decisions[ship2.id] = new StrategicDecision { role = StrategicRole.Approach, targetCoord = prevDecision.targetCoord };
 				}
 				else
 				{
-					var nextShip1Position = FastShipPosition.GetFinalPosition(FastShipPosition.Move(ship1.fposition, ShipMoveCommand.Wait));
-					nextShip1Position = FastShipPosition.GetFinalPosition(FastShipPosition.Move(nextShip1Position, ShipMoveCommand.Slower));
-					strateg.decisions[ship1.id] = new StrategicDecision { role = StrategicRole.Fire, fireToCoord = FastShipPosition.Coord(nextShip1Position) };
-					strateg.decisions[ship2.id] = new StrategicDecision { role = StrategicRole.Approach, targetCoord = FastShipPosition.Coord(nextShip1Position) };
+					uint movement;
+					uint otherMovement;
+					CollisionChecker.Move(ship1.fposition, ShipMoveCommand.Wait, ship2.fposition, ShipMoveCommand.Slower, out movement, out otherMovement);
+					if (FastShipPosition.Speed(FastShipPosition.GetFinalPosition(movement)) == 2)
+						strateg.decisions[ship1.id] = new StrategicDecision { role = StrategicRole.Explicit, explicitCommand = ShipMoveCommand.Slower };
+					else
+					{
+						strateg.decisions[ship1.id] = new StrategicDecision { role = StrategicRole.Fire, fireToCoord = FastShipPosition.Coord(FastShipPosition.GetFinalPosition(movement)), targetCoord = awayTarget, explicitCommand = ShipMoveCommand.Wait };
+						strateg.decisions[ship2.id] = new StrategicDecision { role = StrategicRole.Explicit, explicitCommand = ShipMoveCommand.Slower, targetCoord = prevDecision1.fireToCoord };
+					}
 				}
 			}
 			else
 			{
-				var x = (FastCoord.GetX(ship1.fcoord) + FastCoord.GetX(ship2.fcoord)) / 2;
-				var y = (FastCoord.GetY(ship1.fcoord) + FastCoord.GetY(ship2.fcoord)) / 2;
-				if (x < 5)
-					x = 5;
-				if (x > Constants.MAP_WIDTH - 6)
-					x = Constants.MAP_WIDTH - 6;
-				if (y < 5)
-					y = 5;
-				if (y > Constants.MAP_HEIGHT - 6)
-					x = Constants.MAP_HEIGHT - 6;
-
-				strateg.decisions[ship1.id] = new StrategicDecision { role = StrategicRole.Approach, targetCoord = FastCoord.Create(x, y) };
-				strateg.decisions[ship2.id] = new StrategicDecision { role = StrategicRole.Approach, targetCoord = FastCoord.Create(x, y) };
+				strateg.decisions[ship1.id] = new StrategicDecision { role = StrategicRole.Suicide, targetCoord = awayTarget };
+				strateg.decisions[ship2.id] = new StrategicDecision { role = StrategicRole.Approach, targetCoord = strateg.GetRunAwayApproachTarget(awayTarget) };
 			}
 		}
 	}

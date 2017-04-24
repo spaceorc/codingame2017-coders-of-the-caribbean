@@ -55,7 +55,7 @@ namespace Game.Strategy
 			foreach (var ship in turnState.myShips)
 			{
 				var decision = decisions[ship.index];
-				if (decision.role == StrategicRole.Explicit)
+				if (decision.explicitCommand.HasValue)
 				{
 					moves.Add(decision.explicitCommand.Value);
 				}
@@ -80,6 +80,7 @@ namespace Game.Strategy
 			switch (decision.role)
 			{
 				case StrategicRole.Approach:
+				case StrategicRole.Suicide:
 					return NavigationMethod.Approach;
 				case StrategicRole.Collector:
 					return NavigationMethod.Collect;

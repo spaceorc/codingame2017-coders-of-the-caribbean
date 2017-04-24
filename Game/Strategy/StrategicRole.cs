@@ -8,6 +8,7 @@ namespace Game.Strategy
 		RunAway,
 		Approach,
 		Fire,
-		Explicit
+		Explicit,
+		Suicide
 	}
 }

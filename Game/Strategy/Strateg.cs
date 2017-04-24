@@ -30,6 +30,15 @@ namespace Game.Strategy
 			new Coord(Constants.MAP_WIDTH - 5, Constants.MAP_HEIGHT - 5).ToFastCoord(),
 			new Coord(Constants.MAP_WIDTH - 5, 5).ToFastCoord()
 		};
+
+
+		private static readonly int[] runApproachTargets =
+		{
+			new Coord(6, 8).ToFastCoord(),
+			new Coord(6, Constants.MAP_HEIGHT - 8).ToFastCoord(),
+			new Coord(Constants.MAP_WIDTH - 6, Constants.MAP_HEIGHT - 6).ToFastCoord(),
+			new Coord(Constants.MAP_WIDTH - 6, 8).ToFastCoord()
+		};
 		
 		public Strateg(GameState gameState)
 		{
@@ -97,6 +106,19 @@ namespace Game.Strategy
 
 		public StrategicDecision RunAway_FreeWay(TurnState turnState, Ship ship, StrategicDecision prevDecision)
 		{
+			var runTarget = GetRunAwayTarget(turnState, ship);
+
+			return new StrategicDecision { role = StrategicRole.RunAway, targetCoord = runTarget };
+		}
+
+		public int GetRunAwayApproachTarget(int ftarget)
+		{
+			var index = Array.IndexOf(runTargets, ftarget);
+			return runApproachTargets[index];
+		}
+
+		public int GetRunAwayTarget(TurnState turnState, Ship ship)
+		{
 			var finalCoords = new List<int>();
 			foreach (var enemyShip in turnState.enemyShips)
 			{
@@ -109,7 +131,7 @@ namespace Game.Strategy
 
 			var candidates = runTargets.OrderByDescending(t => (int)finalCoords.Average(fc => FastCoord.Distance(t, fc) * FastCoord.Distance(t, fc))).Take(3).ToArray();
 
-			 var runTarget = candidates.OrderBy(
+			var runTarget = candidates.OrderBy(
 				t =>
 				{
 					var cost = 0;
@@ -117,8 +139,7 @@ namespace Game.Strategy
 						cost += WayEvaluator.CalcCost(ship.fcoord, t, enemyShip.fcoord);
 					return cost;
 				}).First();
-
-			return new StrategicDecision { role = StrategicRole.RunAway, targetCoord = runTarget };
+			return runTarget;
 		}
 
 		public StrategicDecision RunAway(TurnState turnState, Ship ship, StrategicDecision prevDecision)
