@@ -39,22 +39,7 @@ namespace Game.Entities
 		{
 			Console.WriteLine("WAIT WAIT");
 		}
-
-		public void Move(Coord coord)
-		{
-			Console.WriteLine($"MOVE {coord.x} {coord.y} MOVE {coord.x} {coord.y}");
-		}
-
-		public void Move(int fastCoord)
-		{
-			Console.WriteLine($"MOVE {FastCoord.GetX(fastCoord)} {FastCoord.GetY(fastCoord)} MOVE {FastCoord.GetX(fastCoord)} {FastCoord.GetY(fastCoord)}");
-		}
-
-		public void Fire(Coord coord)
-		{
-			Console.WriteLine($"FIRE {coord.x} {coord.y} FIRE {coord.x} {coord.y}");
-		}
-
+		
 		public void Fire(int fastCoord)
 		{
 			Console.WriteLine($"FIRE {FastCoord.GetX(fastCoord)} {FastCoord.GetY(fastCoord)} FIRE {FastCoord.GetX(fastCoord)} {FastCoord.GetY(fastCoord)}");

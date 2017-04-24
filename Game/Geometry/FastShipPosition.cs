@@ -92,12 +92,6 @@ namespace Game.Geometry
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static int SetSpeed(int fastShipPosition, int speed)
-		{
-			return (fastShipPosition & ~speedMask) | (speed << speedShift);
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static int Orientation(int fastShipPosition)
 		{
 			return fastShipPosition >> orientationShift;
@@ -122,25 +116,7 @@ namespace Game.Geometry
 				   || Bow(fastShipPosition) == otherFastCoord
 				   || Stern(fastShipPosition) == otherFastCoord;
 		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static bool CenterCollides(int fastShipPosition, int otherFastCoord)
-		{
-			return Coord(fastShipPosition) == otherFastCoord;
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static bool BowCollides(int fastShipPosition, int otherFastCoord)
-		{
-			return Bow(fastShipPosition) == otherFastCoord;
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static bool SternCollides(int fastShipPosition, int otherFastCoord)
-		{
-			return Stern(fastShipPosition) == otherFastCoord;
-		}
-
+		
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static bool CollidesShip(int fastShipPosition, int otherFastShipPosition)
 		{

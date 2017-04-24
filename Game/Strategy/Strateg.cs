@@ -77,29 +77,6 @@ namespace Game.Strategy
 			return new StrategicDecision { role = StrategicRole.Collector, targetCoord = barrel.fcoord, targetBarrelId = barrel.id };
 		}
 
-		public Barrel SelectEnemyBarrelToFire(TurnState turnState, Ship myShip, params CollectableBarrel[] barrels)
-		{
-			barrels = barrels.Where(b => turnState.cannonballs.All(x => x.fcoord != b.barrel.fcoord)).ToArray();
-			foreach (var barrel in barrels)
-			{
-				var distance = FastCoord.Distance(myShip.fbow, barrel.barrel.fcoord);
-				if (distance <= 10)
-				{
-					var travelTime = (int)(1 + Math.Round(distance / 3.0));
-					var enemyTravelTime = barrel.dist / 2 + 1;
-					if (travelTime < enemyTravelTime)
-						return barrel.barrel;
-				}
-			}
-			return null;
-		}
-
-		public StrategicDecision NavigateToShip(TurnState turnState, Ship ship, StrategicDecision prevDecision)
-		{
-			var nextShipPosition = FastShipPosition.GetFinalPosition(FastShipPosition.Move(ship.fposition, ShipMoveCommand.Faster));
-			return new StrategicDecision { role = StrategicRole.Unknown, targetCoord = FastShipPosition.Coord(nextShipPosition) };
-		}
-
 		public StrategicDecision WalkFree(TurnState turnState, Ship ship, StrategicDecision prevDecision)
 		{
 			switch (prevDecision?.role)
@@ -148,39 +125,6 @@ namespace Game.Strategy
 		{
 			return RunAway_FreeWay(turnState, ship, prevDecision);
 			//return WalkFree(turnState, ship, prevDecision);
-		}
-
-		public StrategicDecision RunAway_FreeTarget(TurnState turnState, Ship ship, StrategicDecision prevDecision)
-		{
-			var finalCoords = new List<int>();
-			foreach (var enemyShip in turnState.enemyShips)
-			{
-				var move = FastShipPosition.Move(enemyShip.fposition, ShipMoveCommand.Faster);
-				move = FastShipPosition.Move(FastShipPosition.GetFinalPosition(move), ShipMoveCommand.Faster);
-				move = FastShipPosition.Move(FastShipPosition.GetFinalPosition(move), ShipMoveCommand.Faster);
-				var finalCoord = FastShipPosition.Coord(FastShipPosition.GetFinalPosition(move));
-				finalCoords.Add(finalCoord);
-			}
-
-			var bestDist = -1;
-			var bestTarget = -1;
-			foreach (var runTarget in runTargets)
-			{
-				var dist = (int)finalCoords.Average(fc => FastCoord.Distance(runTarget, fc) * FastCoord.Distance(runTarget, fc));
-				if (dist > bestDist)
-				{
-					bestDist = dist;
-					bestTarget = runTarget;
-				}
-			}
-
-			return new StrategicDecision { role = StrategicRole.RunAway, targetCoord = bestTarget };
-		}
-
-		private static int CalcShipMovingDistTo(Ship ship, int ftarget)
-		{
-			var nextShipPosition = FastShipPosition.GetFinalPosition(FastShipPosition.Move(ship.fposition, ShipMoveCommand.Faster));
-			return FastShipPosition.DistanceTo(nextShipPosition, ftarget);
 		}
 
 		public void MakeStandardStrategicDecisions(TurnState turnState)
@@ -281,41 +225,7 @@ namespace Game.Strategy
 				}
 			return bestBarrel == null ? null : new CollectableBarrel { barrel = bestBarrel, dist = bestDist };
 		}
-
-		public CollectableBarrel FindNearestBarrelToCollect(TurnState turnState, int fcoord, HashSet<int> used = null)
-		{
-			var barrelsHitTurns = new Dictionary<int, int>();
-			foreach (var barrel in turnState.barrels)
-			{
-				foreach (var cannonball in turnState.cannonballs)
-				{
-					if (cannonball.fcoord == barrel.fcoord)
-					{
-						int prevTurns;
-						if (!barrelsHitTurns.TryGetValue(barrel.id, out prevTurns) || prevTurns > cannonball.turns)
-							barrelsHitTurns[barrel.id] = cannonball.turns;
-					}
-				}
-			}
-
-			var bestDist = int.MaxValue;
-			Barrel bestBarrel = null;
-			foreach (var barrel in turnState.barrels)
-				if (used == null || !used.Contains(barrel.id))
-				{
-					var dist = FastCoord.Distance(fcoord, barrel.fcoord);
-					if (dist < bestDist)
-					{
-						int hitTurns;
-						if (barrelsHitTurns.TryGetValue(barrel.id, out hitTurns) && dist >= hitTurns - 1)
-							continue;
-						bestBarrel = barrel;
-						bestDist = dist;
-					}
-				}
-			return bestBarrel == null ? null : new CollectableBarrel { barrel = bestBarrel, dist = bestDist };
-		}
-
+		
 		private void CleanupObsoleteDecisions(TurnState turnState)
 		{
 			foreach (var kvp in decisions.ToList())
