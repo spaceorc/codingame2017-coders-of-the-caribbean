@@ -111,7 +111,7 @@ namespace Game.Strategy
 					var barrelToFire1 = barrels1.TakeWhile(b => b.barrel != target1.barrel && b.barrel != target2.barrel).LastOrDefault();
 					strateg.decisions[ship1.id] = strateg.Collect(target1.barrel).FireTo(barrelToFire1?.barrel.fcoord);
 
-					var barrelToFire2 = barrels2.TakeWhile(b => b.barrel != target1.barrel && b.barrel != target2.barrel && b.barrel != barrelToFire1.barrel).LastOrDefault();
+					var barrelToFire2 = barrels2.TakeWhile(b => b.barrel != target1.barrel && b.barrel != target2.barrel && b.barrel != barrelToFire1?.barrel).LastOrDefault();
 					strateg.decisions[ship2.id] = strateg.Collect(target2.barrel).FireTo(barrelToFire2?.barrel.fcoord);
 					return;
 				}
