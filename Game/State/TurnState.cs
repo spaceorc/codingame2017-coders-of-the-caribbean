@@ -96,8 +96,11 @@ namespace Game.State
 						minesById.Add(entityId, new Mine(entityId, x, y));
 						break;
 					case EntityType.Cannonball:
-						cannonballs.Add(new Cannonball(entityId, x, y, arg1, arg2));
-						cannonballsById.Add(entityId, new Cannonball(entityId, x, y, arg1, arg2));
+						if (arg2 != 0)
+						{
+							cannonballs.Add(new Cannonball(entityId, x, y, arg1, arg2));
+							cannonballsById.Add(entityId, new Cannonball(entityId, x, y, arg1, arg2));
+						}
 						break;
 				}
 			}
