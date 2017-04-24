@@ -106,12 +106,12 @@ namespace Game.Strategy
 					return;
 				}
 
-				if (target1 != target2)
+				if (target1.barrel != target2.barrel)
 				{
-					var barrelToFire1 = barrels1.TakeWhile(b => b != target1 && b != target2).LastOrDefault();
+					var barrelToFire1 = barrels1.TakeWhile(b => b.barrel != target1.barrel && b.barrel != target2.barrel).LastOrDefault();
 					strateg.decisions[ship1.id] = strateg.Collect(target1.barrel).FireTo(barrelToFire1?.barrel.fcoord);
 
-					var barrelToFire2 = barrels2.TakeWhile(b => b != target1 && b != target2 && b != barrelToFire1).LastOrDefault();
+					var barrelToFire2 = barrels2.TakeWhile(b => b.barrel != target1.barrel && b.barrel != target2.barrel && b.barrel != barrelToFire1.barrel).LastOrDefault();
 					strateg.decisions[ship2.id] = strateg.Collect(target2.barrel).FireTo(barrelToFire2?.barrel.fcoord);
 					return;
 				}
@@ -121,12 +121,12 @@ namespace Game.Strategy
 				var dist2 = Math.Min(FastShipPosition.DistanceTo(nextShip2Position1, target1.barrel.fcoord),
 					FastShipPosition.DistanceTo(nextShip2Position2, target1.barrel.fcoord));
 				if (dist1 < dist2)
-					target2 = barrels1.FirstOrDefault(
-						b => b != target1 && (FastShipPosition.DistanceTo(nextShip2Position1, b.barrel.fcoord) < b.dist - 1
+					target2 = barrels2.FirstOrDefault(
+						b => b.barrel != target1.barrel && (FastShipPosition.DistanceTo(nextShip2Position1, b.barrel.fcoord) < b.dist - 1
 											|| FastShipPosition.DistanceTo(nextShip2Position2, b.barrel.fcoord) < b.dist - 1));
 				else
-					target1 = barrels2.FirstOrDefault(
-						b => b != target2 && (FastShipPosition.DistanceTo(nextShip1Position1, b.barrel.fcoord) < b.dist - 1
+					target1 = barrels1.FirstOrDefault(
+						b => b.barrel != target2.barrel && (FastShipPosition.DistanceTo(nextShip1Position1, b.barrel.fcoord) < b.dist - 1
 											|| FastShipPosition.DistanceTo(nextShip1Position2, b.barrel.fcoord) < b.dist - 1));
 			}
 		}
