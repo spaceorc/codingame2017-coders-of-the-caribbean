@@ -4,6 +4,7 @@ using Game.State;
 
 namespace Game
 {
+    // packOptions: compact
 	public class EntryPoint
 	{
 		private static readonly GameState gameState = new GameState();
