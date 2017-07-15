@@ -18,9 +18,5 @@ It's a solution itself
 - *Strategy2vs2* is pretty the same as *Strategy1vs1*, but with some improvement: if skippers see that they are loosing the game, one of them makes harakiri, giving the other some rum.
 - *Strategy3vs3* - each skipper collects barrels with a greedy algorithm. When there is no more barrels - strategy is the same as *Strategy2vs2* - to make harakiri if needed
 
-
-## Pack
-Packs all .cs files in solution into one .cs file. Surprisingly, the source code size is limited to a very small value - ~100K :(
-
 ## Experiments
 Project for experiments. Entry point for replaying game turns from dumps
